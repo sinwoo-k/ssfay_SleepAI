@@ -1,13 +1,13 @@
-package com.c208.sleepony;
+package com.c208.sleephony;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SleeponyApplication {
+public class SleephonyApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SleeponyApplication.class, args);
+		SpringApplication.run(SleephonyApplication.class, args);
 	}
 
 }

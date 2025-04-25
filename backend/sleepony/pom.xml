@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.c208</groupId>
-	<artifactId>sleepony</artifactId>
+	<artifactId>sleephony</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>sleepony</name>
 	<description>Demo project for Spring Boot</description>
