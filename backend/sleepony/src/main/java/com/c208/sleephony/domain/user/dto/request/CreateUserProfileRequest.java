@@ -1,4 +1,4 @@
-package com.c208.sleephony.domain.user.dto.response;
+package com.c208.sleephony.domain.user.dto.request;
 
 import lombok.*;
 import java.math.BigDecimal;
@@ -6,12 +6,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-
-public class GetUserProfileResponse {
-    private String email;
+public class CreateUserProfileRequest {
     private String nickname;
     private BigDecimal height;
     private BigDecimal weight;
