@@ -23,7 +23,9 @@ public class AuthenticationService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
-    public LoginResponse  loginWithGoogle(Map<String, String> request) {
+    private static final String SOCIAL_GOOGLE = "GOOGLE";
+
+    public LoginResponse loginWithGoogle(Map<String, String> request) {
         String token = request.get("token");
 
         if (token == null || token.isBlank()) {
@@ -34,25 +36,37 @@ public class AuthenticationService {
         String email = payload.getEmail();
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
-        Integer userId;
+        User user;
         String status;
 
         if (optionalUser.isPresent()) {
-            userId = optionalUser.get().getUserId();
-            status = "login";
+            user = optionalUser.get();
+            if (SOCIAL_GOOGLE.equals(user.getSocial())) {
+                // 구글 로그인 사용자
+                status = "login";
+            } else {
+                // 다른 소셜 계정(Kakao 등)으로 이미 존재하는 이메일 → 새로운 유저 생성
+                user = createNewGoogleUser(email);
+                status = "join";
+            }
         } else {
-            User newUser = User.builder()
-                    .email(email)
-                    .themeId(1)
-                    .createdAt(LocalDateTime.now())
-                    .deleted('N')
-                    .build();
-            userRepository.save(newUser);
-            userId = newUser.getUserId();
+            // 이메일 자체가 없는 경우 → 새로운 구글 유저 생성
+            user = createNewGoogleUser(email);
             status = "join";
         }
 
-        String accessToken = jwtProvider.generateAccessToken(userId);
+        String accessToken = jwtProvider.generateAccessToken(user.getUserId());
         return new LoginResponse(status, accessToken);
+    }
+
+    private User createNewGoogleUser(String email) {
+        User newUser = User.builder()
+                .email(email)
+                .themeId(1)
+                .createdAt(LocalDateTime.now())
+                .deleted('N')
+                .social(SOCIAL_GOOGLE)
+                .build();
+        return userRepository.save(newUser); // 저장 후 반환받은 엔티티 사용
     }
 }
