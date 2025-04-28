@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/api/`user")
+@RequestMapping("/api/user")
 @AllArgsConstructor
 @Tag(name = "User", description = "유저 관련 CRUD")
 public class UserController {
