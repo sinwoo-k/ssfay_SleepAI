@@ -1,5 +1,7 @@
 package com.c208.sleephony.global.config;
 
+import com.c208.sleephony.global.security.JwtAccessDeniedHandler;
+import com.c208.sleephony.global.security.JwtAuthenticationEntryPoint;
 import com.c208.sleephony.global.security.JwtAuthenticationFilter;
 import com.c208.sleephony.global.utils.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(CsrfConfigurer::disable)
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui/**",
