@@ -19,27 +19,25 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "유저 프로필 등록")
-    @PutMapping("/profile/{userId}")
-    public ResponseEntity<Void> createUserProfile(@PathVariable Integer userId,
-                                                  @RequestBody CreateUserProfileRequest request) {
-        userService.createUserProfile(userId, request);
+    @PutMapping("/profile")
+    public ResponseEntity<Void> createUserProfile(@RequestBody CreateUserProfileRequest request) {
+        userService.createUserProfile(request);
         return ResponseEntity.ok().build();
     }
 
 
     @Operation(summary = "유저 프로필 수정")
-    @PatchMapping("/profile/{userId}")
-    public ResponseEntity<Void> updateUserProfile(@PathVariable Integer userId,
-                                                  @RequestBody UpdateUserProfileRequest request) {
-        userService.updateUserProfile(userId, request);
+    @PatchMapping("/profile")
+    public ResponseEntity<Void> updateUserProfile(@RequestBody UpdateUserProfileRequest request) {
+        userService.updateUserProfile(request);
         return ResponseEntity.ok().build();
     }
 
 
     @Operation(summary = "유저 프로필 조회")
-    @GetMapping("/profile/{userId}")
-    public ResponseEntity<GetUserProfileResponse> getUserProfile(@PathVariable Integer userId) {
-        return ResponseEntity.ok(userService.getUserProfileResponse(userId));
+    @GetMapping("/profile")
+    public ResponseEntity<GetUserProfileResponse> getUserProfile() {
+        return ResponseEntity.ok(userService.getUserProfileResponse());
     }
 
 }
