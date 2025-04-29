@@ -1,0 +1,36 @@
+package com.c208.sleephony.domain.sleep.controller;
+
+import com.c208.sleephony.domain.sleep.dto.request.BioDataRequestDto;
+import com.c208.sleephony.domain.sleep.dto.response.BioDataResponseDto;
+import com.c208.sleephony.domain.sleep.service.SleepService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/sleep")
+@AllArgsConstructor
+@Tag(name = "Sleep", description = "수면 관련 CRUD")
+public class SleepController {
+
+    private final SleepService sleepService;
+
+    @PostMapping("bio-data/{userId}")
+    public ResponseEntity<?> saveDioData(@RequestBody BioDataRequestDto requestDto, @PathVariable Integer userId) {
+        sleepService.saveAll(requestDto,userId);
+        // TODO: AI 서버에 수면 레벨 받아와서 저장하고 값 보내는거
+        BioDataResponseDto response = new BioDataResponseDto(
+                HttpStatus.OK.value(),
+                "SU",
+                "OK",
+                "NREM1"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+}

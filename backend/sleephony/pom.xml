@@ -11,7 +11,7 @@
 	<groupId>com.c208</groupId>
 	<artifactId>sleephony</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>sleepony</name>
+	<name>sleephony</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
