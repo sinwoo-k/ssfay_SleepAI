@@ -1,4 +1,4 @@
-package com.c208.sleephony.domain.authentication.contoller;
+package com.c208.sleephony.domain.authentication.controller;
 
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.service.AuthenticationService;
