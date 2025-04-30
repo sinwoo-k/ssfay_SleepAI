@@ -31,5 +31,10 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "토큰 유효성 검사")
+    @GetMapping("/validate")
+    public ResponseEntity<?> validate() {
+        return ResponseEntity.ok().build();
+    }
 
 }
