@@ -41,11 +41,12 @@ public class SleepService {
         bioRepository.saveAll(entities);
     }
 
-    public void startMeasurement(LocalDateTime startedAt) {
+    public String startMeasurement(LocalDateTime startedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
         String value = startedAt.toString();
 
         stringRedisTemplate.opsForValue().set(key, value, Duration.ofHours(24));
+        return "측정 시작 시각 저장 완료";
     }
 }
