@@ -12,8 +12,8 @@ import java.time.LocalDate;
 public class GetUserProfileResponse {
     private String email;
     private String nickname;
-    private float height;
-    private float weight;
+    private Float height;
+    private Float weight;
     private LocalDate birthDate;
     private String gender;
 }
