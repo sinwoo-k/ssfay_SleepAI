@@ -43,7 +43,7 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createNewGoogleUser(email);
+            user = createUser(email, "GOOGLE");
             status = "join";
         }
 
@@ -51,14 +51,14 @@ public class AuthenticationService {
         return new LoginResponse(status, accessToken);
     }
 
-    private User createNewGoogleUser(String email) {
+    private User createUser(String email, String social) {
         User newUser = User.builder()
                 .email(email)
                 .themeId(1)
                 .createdAt(LocalDateTime.now())
                 .deleted('N')
-                .social(SOCIAL_GOOGLE)
+                .social(social)
                 .build();
-        return userRepository.save(newUser); // 저장 후 반환받은 엔티티 사용
+        return userRepository.save(newUser);
     }
 }
