@@ -1,0 +1,27 @@
+package com.c208.sleephony.domain.sleep.dto.request;
+
+import lombok.*;
+
+import java.util.List;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class BioDataRequestDto {
+    private String measuredAt;
+    private List<DataPoint> data;
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DataPoint {
+        private String time;
+        private Integer heartRate;
+        private Float gyroX;
+        private Float gyroY;
+        private Float gyroZ;
+    }
+}
