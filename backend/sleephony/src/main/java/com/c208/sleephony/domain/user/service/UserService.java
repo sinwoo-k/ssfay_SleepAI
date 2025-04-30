@@ -9,8 +9,6 @@ import com.c208.sleephony.global.utils.AuthUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
@@ -77,8 +75,8 @@ public class UserService {
         user.setEmail("deleted_" + userId + "@sleephony.com");
         user.setBirthDate(LocalDate.of(1900, 1, 1));
         user.setGender("X");
-        user.setHeight(BigDecimal.ZERO);
-        user.setWeight(BigDecimal.ZERO);
+        user.setHeight((float) -1.0);
+        user.setWeight((float) 0);
     }
 
 
