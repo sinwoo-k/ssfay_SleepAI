@@ -34,23 +34,15 @@ public class AuthenticationService {
 
         GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
         String email = payload.getEmail();
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_GOOGLE);
 
         User user;
         String status;
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
-            if (SOCIAL_GOOGLE.equals(user.getSocial())) {
-                // 구글 로그인 사용자
-                status = "login";
-            } else {
-                // 다른 소셜 계정(Kakao 등)으로 이미 존재하는 이메일 → 새로운 유저 생성
-                user = createNewGoogleUser(email);
-                status = "join";
-            }
+            status = "login";
         } else {
-            // 이메일 자체가 없는 경우 → 새로운 구글 유저 생성
             user = createNewGoogleUser(email);
             status = "join";
         }
