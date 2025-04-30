@@ -2,7 +2,9 @@ package com.c208.sleephony.domain.sleep.controller;
 
 import com.c208.sleephony.domain.sleep.dto.request.BioDataRequestDto;
 import com.c208.sleephony.domain.sleep.dto.response.BioDataResponseDto;
+import com.c208.sleephony.domain.sleep.dto.request.StartMeasurementRequestDto;
 import com.c208.sleephony.domain.sleep.service.SleepService;
+import com.c208.sleephony.global.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,8 +19,9 @@ public class SleepController {
 
     private final SleepService sleepService;
 
-    @PostMapping("bio-data/{userId}")
-    public ResponseEntity<?> saveDioData(@RequestBody BioDataRequestDto requestDto, @PathVariable Integer userId) {
+    @PostMapping("bio-data")
+    public ResponseEntity<?> saveDioData(@RequestBody BioDataRequestDto requestDto) {
+        Integer userId = AuthUtil.getLoginUserId();
         sleepService.saveAll(requestDto,userId);
         // TODO: AI 서버에 수면 레벨 받아와서 저장하고 값 보내는거
         BioDataResponseDto response = new BioDataResponseDto(
@@ -33,4 +36,14 @@ public class SleepController {
                 .body(response);
     }
 
+    @PostMapping("start-measurement")
+    public ResponseEntity<?> startMeasurement(@RequestBody StartMeasurementRequestDto requestDto) {
+        try {
+            Integer userId = AuthUtil.getLoginUserId();
+            sleepService.startMeasurement(userId,requestDto.getStartedAt());
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

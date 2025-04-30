@@ -4,6 +4,8 @@ import com.c208.sleephony.domain.sleep.dto.request.BioDataRequestDto;
 import com.c208.sleephony.domain.sleep.entity.BioData;
 import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.List;
 public class SleepService {
 
     private final BioRepository bioRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public void saveAll(BioDataRequestDto requestDto, Integer userId) {
@@ -37,4 +40,8 @@ public class SleepService {
         bioRepository.saveAll(entities);
     }
 
+    public void startMeasurement(Integer userId, LocalDateTime startedAt) {
+        String key = "sleep:start:" + userId;
+        stringRedisTemplate.opsForValue().setIfAbsent(key, startedAt.toString());
+    }
 }
