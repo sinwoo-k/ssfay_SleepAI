@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/api/auth/login-google"
+                                "/api/auth/login-google",
+                                "/api/auth/login-kakao"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
