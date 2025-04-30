@@ -10,6 +10,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,14 +23,14 @@ public class UserService {
     // 유저 프로필 등록
     public void createUserProfile (CreateUserProfileRequest request){
         Integer userId = AuthUtil.getLoginUserId();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeleted(userId, 'N')
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
 
-        user.setNickname(request.getNickname());
-        user.setHeight(request.getHeight());
-        user.setWeight(request.getWeight());
-        user.setBirthDate(request.getBirthDate());
-        user.setGender(request.getGender());
+        if (request.getNickname() != null) user.setNickname(request.getNickname());
+        if (request.getHeight() != null) user.setHeight(request.getHeight());
+        if (request.getWeight() != null) user.setWeight(request.getWeight());
+        if (request.getBirthDate() != null) user.setBirthDate(request.getBirthDate());
+        if (request.getGender() != null) user.setGender(request.getGender());
 
         userRepository.save(user);
     }
@@ -35,14 +38,14 @@ public class UserService {
     // 유저 프로필 수정
     public void updateUserProfile(UpdateUserProfileRequest request) {
         Integer userId = AuthUtil.getLoginUserId();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeleted(userId, 'N')
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
 
-        user.setNickname(request.getNickname());
-        user.setHeight(request.getHeight());
-        user.setWeight(request.getWeight());
-        user.setBirthDate(request.getBirthDate());
-        user.setGender(request.getGender());
+        if (request.getNickname() != null) user.setNickname(request.getNickname());
+        if (request.getHeight() != null) user.setHeight(request.getHeight());
+        if (request.getWeight() != null) user.setWeight(request.getWeight());
+        if (request.getBirthDate() != null) user.setBirthDate(request.getBirthDate());
+        if (request.getGender() != null) user.setGender(request.getGender());
 
         userRepository.save(user);
     }
@@ -50,7 +53,7 @@ public class UserService {
     // 유저 프로플 조회
     public GetUserProfileResponse getUserProfileResponse(){
         Integer userId = AuthUtil.getLoginUserId();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeleted(userId, 'N')
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
 
         return GetUserProfileResponse.builder()
@@ -62,5 +65,21 @@ public class UserService {
                 .gender(user.getGender())
                 .build();
     }
+
+    // 유저 삭제
+    public void deleteUser() {
+        Integer userId = AuthUtil.getLoginUserId();
+        User user = userRepository.findByUserIdAndDeleted(userId, 'N')
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
+
+        user.setDeleted('Y');
+        user.setNickname("탈퇴한 사용자");
+        user.setEmail("deleted_" + userId + "@sleephony.com");
+        user.setBirthDate(LocalDate.of(1900, 1, 1));
+        user.setGender("X");
+        user.setHeight(BigDecimal.ZERO);
+        user.setWeight(BigDecimal.ZERO);
+    }
+
 
 }

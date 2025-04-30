@@ -40,4 +40,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserProfileResponse());
     }
 
+    @Operation(summary = "유저 삭제")
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteUserProfile() {
+        userService.deleteUser();
+        return ResponseEntity.ok().build();
+    }
+
 }
