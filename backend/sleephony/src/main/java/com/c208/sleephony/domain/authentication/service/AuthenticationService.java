@@ -2,6 +2,7 @@ package com.c208.sleephony.domain.authentication.service;
 
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.util.GoogleTokenVerifier;
+import com.c208.sleephony.domain.authentication.util.KakaoTokenVerifier;
 import com.c208.sleephony.global.utils.JwtProvider;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
@@ -20,38 +21,33 @@ import java.util.Optional;
 public class AuthenticationService {
 
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final KakaoTokenVerifier kakaoTokenVerifier;
+
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
     private static final String SOCIAL_GOOGLE = "GOOGLE";
+    private static final String SOCIAL_KAKAO = "KAKAO";
 
     public LoginResponse loginWithGoogle(Map<String, String> request) {
-        String token = request.get("token");
 
+        String token = request.get("credential");
         if (token == null || token.isBlank()) {
             throw new IllegalArgumentException("구글 로그인 토큰이 없습니다.");
         }
 
         GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
         String email = payload.getEmail();
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_GOOGLE);
 
         User user;
         String status;
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
-            if (SOCIAL_GOOGLE.equals(user.getSocial())) {
-                // 구글 로그인 사용자
-                status = "login";
-            } else {
-                // 다른 소셜 계정(Kakao 등)으로 이미 존재하는 이메일 → 새로운 유저 생성
-                user = createNewGoogleUser(email);
-                status = "join";
-            }
+            status = "login";
         } else {
-            // 이메일 자체가 없는 경우 → 새로운 구글 유저 생성
-            user = createNewGoogleUser(email);
+            user = createUser(email, SOCIAL_GOOGLE);
             status = "join";
         }
 
@@ -59,14 +55,39 @@ public class AuthenticationService {
         return new LoginResponse(status, accessToken);
     }
 
-    private User createNewGoogleUser(String email) {
+    public LoginResponse loginWithKakao(Map<String, String> request) {
+
+        String token = request.get("access_token");
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("카카오 로그인 토큰이 없습니다.");
+        }
+
+        String email = kakaoTokenVerifier.verify(token);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_KAKAO);
+
+        User user;
+        String status;
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+            status = "login";
+        } else {
+            user = createUser(email, SOCIAL_KAKAO);
+            status = "join";
+        }
+
+        String accessToken = jwtProvider.generateAccessToken(user.getUserId());
+        return new LoginResponse(status, accessToken);
+    }
+
+    private User createUser(String email, String social) {
         User newUser = User.builder()
                 .email(email)
                 .themeId(1)
                 .createdAt(LocalDateTime.now())
                 .deleted('N')
-                .social(SOCIAL_GOOGLE)
+                .social(social)
                 .build();
-        return userRepository.save(newUser); // 저장 후 반환받은 엔티티 사용
+        return userRepository.save(newUser);
     }
 }
