@@ -24,4 +24,12 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "카카오 소셜 로그인")
+    @PostMapping("/login-kakao")
+    public ResponseEntity<?> loginWithKakao(@RequestBody Map<String,String> request) {
+        LoginResponse response = authenticationService.loginWithKakao(request);
+        return ResponseEntity.ok(response);
+    }
+
+
 }

@@ -2,6 +2,7 @@ package com.c208.sleephony.domain.authentication.service;
 
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.util.GoogleTokenVerifier;
+import com.c208.sleephony.domain.authentication.util.KakaoTokenVerifier;
 import com.c208.sleephony.global.utils.JwtProvider;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
@@ -20,14 +21,17 @@ import java.util.Optional;
 public class AuthenticationService {
 
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final KakaoTokenVerifier kakaoTokenVerifier;
+
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
     private static final String SOCIAL_GOOGLE = "GOOGLE";
+    private static final String SOCIAL_KAKAO = "KAKAO";
 
     public LoginResponse loginWithGoogle(Map<String, String> request) {
-        String token = request.get("token");
 
+        String token = request.get("credential");
         if (token == null || token.isBlank()) {
             throw new IllegalArgumentException("구글 로그인 토큰이 없습니다.");
         }
@@ -43,7 +47,32 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createUser(email, "GOOGLE");
+            user = createUser(email, SOCIAL_GOOGLE);
+            status = "join";
+        }
+
+        String accessToken = jwtProvider.generateAccessToken(user.getUserId());
+        return new LoginResponse(status, accessToken);
+    }
+
+    public LoginResponse loginWithKakao(Map<String, String> request) {
+
+        String token = request.get("access_token");
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("카카오 로그인 토큰이 없습니다.");
+        }
+
+        String email = kakaoTokenVerifier.verify(token);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_KAKAO);
+
+        User user;
+        String status;
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+            status = "login";
+        } else {
+            user = createUser(email, SOCIAL_KAKAO);
             status = "join";
         }
 
