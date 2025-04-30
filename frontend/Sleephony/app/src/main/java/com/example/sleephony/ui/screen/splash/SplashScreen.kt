@@ -12,8 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -21,23 +20,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.example.sleephony.R
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    modifier: Modifier = Modifier,
-    onTimeout: () -> Unit
+    navController: NavHostController,
+    viewModel: SplashViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(Unit) {
-        delay(2000L)
-        onTimeout()
-    }
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState(initial = null)
     // 베경 그라데이션
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
@@ -51,21 +48,21 @@ fun SplashScreen(
     ) {
         ShootingStar(
             modifier = Modifier.fillMaxSize(),
-            delayMillis = 1800,
+            delayMillis = 200,
             durationMillis = 1000,
             startXFrac = 0.1f, startYFrac = 0.2f,
             endXFrac   = 0.5f, endYFrac   = 0.6f
         )
         ShootingStar(
             modifier = Modifier.fillMaxSize(),
-            delayMillis = 2500,
+            delayMillis = 1500,
             durationMillis = 1000,
             startXFrac = 0.2f, startYFrac = 0.15f,
             endXFrac   = 0.9f, endYFrac   = 0.7f
         )
         ShootingStar(
             modifier = Modifier.fillMaxSize(),
-            delayMillis = 2000,
+            delayMillis = 1000,
             durationMillis = 1000,
             startXFrac = 0.4f, startYFrac = 0.05f,
             endXFrac   = 0.9f, endYFrac   = 0.4f
@@ -107,12 +104,20 @@ fun SplashScreen(
             )
         }
     }
+
+    LaunchedEffect(isLoggedIn) {
+        delay(2000L)
+        when(isLoggedIn) {
+            true -> navController.navigate("sleep_setting"){
+                popUpTo("splash"){inclusive = true}
+            }
+            false -> navController.navigate("login"){
+                popUpTo("splash"){inclusive = true}
+            }
+            null -> navController.navigate("login"){
+                popUpTo("splash"){inclusive = true}
+            }
+        }
+    }
 }
 
-@Preview(
-   showSystemUi = true
-)
-@Composable
-fun SplashScreenPreview() {
-    SplashScreen(onTimeout = {})
-}

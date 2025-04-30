@@ -2,20 +2,31 @@ package com.example.sleephony
 
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
-import com.example.sleephony.ui.screen.splash.SplashScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.sleephony.navigation.AppNavGraph
 import com.example.sleephony.ui.theme.SleephonyTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.kakao.sdk.common.KakaoSdk
+import com.kakao.sdk.common.util.Utility
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class MainApplication : Application()
+class MainApplication : Application(){
+    override fun onCreate() {
+        super.onCreate()
+
+        Log.d("KeyHash", "${Utility.getKeyHash(this)}")
+        KakaoSdk.init(this, getString(R.string.kakao_native_app_key))
+    }
+}
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -38,20 +49,12 @@ class MainActivity : ComponentActivity() {
                         darkIcons = false
                     )
                 }
-                SplashScreen{}
+
+                // 내비게이션 관련
+                val navController = rememberNavController()
+
+                AppNavGraph(navController = navController)
             }
         }
     }
 }
-
-//@Composable
-//fun AppNavHost(){
-//    val navController = rememberNavController()
-//    NavHost(navController, startDestination = "splash"){
-//        composable("splash"){
-//            SplashScreen {
-//                navController
-//            }
-//        }
-//    }
-//}
