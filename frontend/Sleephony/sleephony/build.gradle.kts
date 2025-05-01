@@ -40,8 +40,6 @@ android {
 
 dependencies {
 
-
-
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
     // 앱 통싱
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
