@@ -56,6 +56,7 @@ android {
 }
 
 dependencies {
+
     // Hilt
     implementation("com.google.dagger:hilt-android:2.56.1")
     ksp("com.google.dagger:hilt-android-compiler:2.56.1")
