@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sleephony"
 include(":app")
+include(":sleepphony_wear_os")
