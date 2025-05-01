@@ -1,6 +1,5 @@
 package com.example.sleephony_wear.components.alarm
 
-import android.graphics.BitmapFactory.Options
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Picker
-import androidx.wear.compose.material.PickerDefaults
 import androidx.wear.compose.material.rememberPickerState
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkNavyBlue

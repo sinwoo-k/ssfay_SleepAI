@@ -139,6 +139,7 @@ fun SendMessage(context:Context, bedTime:String, wakUpTime:String){
 
             val nodes = nodeClient.connectedNodes.await()
             for (node in nodes) {
+                Log.d("ssafy", "노드 ID: ${node.id}")
                 messageClient.sendMessage(
                     node.id,
                     "/alarm",

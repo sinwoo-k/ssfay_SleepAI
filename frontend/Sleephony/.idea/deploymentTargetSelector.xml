@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="frontend.Sleephony.sleephony">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-05-01T14:41:33.763204100Z">
+        <DropdownSelection timestamp="2025-05-01T16:53:51.237518400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.0.14:35255;connection=a9fd9c89" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.0.14:41545;connection=bfbbfe86" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-05-01T14:38:03.818999Z">
+        <DropdownSelection timestamp="2025-05-01T16:41:47.880146500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M30B501H" />
@@ -23,6 +23,9 @@
           </Target>
         </DropdownSelection>
         <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="sleepphony_wear_os.MainComplicationService">
+        <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
   </component>
