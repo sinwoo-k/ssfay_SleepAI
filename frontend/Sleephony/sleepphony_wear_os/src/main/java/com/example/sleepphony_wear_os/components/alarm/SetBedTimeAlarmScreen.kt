@@ -1,6 +1,9 @@
 package com.example.sleephony_wear.components.alarm
 
+import android.graphics.BitmapFactory.Options
 import android.util.Log
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,14 +18,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material.Text
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Picker
+import androidx.wear.compose.material.PickerDefaults
 import androidx.wear.compose.material.rememberPickerState
 import com.example.sleepphony_wear_os.R
 import com.example.sleepphony_wear_os.presentation.theme.darkNavyBlue
@@ -30,8 +37,8 @@ import com.example.sleepphony_wear_os.presentation.theme.darkNavyBlue
 @Composable
 fun SetBedTimeAlarmScreen(
     modifier: Modifier = Modifier,
+    navController: NavController
 ) {
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -63,22 +70,26 @@ fun SelectTime(onTime:(meridiem:String,hour:Int,minute:Int) -> Unit){
 
     val hourState = rememberPickerState(initialNumberOfOptions = hours.size)
     val minuteState = rememberPickerState(initialNumberOfOptions = minutes.size)
-    val meridiemState = rememberPickerState(initialNumberOfOptions = meridiems.size)
+    val meridiemState = rememberPickerState(initialNumberOfOptions = meridiems.size, repeatItems = false)
 
     val hour = hourState.selectedOption
     val minute = minuteState.selectedOption
     val meridiem = meridiemState.selectedOption
 
+    val focusMeridiem = remember { FocusRequester() }
+    val focusHour = remember { FocusRequester() }
+    val focusMinute = remember { FocusRequester() }
 
     LaunchedEffect(hour,minute,meridiem) {
         onTime(meridiems[meridiem],hour,minute)
     }
-
     Row(verticalAlignment = Alignment.CenterVertically) {
         Picker(
             state = meridiemState,
             modifier = Modifier.size(60.dp, 80.dp)
-                .padding(top = 15.dp),
+                .padding(top = 17.dp)
+                .clickable { focusMeridiem.requestFocus() }
+                .focusRequester(focusMeridiem),
             contentDescription = "오전/오후",
             separation = 7.dp,
             gradientRatio = 0f,
@@ -94,10 +105,15 @@ fun SelectTime(onTime:(meridiem:String,hour:Int,minute:Int) -> Unit){
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "시")
+            Text(
+                text = "시",
+                modifier = Modifier.size(20.dp)
+            )
             Picker(
                 state = hourState,
-                modifier = Modifier.size(60.dp, 80.dp),
+                modifier = Modifier.size(60.dp, 80.dp)
+                    .clickable { focusHour.requestFocus() }
+                    .focusRequester(focusHour),
                 contentDescription = "시간",
                 separation = 7.dp,
                 gradientRatio = 0f
@@ -115,10 +131,15 @@ fun SelectTime(onTime:(meridiem:String,hour:Int,minute:Int) -> Unit){
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "분")
+            Text(
+                text = "분",
+                modifier = Modifier.size(20.dp),
+                )
             Picker(
                 state = minuteState,
-                modifier = Modifier.size(60.dp, 80.dp),
+                modifier = Modifier.size(60.dp, 80.dp)
+                    .clickable { focusMinute.requestFocus() }
+                    .focusRequester(focusMinute),
                 contentDescription = "분",
                 separation = 7.dp,
                 gradientRatio = 0f

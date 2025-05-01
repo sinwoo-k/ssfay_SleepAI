@@ -44,7 +44,7 @@ fun SetAlarmScreen(
                 state = pageState
             ) { page ->
                 when (page) {
-                    0 -> SetBedTimeAlarmScreen(modifier = modifier)
+                    0 -> SetBedTimeAlarmScreen(modifier = modifier, navController = navController)
                     1 -> SetWakeUpTimeAlarmScreen(modifier = modifier, navController = navController)
                     2 -> AlarmCheckScreen(modifier = modifier, navController = navController)
                 }

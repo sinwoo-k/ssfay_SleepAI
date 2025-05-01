@@ -34,7 +34,7 @@ fun AlarmScreen(
         Column(
             modifier = modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
