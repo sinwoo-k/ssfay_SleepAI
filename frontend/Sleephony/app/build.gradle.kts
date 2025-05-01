@@ -56,6 +56,8 @@ android {
 }
 
 dependencies {
+    // wear 통신
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.56.1")

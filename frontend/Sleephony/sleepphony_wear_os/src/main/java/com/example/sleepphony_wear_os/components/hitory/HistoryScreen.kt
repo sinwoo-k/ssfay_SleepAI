@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
@@ -32,8 +33,11 @@ fun HistoryScreen(
     modifier: Modifier = Modifier,
     navController: NavController
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally) {
+    ScalingLazyColumn(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        reverseLayout = true
+    ) {
         item {
             Button(
                 modifier = modifier.fillMaxWidth(0.9f)
@@ -42,7 +46,8 @@ fun HistoryScreen(
                 colors = ButtonDefaults.buttonColors(darkGray),
                 onClick = {}
             ) { Row(
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                         painter = painterResource(id = R.drawable.moon),

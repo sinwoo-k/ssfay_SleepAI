@@ -1,5 +1,7 @@
 package com.example.sleephony_wear.components.alarm
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,12 +32,18 @@ import androidx.wear.compose.material.Text
 import com.example.sleepphony_wear_os.R
 import com.example.sleepphony_wear_os.presentation.theme.darkGray
 import com.example.sleepphony_wear_os.presentation.theme.darkNavyBlue
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun AlarmCheckScreen(
     modifier: Modifier,
     navController: NavController
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -80,11 +89,35 @@ fun AlarmCheckScreen(
                         .height(30.dp)
                         .padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(darkNavyBlue),
-                    onClick = {}
+                    onClick = {
+                        SendMessage(context)
+                    }
                 ) {
                     Text(text = stringResource(R.string.check))
                 }
             }
+        }
+    }
+}
+
+fun SendMessage(context:Context){
+    CoroutineScope(Dispatchers.IO).launch {
+        try{
+            val nodeClient = Wearable.getNodeClient(context)
+            val messageClient = Wearable.getMessageClient(context)
+
+            val nodes = nodeClient.connectedNodes.await()
+            Log.d("ssafy", "연결된 노드 수: ${nodes.size}")
+            for (node in nodes) {
+                messageClient.sendMessage(
+                    node.id,
+                    "/alarm",
+                    "hello, ssafy".toByteArray()
+                ).await()
+                Log.d("ssafy","메시지 보냄")
+            }
+        } catch (error: Exception){
+            Log.e("ssafy","$error")
         }
     }
 }
