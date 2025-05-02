@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.theme.controller;
 
+import com.c208.sleephony.domain.theme.dto.response.ThemeDetailResponse;
 import com.c208.sleephony.domain.theme.entity.Theme;
 import com.c208.sleephony.domain.theme.service.ThemeService;
 import com.c208.sleephony.global.response.ApiResponse;
@@ -24,6 +25,12 @@ public class ThemeController {
     public ApiResponse<List<Theme>> getAllThemes() {
         List<Theme> themes = themeService.getAllThemes();
         return ApiResponse.success(HttpStatus.OK, themes);
+    }
+
+    @Operation(summary = "테마 상세 조회")
+    @GetMapping("/{themeId}")
+    public ApiResponse<ThemeDetailResponse> getThemeDetail(@PathVariable Integer themeId) {
+        return ApiResponse.success(HttpStatus.OK, themeService.getThemeDetail(themeId));
     }
 
 }
