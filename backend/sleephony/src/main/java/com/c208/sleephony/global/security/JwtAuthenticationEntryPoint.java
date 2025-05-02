@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+//인증 실패(401) 처리 핸들러
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+//인가 실패(403) 처리 핸들러
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
