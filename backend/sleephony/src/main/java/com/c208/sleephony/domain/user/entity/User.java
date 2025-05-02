@@ -46,7 +46,8 @@ public class User {
     @Column(name = "deleted", nullable = false, length = 1)
     private Character deleted;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "social", nullable = false, length = 6)
-    private String social;
+    private Social social;
 
 }

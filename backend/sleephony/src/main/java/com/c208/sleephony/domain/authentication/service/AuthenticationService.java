@@ -3,6 +3,7 @@ package com.c208.sleephony.domain.authentication.service;
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.util.GoogleTokenVerifier;
 import com.c208.sleephony.domain.authentication.util.KakaoTokenVerifier;
+import com.c208.sleephony.domain.user.entity.Social;
 import com.c208.sleephony.global.utils.JwtProvider;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
@@ -26,9 +27,12 @@ public class AuthenticationService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
-    private static final String SOCIAL_GOOGLE = "GOOGLE";
-    private static final String SOCIAL_KAKAO = "KAKAO";
-
+    /**
+     * Google OAuth 토큰을 통해 로그인 또는 회원가입을 처리합니다.
+     *
+     * @param request 클라이언트에서 전달된 credential(토큰)을 포함한 Map
+     * @return LoginResponse (status: login/join, accessToken 포함)
+     */
     public LoginResponse loginWithGoogle(Map<String, String> request) {
 
         String token = request.get("credential");
@@ -38,7 +42,7 @@ public class AuthenticationService {
 
         GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
         String email = payload.getEmail();
-        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_GOOGLE, 'N');
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, Social.GOOGLE, 'N');
 
         User user;
         String status;
@@ -47,7 +51,7 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createUser(email, SOCIAL_GOOGLE);
+            user = createUser(email, Social.GOOGLE);
             status = "join";
         }
 
@@ -55,6 +59,13 @@ public class AuthenticationService {
         return new LoginResponse(status, accessToken);
     }
 
+
+    /**
+     * Kakao OAuth 토큰을 통해 로그인 또는 회원가입을 처리합니다.
+     *
+     * @param request 클라이언트에서 전달된 access_token을 포함한 Map
+     * @return LoginResponse (status: login/join, accessToken 포함)
+     */
     public LoginResponse loginWithKakao(Map<String, String> request) {
 
         String token = request.get("access_token");
@@ -63,7 +74,7 @@ public class AuthenticationService {
         }
 
         String email = kakaoTokenVerifier.verify(token);
-        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_KAKAO, 'N');
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, Social.KAKAO, 'N');
 
         User user;
         String status;
@@ -72,7 +83,7 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createUser(email, SOCIAL_KAKAO);
+            user = createUser(email, Social.KAKAO);
             status = "join";
         }
 
@@ -80,7 +91,15 @@ public class AuthenticationService {
         return new LoginResponse(status, accessToken);
     }
 
-    private User createUser(String email, String social) {
+
+    /**
+     * 소셜 로그인으로 최초 가입하는 사용자를 DB에 저장합니다.
+     *
+     * @param email 사용자 이메일
+     * @param social 소셜 플랫폼 (GOOGLE, KAKAO 등)
+     * @return 저장된 User 객체
+     */
+    private User createUser(String email, Social social) {
         User newUser = User.builder()
                 .email(email)
                 .themeId(1)
