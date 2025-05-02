@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ApiResponse<T> {
 
-    private static final String DEFAULT_SUCCESS_MESSAGE = "Success";
+    private static final String DEFAULT_SUCCESS_MESSAGE = "SUCCESS";
 
     private int status;
     private String code;
