@@ -24,9 +24,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType("application/json;charset=UTF-8");
 
-        ApiResponse<?> errorResponse = ApiResponse.fail(
+        ApiResponse<Void> errorResponse = ApiResponse.<Void>fail(
                 HttpStatus.UNAUTHORIZED,
-                "UR: 인증 정보가 없습니다."
+                "UR",
+                "인증 정보가 없습니다."
         );
 
         ObjectMapper objectMapper = new ObjectMapper();

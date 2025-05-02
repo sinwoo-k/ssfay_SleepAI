@@ -20,7 +20,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> success(HttpStatus status, T results) {
         return ApiResponse.<T>builder()
                 .status(status.value())
-                .code(String.valueOf(status.value()))
+                .code("SU")
                 .message(DEFAULT_SUCCESS_MESSAGE)
                 .results(results)
                 .build();
@@ -30,6 +30,15 @@ public class ApiResponse<T> {
         return ApiResponse.<T>builder()
                 .status(status.value())
                 .code(String.valueOf(status.value()))
+                .message(message)
+                .results(null)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> fail(HttpStatus status, String code, String message) {
+        return ApiResponse.<T>builder()
+                .status(status.value())
+                .code(code)
                 .message(message)
                 .results(null)
                 .build();
