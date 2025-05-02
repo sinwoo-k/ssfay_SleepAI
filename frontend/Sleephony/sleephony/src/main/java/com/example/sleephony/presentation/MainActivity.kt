@@ -25,15 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.example.sleephony.components.alarm.SleepingScreen
 import com.example.sleephony_wear.components.HomeScreen
 import com.example.sleephony_wear.components.alarm.SetAlarmScreen
 import com.example.sleephony_wear.screens.SleepAlarmScreen
 import com.example.sleephony.presentation.theme.Sleephony_wearTheme
 import com.example.sleephony.presentation.theme.backGroundGeadientColor
+import com.example.sleephony.viewmodel.AlarmViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -60,8 +63,9 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
         }
 
-        // Compose UI 시작
         setContent {
+            val alarmViewModel: AlarmViewModel = viewModel()
+
             Sleephony_wearTheme {
                 val navController = rememberSwipeDismissableNavController()
 
@@ -82,7 +86,8 @@ class MainActivity : ComponentActivity() {
                     composable("setalarm") {
                         SetAlarmScreen(
                             modifier = Modifier,
-                            navController = navController
+                            navController = navController,
+                            viewModel = alarmViewModel
                         )
                     }
                     composable("sleepalarm") {
@@ -90,6 +95,13 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("sensorList") {
                         SensorListScreen(sensorList = sensorList)
+                    }
+                    composable("sleepingscreen") {
+                        SleepingScreen(
+                            modifier = Modifier,
+                            viewModel = alarmViewModel,
+                            navController = navController
+                        )
                     }
                 }
             }

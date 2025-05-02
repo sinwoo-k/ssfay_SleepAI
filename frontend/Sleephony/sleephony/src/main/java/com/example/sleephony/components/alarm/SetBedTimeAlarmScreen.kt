@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.wear.compose.material.Text
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -27,12 +29,20 @@ import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.rememberPickerState
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkNavyBlue
+import com.example.sleephony.viewmodel.AlarmViewModel
+import com.google.accompanist.pager.PagerState
 
 @Composable
 fun SetBedTimeAlarmScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    onNext: () -> Unit,
+    viewModel: AlarmViewModel
 ) {
+    var bedMeridiem = remember { mutableStateOf("") }
+    var bedHour = remember { mutableStateOf("") }
+    var bedMinute = remember { mutableStateOf("") }
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -40,14 +50,19 @@ fun SetBedTimeAlarmScreen(
 
             Text(text = stringResource(id = R.string.sleep_time), fontSize = 18.sp)
 
-            SelectTime() {meridiem, hour, minute -> Log.d("TAG","$meridiem-$hour:$minute") }
+            SelectTime() {meridiem, hour, minute ->
+                bedMeridiem.value = meridiem
+                bedHour.value = hour.toString().padStart(2,'0')
+                bedMinute.value = minute.toString().padStart(2,'0')
+            }
 
             Button(
                 modifier = modifier
                     .fillMaxWidth(0.5f)
                     .height(25.dp),
                 onClick = {
-
+                    viewModel.bedUpDate(bedMeridiem.value,bedHour.value,bedMinute.value)
+                    onNext()
             },
             colors = ButtonDefaults.buttonColors(darkNavyBlue)
             ) {
@@ -73,6 +88,22 @@ fun SelectTime(onTime:(meridiem:String,hour:Int,minute:Int) -> Unit){
     val focusMeridiem = remember { FocusRequester() }
     val focusHour = remember { FocusRequester() }
     val focusMinute = remember { FocusRequester() }
+
+    val previousHour = remember { mutableStateOf(hour) }
+
+    LaunchedEffect(hour) {
+        if (previousHour.value == 11 && hour == 0) {
+            meridiemState.scrollToOption((meridiem + 1) % meridiems.size)
+        }
+        else if (previousHour.value == 0 && hour == 11) {
+            meridiemState.scrollToOption((meridiem + 1) % meridiems.size)
+        }
+        previousHour.value = hour
+    }
+
+    LaunchedEffect(hour, minute, meridiem) {
+        onTime(meridiems[meridiem], hour, minute)
+    }
 
     LaunchedEffect(hour,minute,meridiem) {
         onTime(meridiems[meridiem],hour,minute)

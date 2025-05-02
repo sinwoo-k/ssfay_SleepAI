@@ -34,4 +34,11 @@
 
     <string name="check">확인</string>
     <string name="enxt">다음</string>
+
+    <string name="bed_meridiem">%s</string>
+    <string name="bed_hour">%s</string>
+    <string name="bed_minute">%s</string>
+    <string name="wakeup_meridiem">%s</string>
+    <string name="wakeup_hour">%s</string>
+    <string name="wakeup_minute">%s</string>
 </resources>

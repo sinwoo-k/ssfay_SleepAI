@@ -3,6 +3,7 @@ package com.example.sleephony.service
 import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
+import org.json.JSONObject
 
 class WearMessageListener :WearableListenerService() {
     override fun onCreate() {
@@ -12,12 +13,16 @@ class WearMessageListener :WearableListenerService() {
 
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d("ssafy","receive")
-        Log.d("ssafy","path = ${messageEvent.path}")
-
         if (messageEvent.path == "/alarm") {
             val message = String(messageEvent.data)
-            Log.d("ssafy","message $message")
+            val jsonData = JSONObject(message)
+            val mode = jsonData.getString("mode")
+            if (mode == "alarm") {
+                val bedtime = jsonData.getString("bedTime")
+                val wakeUpTime = jsonData.getString("wakeUpTime")
+                Log.d("ssafy","bedtime $bedtime")
+                Log.d("ssafy","wakeuptime $wakeUpTime")
+            }
         }
     }
 }
