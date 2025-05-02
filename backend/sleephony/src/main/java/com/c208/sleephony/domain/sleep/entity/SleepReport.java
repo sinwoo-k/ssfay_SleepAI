@@ -16,18 +16,7 @@ import java.time.LocalDateTime;
 public class SleepReport {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.TABLE,
-            generator = "sleep_report_tbl_gen"
-    )
-    @TableGenerator(
-            name = "sleep_report_tbl_gen",
-            table = "id_generator",
-            pkColumnName = "generator_name",
-            valueColumnName = "generator_value",
-            pkColumnValue = "sleep_report_id",
-            allocationSize = 20
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sleep_report_id")
     private Integer sleepReportId;
 

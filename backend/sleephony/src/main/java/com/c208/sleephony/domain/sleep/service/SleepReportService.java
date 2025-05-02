@@ -34,9 +34,13 @@ public class SleepReportService {
                 case "AWAKE" -> awake++;
                 case "REM" -> rem++;
                 case "NREM1" -> {
-                    n1++; firstN1 = (firstN1 == null) ? level.getMeasuredAt() : firstN1;
+                    n1++;
+                    if (firstN1 == null) firstN1 = level.getMeasuredAt();
                 }
-                case "NREM2" -> n2++;
+                case "NREM2" -> {
+                    n2++;
+                    if (firstN1 == null) firstN1 = level.getMeasuredAt(); // 추가!
+                }
                 case "NREM3" -> n3++;
             }
         }

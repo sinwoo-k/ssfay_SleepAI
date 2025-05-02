@@ -29,7 +29,7 @@ public class SleepController {
     private final SleepLevelService sleepLevelService;
 
     @PostMapping("bio-data")
-    public ResponseEntity<?> saveDioData(@RequestBody BioDataRequestDto requestDto) {
+    public ResponseEntity<?> saveBioData(@RequestBody BioDataRequestDto requestDto) {
         sleepService.measureSleepStage(requestDto);
         return ResponseEntity.ok(ApiResponse.success(
                 new BioDataResponseDto(200, "SU", "OK", "NREM1")

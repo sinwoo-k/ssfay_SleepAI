@@ -15,18 +15,7 @@ import java.time.LocalDateTime;
 public class SleepLevel {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.TABLE,
-            generator = "sleep_level_tbl_gen"
-    )
-    @TableGenerator(
-            name = "sleep_level_tbl_gen",
-            table = "id_generator",
-            pkColumnName = "generator_name",
-            valueColumnName = "generator_value",
-            pkColumnValue = "sleep_level_id",
-            allocationSize = 20
-    )    @Column(name = "sleep_level_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sleepLevelId;
 
     @Column(name = "user_id", nullable = false)
