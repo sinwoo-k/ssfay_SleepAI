@@ -6,8 +6,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Schema(description = "측정 시작 요청")
 public class StartMeasurementRequestDto {
 
