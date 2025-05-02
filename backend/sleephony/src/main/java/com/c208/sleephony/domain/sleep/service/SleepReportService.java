@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.sleep.service;
 
+import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPointDto;
 import com.c208.sleephony.domain.sleep.entity.SleepLevel;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
@@ -17,31 +18,31 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class SleepReportService {
-    private final SleepLevelRepository levelRepository;
-    private final SleepReportRepository reportRepository;
+    private final SleepLevelRepository sleepLevelRepository;
+    private final SleepReportRepository sleepReportRepository;
     private final StringRedisTemplate stringRedisTemplate;
 
     public SleepReport generateSleepReport(LocalDateTime endedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
         LocalDateTime startedAt = LocalDateTime.parse(Objects.requireNonNull(stringRedisTemplate.opsForValue().getAndDelete(key)));
-        List<SleepLevel> levels = levelRepository.findAllByUserIdAndMeasuredAtBetween(userId,startedAt,endedAt);
+        List<SleepLevel> levels = sleepLevelRepository.findAllByUserIdAndMeasuredAtBetween(userId,startedAt,endedAt);
 
         int awake = 0, rem = 0, n1 = 0, n2 = 0, n3 = 0;
         LocalDateTime firstN1 = null;
         for(SleepLevel level : levels) {
             switch(level.getLevel()) {
-                case "AWAKE" -> awake++;
-                case "REM" -> rem++;
-                case "NREM1" -> {
+                case AWAKE -> awake++;
+                case REM -> rem++;
+                case NREM1 -> {
                     n1++;
                     if (firstN1 == null) firstN1 = level.getMeasuredAt();
                 }
-                case "NREM2" -> {
+                case NREM2 -> {
                     n2++;
                     if (firstN1 == null) firstN1 = level.getMeasuredAt(); // 추가!
                 }
-                case "NREM3" -> n3++;
+                case NREM3 -> n3++;
             }
         }
 
@@ -64,7 +65,22 @@ public class SleepReportService {
                 .deepTime(deep)
                 .sleepCycle(cycle)
                 .build();
-        return reportRepository.save(report);
+        return sleepReportRepository.save(report);
+    }
+    public List<SleepGraphPointDto> getSleepGraphPoints(LocalDate date) {
+        Integer userId = AuthUtil.getLoginUserId();
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(23, 59, 59);
+
+        List<SleepLevel> levels = sleepLevelRepository.findByUserIdAndMeasuredAtBetween(userId, start, end);
+
+        return levels.stream()
+                .map(level -> SleepGraphPointDto.builder()
+                        .measuredAt(level.getMeasuredAt())
+                        .level(level.getLevel())
+                        .score(level.getScore())
+                        .build())
+                .toList();
     }
 
     public SleepReport getReportByDate(LocalDate date) {
@@ -72,7 +88,7 @@ public class SleepReportService {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.plusDays(1).atStartOfDay();
 
-        return reportRepository
+        return sleepReportRepository
                 .findFirstByUserIdAndSleepTimeBetween(userId, from, to)
                 .orElse(null);
     }

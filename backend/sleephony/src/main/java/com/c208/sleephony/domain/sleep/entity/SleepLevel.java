@@ -21,8 +21,9 @@ public class SleepLevel {
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "level", length = 5)
-    private String level; // AWAKE, REM, NREM1, NREM2, NREM3
+    private SleepStage level; // AWAKE, REM, NREM1, NREM2, NREM3
 
     @Column(name = "score")
     private Integer score;

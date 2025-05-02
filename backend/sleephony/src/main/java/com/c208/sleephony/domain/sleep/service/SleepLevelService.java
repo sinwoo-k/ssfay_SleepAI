@@ -3,6 +3,7 @@ package com.c208.sleephony.domain.sleep.service;
 import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
 import com.c208.sleephony.domain.sleep.entity.BioData;
 import com.c208.sleephony.domain.sleep.entity.SleepLevel;
+import com.c208.sleephony.domain.sleep.entity.SleepStage;
 import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
 import com.c208.sleephony.global.utils.AuthUtil;
@@ -31,7 +32,7 @@ public class SleepLevelService {
 
             SleepLevel level = SleepLevel.builder()
                     .userId(data.getUserId())
-                    .level(result.getLevel())
+                    .level(SleepStage.valueOf(result.getLevel()))
                     .score(result.getScore())
                     .measuredAt(data.getMeasuredAt())
                     .createdAt(LocalDateTime.now())
