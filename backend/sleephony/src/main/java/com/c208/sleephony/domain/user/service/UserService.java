@@ -5,6 +5,7 @@ import com.c208.sleephony.domain.user.dto.request.UpdateUserProfileRequest;
 import com.c208.sleephony.domain.user.dto.response.GetUserProfileResponse;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
+import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class UserService {
     public void createUserProfile (CreateUserProfileRequest request){
         Integer userId = AuthUtil.getLoginUserId();
         User user = userRepository.findByUserIdAndDeleted(userId, 'N')
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         user.setNickname(request.getNickname());
         user.setHeight(request.getHeight());
@@ -44,7 +45,7 @@ public class UserService {
     public void updateUserProfile(UpdateUserProfileRequest request) {
         Integer userId = AuthUtil.getLoginUserId();
         User user = userRepository.findByUserIdAndDeleted(userId, 'N')
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         user.setNickname(request.getNickname());
         user.setHeight(request.getHeight());
@@ -64,7 +65,7 @@ public class UserService {
     public GetUserProfileResponse getUserProfileResponse(){
         Integer userId = AuthUtil.getLoginUserId();
         User user = userRepository.findByUserIdAndDeleted(userId, 'N')
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         return GetUserProfileResponse.builder()
                 .email(user.getEmail())
@@ -83,10 +84,9 @@ public class UserService {
     public void deleteUser() {
         Integer userId = AuthUtil.getLoginUserId();
         User user = userRepository.findByUserIdAndDeleted(userId, 'N')
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다: id = " + userId));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         user.setDeleted('Y');
     }
-
 
 }

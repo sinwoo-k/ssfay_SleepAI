@@ -11,8 +11,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,18 +43,18 @@ public class AuthenticationService {
         Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, Social.GOOGLE, 'N');
 
         User user;
-        String status;
+        String authStatus;
 
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
-            status = "login";
+            authStatus = "login";
         } else {
             user = createUser(email, Social.GOOGLE);
-            status = "join";
+            authStatus = "join";
         }
 
         String accessToken = jwtProvider.generateAccessToken(user.getUserId());
-        return new LoginResponse(status, accessToken);
+        return new LoginResponse(authStatus, accessToken);
     }
 
 
@@ -102,9 +100,6 @@ public class AuthenticationService {
     private User createUser(String email, Social social) {
         User newUser = User.builder()
                 .email(email)
-                .themeId(1)
-                .createdAt(LocalDateTime.now())
-                .deleted('N')
                 .social(social)
                 .build();
         return userRepository.save(newUser);

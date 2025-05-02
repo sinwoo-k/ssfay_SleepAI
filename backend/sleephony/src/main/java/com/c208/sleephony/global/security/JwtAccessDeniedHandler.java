@@ -24,9 +24,10 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType("application/json;charset=UTF-8");
 
-        ApiResponse<?> errorResponse = ApiResponse.fail(
+        ApiResponse<Void> errorResponse = ApiResponse.fail(
                 HttpStatus.FORBIDDEN,
-                "FB: 접근 권한이 없습니다."
+                "FB",
+                "접근 권한이 없습니다."
         );
 
         ObjectMapper objectMapper = new ObjectMapper();

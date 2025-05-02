@@ -1,13 +1,12 @@
 package com.c208.sleephony.domain.authentication.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class LoginResponse {
 
     @NotBlank
