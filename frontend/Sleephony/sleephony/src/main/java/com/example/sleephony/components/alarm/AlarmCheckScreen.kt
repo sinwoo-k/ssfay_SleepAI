@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +27,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -32,18 +36,37 @@ import androidx.wear.compose.material.Text
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkGray
 import com.example.sleephony.presentation.theme.darkNavyBlue
+import com.example.sleephony.viewmodel.AlarmViewModel
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
 
 @Composable
 fun AlarmCheckScreen(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: AlarmViewModel,
 ) {
     val context = LocalContext.current
+
+    val bedMeridiemState = viewModel.bedMeridiem.observeAsState("")
+    val bedHourState = viewModel.bedHour.observeAsState("")
+    val bedMinuteState = viewModel.bedMinute.observeAsState("")
+    val wakeUpMeridiemState = viewModel.wakeUpMeridiem.observeAsState("")
+    val wakeUpHourState = viewModel.wakeUpHour.observeAsState("")
+    val wakeUpMinuteState = viewModel.wakeUpMinute.observeAsState("")
+
+    val bedMeridiem = context.getString(R.string.bed_meridiem, bedMeridiemState.value)
+    val bedHour = bedHourState.value
+    val bedMinute = bedMinuteState.value
+    val wakeUpMeridiem = context.getString(R.string.wakeup_meridiem, wakeUpMeridiemState.value)
+    val wakeUpHour = wakeUpHourState.value
+    val wakeUpMinute = wakeUpMinuteState.value
+
+
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -71,8 +94,8 @@ fun AlarmCheckScreen(
                     .padding(8.dp,0.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(text = "오후", fontSize = 25.sp)
-                    Text(text = "11 : 30", fontSize = 25.sp)
+                    Text(text = bedMeridiem, fontSize = 25.sp)
+                    Text(text = "$bedHour : $bedMinute", fontSize = 25.sp)
                 }
                 Row(
                     modifier = modifier
@@ -80,8 +103,8 @@ fun AlarmCheckScreen(
                         .padding(8.dp,0.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "오전",fontSize = 25.sp)
-                    Text(text = "08 : 30",fontSize = 25.sp)
+                    Text(text = wakeUpMeridiem,fontSize = 25.sp)
+                    Text(text = "$wakeUpHour : $wakeUpMinute",fontSize = 25.sp)
                 }
                 Button(
                     modifier = modifier
@@ -90,7 +113,8 @@ fun AlarmCheckScreen(
                         .padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(darkNavyBlue),
                     onClick = {
-                        SendMessage(context)
+                        SendMessage(context,"$bedMeridiem $bedHour $bedMinute", "$wakeUpMeridiem $wakeUpHour $wakeUpMinute")
+                        navController.navigate("sleepingscreen")
                     }
                 ) {
                     Text(text = stringResource(R.string.check))
@@ -100,21 +124,26 @@ fun AlarmCheckScreen(
     }
 }
 
-fun SendMessage(context:Context){
+fun SendMessage(context:Context, bedTime:String, wakUpTime:String){
     CoroutineScope(Dispatchers.IO).launch {
         try{
             val nodeClient = Wearable.getNodeClient(context)
             val messageClient = Wearable.getMessageClient(context)
 
+            val jsonData = JSONObject().apply {
+                put("mode","alarm")
+                put("bedTime",bedTime)
+                put("wakeUpTime",wakUpTime)
+            }
+            val jsonString = jsonData.toString()
+
             val nodes = nodeClient.connectedNodes.await()
             for (node in nodes) {
-                Log.d("ssafy", "노드 ID: ${node.id}")
                 messageClient.sendMessage(
                     node.id,
                     "/alarm",
-                    "hello, ssafy".toByteArray()
+                    "$jsonString ".toByteArray()
                 ).await()
-                Log.d("ssafy","메시지 보냄")
             }
         } catch (error: Exception){
             Log.e("ssafy","$error")
