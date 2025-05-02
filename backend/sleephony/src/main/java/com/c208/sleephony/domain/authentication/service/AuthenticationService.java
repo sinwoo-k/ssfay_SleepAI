@@ -38,7 +38,7 @@ public class AuthenticationService {
 
         GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
         String email = payload.getEmail();
-        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_GOOGLE);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_GOOGLE, 'N');
 
         User user;
         String status;
@@ -63,7 +63,7 @@ public class AuthenticationService {
         }
 
         String email = kakaoTokenVerifier.verify(token);
-        Optional<User> optionalUser = userRepository.findByEmailAndSocial(email, SOCIAL_KAKAO);
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_KAKAO, 'N');
 
         User user;
         String status;

@@ -2,7 +2,6 @@ package com.c208.sleephony.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -29,11 +28,11 @@ public class User {
     @Column(name = "nickname", length = 30)
     private String nickname;
 
-    @Column(name = "height", precision = 4, scale = 1)
-    private BigDecimal height;
+    @Column(name = "height")
+    private Float height;
 
-    @Column(name = "weight", precision = 4, scale = 1)
-    private BigDecimal weight;
+    @Column(name = "weight")
+    private Float weight;
 
     @Column(name = "birth_date")
     private LocalDate birthDate;
