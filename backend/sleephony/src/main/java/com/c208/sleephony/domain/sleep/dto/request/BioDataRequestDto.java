@@ -6,16 +6,13 @@ import java.util.List;
 
 @Getter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class BioDataRequestDto {
     private String measuredAt;
     private List<DataPoint> data;
 
     @Getter
-    @Setter
     @Builder
-    @NoArgsConstructor
     @AllArgsConstructor
     public static class DataPoint {
         private String time;
