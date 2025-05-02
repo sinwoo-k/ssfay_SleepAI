@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.sleep.service;
 
+import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
 import com.c208.sleephony.domain.sleep.dto.request.BioDataRequestDto;
 import com.c208.sleephony.domain.sleep.entity.BioData;
 import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
@@ -20,11 +21,13 @@ public class SleepService {
 
     private final BioRepository bioRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final SleepLevelService sleepLevelService;
 
     @Transactional
-    public void saveAll(BioDataRequestDto requestDto) {
+    public List<SleepPredictionResult> measureSleepStage(BioDataRequestDto requestDto) {
         LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
         Integer userId = AuthUtil.getLoginUserId();
+
         List<BioData> entities = requestDto.getData().stream()
                 .map(dataPoint -> BioData.builder()
                         .userId(userId)
@@ -32,13 +35,15 @@ public class SleepService {
                         .gyroX(dataPoint.getGyroX())
                         .gyroY(dataPoint.getGyroY())
                         .gyroZ(dataPoint.getGyroZ())
+                        .bodyTemperature(0.0f) // 추후 필요시 입력
                         .createdAt(LocalDateTime.now())
-                        .bodyTemperature(Float.parseFloat("0.0"))
                         .measuredAt(baseTime)
                         .build()
                 )
                 .toList();
+
         bioRepository.saveAll(entities);
+        return sleepLevelService.predictAndSaveAll(entities);
     }
 
     public String startMeasurement(LocalDateTime startedAt) {
