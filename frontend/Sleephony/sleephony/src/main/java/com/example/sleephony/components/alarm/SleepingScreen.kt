@@ -1,6 +1,7 @@
 package com.example.sleephony.components.alarm
 
 import android.content.Context
+import android.content.Intent
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -34,12 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkNavyBlue
+import com.example.sleephony.service.SleepAlarmService
 import com.example.sleephony.viewmodel.AlarmViewModel
 import kotlinx.coroutines.delay
 import java.time.LocalTime
@@ -67,22 +70,19 @@ fun SleepingScreen(
 
     var isCheck = remember { mutableStateOf(false) }
     val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    val effect = VibrationEffect.createOneShot(5000, VibrationEffect.DEFAULT_AMPLITUDE)
+
+    val wakeup = "$wakeUpMeridiem $wakeUpHour:$wakeUpMinute"
+    var intent = Intent(context, SleepAlarmService::class.java).apply {
+        putExtra("waketime","$wakeup")
+    }
+    ContextCompat.startForegroundService(context,intent)
 
     LaunchedEffect(Unit) {
         while (true) {
             val now = LocalTime.now()
             var formatter = DateTimeFormatter.ofPattern("a hh:mm")
             currentTime.value = now.format(formatter)
-
-            val wakeup = "$wakeUpMeridiem $wakeUpHour:$wakeUpMinute"
-            if (currentTime.value == wakeup) {
-                isCheck.value = true
-                vibrator.vibrate(effect)
-            } else {
-                isCheck.value = false
-            }
-
+            isCheck.value = (wakeup == currentTime.value)
             delay(5000L)
         }
     }
@@ -103,6 +103,8 @@ fun SleepingScreen(
                 Text(text = "${currentTime.value}", fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 DragToDismissAlarm(
                     onDismiss = {
+                        intent = Intent(context,SleepAlarmService::class.java)
+                        context.stopService(intent)
                         navController.navigate("homeScreen")
                 },
                     vibrator = vibrator

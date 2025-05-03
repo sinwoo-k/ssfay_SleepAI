@@ -29,7 +29,6 @@ import kotlinx.coroutines.tasks.await
 class MainApplication : Application(){
     override fun onCreate() {
         super.onCreate()
-
         Log.d("KeyHash", "${Utility.getKeyHash(this)}")
         KakaoSdk.init(this, getString(R.string.kakao_native_app_key))
     }
