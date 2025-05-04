@@ -4,11 +4,13 @@ import com.c208.sleephony.domain.user.dto.request.CreateUserProfileRequest;
 import com.c208.sleephony.domain.user.dto.request.UpdateUserProfileRequest;
 import com.c208.sleephony.domain.user.dto.response.GetUserProfileResponse;
 import com.c208.sleephony.domain.user.service.UserService;
+import com.c208.sleephony.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -20,24 +22,28 @@ public class UserController {
 
     @Operation(summary = "유저 프로필 등록")
     @PutMapping("/profile")
-    public ResponseEntity<Void> createUserProfile(@RequestBody CreateUserProfileRequest request) {
+    public ApiResponse<String> createUserProfile(@Valid @RequestBody CreateUserProfileRequest request) {
         userService.createUserProfile(request);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success(HttpStatus.OK, "프로필이 등록되었습니다.");
     }
-
 
     @Operation(summary = "유저 프로필 수정")
     @PatchMapping("/profile")
-    public ResponseEntity<Void> updateUserProfile(@RequestBody UpdateUserProfileRequest request) {
+    public ApiResponse<String> updateUserProfile(@Valid @RequestBody UpdateUserProfileRequest request) {
         userService.updateUserProfile(request);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success(HttpStatus.OK, "프로필이 수정되었습니다.");
     }
-
 
     @Operation(summary = "유저 프로필 조회")
     @GetMapping("/profile")
-    public ResponseEntity<GetUserProfileResponse> getUserProfile() {
-        return ResponseEntity.ok(userService.getUserProfileResponse());
+    public ApiResponse<GetUserProfileResponse> getUserProfile() {
+        return ApiResponse.success(HttpStatus.OK, userService.getUserProfileResponse());
     }
 
+    @Operation(summary = "유저 삭제")
+    @DeleteMapping("/delete")
+    public ApiResponse<String> deleteUserProfile() {
+        userService.deleteUser();
+        return ApiResponse.success(HttpStatus.OK, "회원 탈퇴가 완료되었습니다.");
+    }
 }
