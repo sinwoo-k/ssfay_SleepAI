@@ -2,7 +2,6 @@ package com.example.sleephony
 
 import android.app.Application
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,7 +13,6 @@ import com.example.sleephony.navigation.AppNavGraph
 import com.example.sleephony.ui.theme.SleephonyTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.kakao.sdk.common.KakaoSdk
-import com.kakao.sdk.common.util.Utility
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
@@ -22,9 +20,7 @@ import dagger.hilt.android.HiltAndroidApp
 class MainApplication : Application(){
     override fun onCreate() {
         super.onCreate()
-
-        Log.d("KeyHash", "${Utility.getKeyHash(this)}")
-        KakaoSdk.init(this, getString(R.string.kakao_native_app_key))
+        KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
     }
 }
 

@@ -17,8 +17,7 @@ class SplashViewModel @Inject constructor(
     val isLoggedIn: StateFlow<Boolean?> = _isLoggedIn
     init {
         viewModelScope.launch {
-            val loggedIn = authRepository.isLoggedIn()
-            _isLoggedIn.value = loggedIn
+            _isLoggedIn.value = authRepository.isLoggedIn()
         }
     }
 }

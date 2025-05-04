@@ -16,10 +16,21 @@ val localProps = Properties().apply {
 val kakaoNativeKey: String =
     localProps["KAKAO_NATIVE_APP_KEY"] as? String ?: error("KAKAO_NATIVE_APP_KEY가 없습니다.")
 
+val googleOauthClientId: String =
+    localProps["GOOGLE_OAUTH_CLIENT_ID"] as? String ?:error("GOOGLE_OAUTH_CLIENT_ID가 없습니다.")
+
+val sleephonyBaseUrl: String =
+    localProps["SLEEPHONY_BASE_URL"] as? String ?:error("SLEEPHONY_BASE_URL이 없습니다.")
+
 
 android {
     namespace = "com.example.sleephony"
     compileSdk = 35
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.example.sleephony"
@@ -30,8 +41,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        resValue("string", "kakao_native_app_key", kakaoNativeKey)
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeKey\"")
+        buildConfigField("String", "GOOGLE_OAUTH_CLIENT_ID", "\"$googleOauthClientId\"")
+        buildConfigField("String", "SLEEPHONY_BASE_URL", "\"$sleephonyBaseUrl\"")
+
         resValue("string", "kakao_redirect_url", "kakao${kakaoNativeKey}")
+
     }
 
     buildTypes {
@@ -49,9 +64,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-    }
-    buildFeatures {
-        compose = true
     }
 }
 
@@ -103,6 +115,11 @@ dependencies {
     implementation("com.kakao.sdk:v2-friend:${LATEST_VERSION}") // 피커 API 모듈
     implementation("com.kakao.sdk:v2-navi:${LATEST_VERSION}") // 카카오내비 API 모듈
     implementation("com.kakao.sdk:v2-cert:${LATEST_VERSION}") // 카카오톡 인증 서비스 API 모듈
+
+    // google 로그인
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 
     // Test
     testImplementation            (libs.junit)

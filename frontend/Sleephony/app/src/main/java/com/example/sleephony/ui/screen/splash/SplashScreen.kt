@@ -4,6 +4,8 @@ import ShootingStar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +34,19 @@ fun SplashScreen(
     viewModel: SplashViewModel = hiltViewModel()
 ) {
     val isLoggedIn by viewModel.isLoggedIn.collectAsState(initial = null)
+
+    LaunchedEffect(isLoggedIn) {
+        // 초기 null일 때도 잠깐 띄우고, boolean으로 바뀌면 바로 이동
+        if (isLoggedIn != null) {
+            delay(2000)
+            if (isLoggedIn == true) {
+                navController.navigate("sleep_setting") { popUpTo("splash") { inclusive = true } }
+            } else {
+                navController.navigate("login") { popUpTo("splash") { inclusive = true } }
+            }
+        }
+    }
+
     // 베경 그라데이션
     Box(
         modifier = Modifier
@@ -80,42 +95,24 @@ fun SplashScreen(
 
         // 로고 + 텍스트 중앙 배치
         Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-50).dp)
-                .size(400.dp),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            // 로고
-            Image(
-                painter = painterResource(R.drawable.ic_sleephony_logo),
-                contentDescription = "Sleepphony Logo",
-                modifier = Modifier
-                    .size(400.dp)
-            )
-            Text(
-                text = "슬립포니와 함께 오늘도 편안한 꿈나라로 떠나보세요.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFEEEEEE),
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .offset(y = 120.dp)
-                    .padding(horizontal = 32.dp)
-            )
-        }
-    }
-
-    LaunchedEffect(isLoggedIn) {
-        delay(2000L)
-        when(isLoggedIn) {
-            true -> navController.navigate("sleep_setting"){
-                popUpTo("splash"){inclusive = true}
-            }
-            false -> navController.navigate("login"){
-                popUpTo("splash"){inclusive = true}
-            }
-            null -> navController.navigate("login"){
-                popUpTo("splash"){inclusive = true}
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_sleephony_logo),
+                    contentDescription = "Sleephony Logo",
+                    modifier = Modifier.fillMaxWidth().height(200.dp)
+                )
+                Text(
+                    text = "슬립포니와 함께 오늘도 편안한 꿈나라로 떠나보세요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFEEEEEE),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp).offset()
+                )
             }
         }
     }
