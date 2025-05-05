@@ -2,8 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <!--  인터넷 사용 권한 설정  -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--통신 권한-->
+    <uses-permission android:name="com.google.android.gms.permission.BIND_LISTENER" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
     <application
         android:name=".MainApplication"
@@ -16,6 +24,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Sleephony"
         tools:targetApi="31">
+
+        <service
+            android:name=".service.WearMessageListener"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/alarm" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="false" />
+
+        <meta-data
+            android:name="com.kakao.sdk.AppKey"
+            android:value="@string/kakao_native_app_key" />
+
 
         <activity
             android:name=".MainActivity"
