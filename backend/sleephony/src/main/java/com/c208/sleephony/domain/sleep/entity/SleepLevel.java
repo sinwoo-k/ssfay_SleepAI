@@ -15,25 +15,18 @@ import java.time.LocalDateTime;
 public class SleepLevel {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.TABLE,
-            generator = "bio_data_tbl_gen"
-    )
-    @TableGenerator(
-            name = "bio_data_tbl_gen",
-            table = "id_generator",
-            pkColumnName = "generator_name",
-            valueColumnName = "generator_value",
-            pkColumnValue = "bio_data_id",
-            allocationSize = 20
-    )    @Column(name = "sleep_level_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sleepLevelId;
 
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "level", length = 5)
-    private String level; // AWAKE, REM, NREM1, NREM2, NREM3
+    private SleepStage level; // AWAKE, REM, NREM1, NREM2, NREM3
+
+    @Column(name = "score")
+    private Integer score;
 
     @Column(name = "measured_at")
     private LocalDateTime measuredAt;

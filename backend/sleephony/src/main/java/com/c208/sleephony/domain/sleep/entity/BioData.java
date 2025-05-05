@@ -15,18 +15,8 @@ import java.time.LocalDateTime;
 public class BioData {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.TABLE,
-            generator = "bio_data_tbl_gen"
-    )
-    @TableGenerator(
-            name = "bio_data_tbl_gen",
-            table = "id_generator",
-            pkColumnName = "generator_name",
-            valueColumnName = "generator_value",
-            pkColumnValue = "bio_data_id",
-            allocationSize = 20
-    )    @Column(name = "bio_data_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "bio_data_id")
     private Long bioDataId;
 
     @Column(name = "user_id", nullable = false)
