@@ -25,8 +25,7 @@
         android:theme="@style/Theme.Sleephony"
         tools:targetApi="31">
 
-<<<<<<< HEAD
-=======
+
         <service
             android:name=".service.WearMessageListener"
             android:enabled="true"
@@ -45,7 +44,7 @@
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_native_app_key" />
 
->>>>>>> 8f19797 (✨_Feat:_wear os application 통신 테스트 중)
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
