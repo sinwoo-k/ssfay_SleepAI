@@ -1,12 +1,11 @@
 package com.c208.sleephony.domain.authentication.service;
 
+import com.c208.sleephony.domain.authentication.dto.request.GoogleLoginRequest;
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
-import com.c208.sleephony.domain.authentication.util.GoogleTokenVerifier;
 import com.c208.sleephony.domain.authentication.util.KakaoTokenVerifier;
 import com.c208.sleephony.global.utils.JwtProvider;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ import java.util.Optional;
 @Transactional
 public class AuthenticationService {
 
-    private final GoogleTokenVerifier googleTokenVerifier;
     private final KakaoTokenVerifier kakaoTokenVerifier;
 
     private final JwtProvider jwtProvider;
@@ -29,15 +27,9 @@ public class AuthenticationService {
     private static final String SOCIAL_GOOGLE = "GOOGLE";
     private static final String SOCIAL_KAKAO = "KAKAO";
 
-    public LoginResponse loginWithGoogle(Map<String, String> request) {
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
 
-        String token = request.get("credential");
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("구글 로그인 토큰이 없습니다.");
-        }
-
-        GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
-        String email = payload.getEmail();
+        String email = request.getEmail();
         Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_GOOGLE, 'N');
 
         User user;

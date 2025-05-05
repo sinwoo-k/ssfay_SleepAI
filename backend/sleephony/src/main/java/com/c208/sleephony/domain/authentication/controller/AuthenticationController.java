@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.authentication.controller;
 
+import com.c208.sleephony.domain.authentication.dto.request.GoogleLoginRequest;
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.service.AuthenticationService;
 import com.c208.sleephony.global.response.ApiResponse;
@@ -21,7 +22,7 @@ public class AuthenticationController {
 
     @Operation(summary = "구글 소셜 로그인")
     @PostMapping("/login-google")
-    public ApiResponse<LoginResponse> loginWithGoogle(@RequestBody Map<String,String> request) {
+    public ApiResponse<LoginResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request) {
         LoginResponse response = authenticationService.loginWithGoogle(request);
         return ApiResponse.success(HttpStatus.OK, response);
     }
