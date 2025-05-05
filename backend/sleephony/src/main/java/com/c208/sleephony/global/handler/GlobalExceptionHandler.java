@@ -1,5 +1,6 @@
 package com.c208.sleephony.global.handler;
 
+import com.c208.sleephony.global.exception.ThemeNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -75,5 +76,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleException(Exception e) {
         log.error("Unhandled exception", e);
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler(ThemeNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleThemeNotFound(ThemeNotFoundException e) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage());
     }
 }

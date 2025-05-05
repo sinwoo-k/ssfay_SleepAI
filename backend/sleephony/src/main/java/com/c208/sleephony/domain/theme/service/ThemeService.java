@@ -5,6 +5,7 @@ import com.c208.sleephony.domain.theme.entity.Sound;
 import com.c208.sleephony.domain.theme.entity.Theme;
 import com.c208.sleephony.domain.theme.repository.SoundRepository;
 import com.c208.sleephony.domain.theme.repository.ThemeRepository;
+import com.c208.sleephony.global.exception.ThemeNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -16,16 +17,26 @@ public class ThemeService {
     private final ThemeRepository themeRepository;
     private final SoundRepository soundRepository;
 
-    // 테마 전체 목록 조회
+    /**
+     * 전체 테마 목록을 조회합니다.
+     *
+     * @return List<Theme> 모든 테마 엔티티 리스트
+     */
     public List<Theme> getAllThemes() {
         return themeRepository.findAll();
     }
 
-    // 테마 상세 조회
+    /**
+     * 특정 테마의 상세 정보를 조회합니다.
+     *
+     * @param themeId 조회할 테마의 ID
+     * @return ThemeDetailResponse 테마 기본 정보 + 해당 테마에 속한 사운드 리스트
+     * @throws IllegalArgumentException 테마가 존재하지 않는 경우
+     */
     public ThemeDetailResponse getThemeDetail(Integer themeId) {
-        Theme theme = themeRepository.findById(themeId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 테마입니다. ID = " + themeId));
 
+        Theme theme = themeRepository.findById(themeId)
+                .orElseThrow(() -> new ThemeNotFoundException(themeId));
         List<Sound> sounds = soundRepository.findByThemeId(themeId);
 
         return ThemeDetailResponse.from(theme, sounds);
