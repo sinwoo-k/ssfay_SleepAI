@@ -3,6 +3,7 @@ package com.c208.sleephony.domain.authentication.service;
 import com.c208.sleephony.domain.authentication.dto.request.GoogleLoginRequest;
 import com.c208.sleephony.domain.authentication.dto.response.LoginResponse;
 import com.c208.sleephony.domain.authentication.util.KakaoTokenVerifier;
+import com.c208.sleephony.domain.user.entity.Social;
 import com.c208.sleephony.global.utils.JwtProvider;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
@@ -24,13 +25,10 @@ public class AuthenticationService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
-    private static final String SOCIAL_GOOGLE = "GOOGLE";
-    private static final String SOCIAL_KAKAO = "KAKAO";
-
     public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
 
         String email = request.getEmail();
-        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_GOOGLE, 'N');
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, Social.GOOGLE, 'N');
 
         User user;
         String status;
@@ -39,7 +37,7 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createUser(email, SOCIAL_GOOGLE);
+            user = createUser(email, Social.GOOGLE);
             status = "join";
         }
 
@@ -55,7 +53,7 @@ public class AuthenticationService {
         }
 
         String email = kakaoTokenVerifier.verify(token);
-        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, SOCIAL_KAKAO, 'N');
+        Optional<User> optionalUser = userRepository.findByEmailAndSocialAndDeleted(email, Social.KAKAO, 'N');
 
         User user;
         String status;
@@ -64,7 +62,7 @@ public class AuthenticationService {
             user = optionalUser.get();
             status = "login";
         } else {
-            user = createUser(email, SOCIAL_KAKAO);
+            user = createUser(email, Social.KAKAO);
             status = "join";
         }
 
@@ -72,7 +70,7 @@ public class AuthenticationService {
         return new LoginResponse(status, accessToken);
     }
 
-    private User createUser(String email, String social) {
+    private User createUser(String email, Social social) {
         User newUser = User.builder()
                 .email(email)
                 .themeId(1)
