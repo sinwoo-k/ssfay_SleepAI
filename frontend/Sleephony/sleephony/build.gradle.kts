@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sleepphony_wear_os"
+    namespace = "com.example.sleephony"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.sleepphony_wear_os"
+        applicationId = "com.example.sleephony"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
@@ -40,13 +40,19 @@ android {
 
 dependencies {
 
+
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
+    // 앱 통싱
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
+
     // For Jetpack Compose Pager
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
 
     implementation("androidx.wear.compose:compose-navigation:1.2.0")
 
-    implementation("androidx.wear.compose:compose-material:1.4.1")
-    implementation("androidx.wear.compose:compose-foundation:1.4.1")
+    implementation("com.google.android.horologist:horologist-compose-material:0.6.9")
 
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))

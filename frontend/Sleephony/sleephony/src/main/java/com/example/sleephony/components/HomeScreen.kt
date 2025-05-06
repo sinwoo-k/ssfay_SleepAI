@@ -1,4 +1,4 @@
-package com.example.sleephony_wear.components
+package com.example.sleephony.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,10 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Scaffold
-import com.example.sleephony_wear.components.mypage.MyPageScreen
-import com.example.sleephony_wear.presentation.components.alarm.AlarmScreen
-import com.example.sleephony_wear.presentation.components.hitory.HistoryScreen
-import com.example.sleephony_wear.presentation.components.step.StepIndicator
+import com.example.sleephony.components.mypage.MyPageScreen
+import com.example.sleephony.presentation.components.alarm.AlarmScreen
+import com.example.sleephony.presentation.components.hitory.HistoryScreen
+import com.example.sleephony.presentation.components.step.StepIndicator
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState

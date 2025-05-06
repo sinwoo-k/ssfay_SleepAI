@@ -3,7 +3,7 @@
  * most up to date changes to the libraries and their usages.
  */
 
-package com.example.sleepphony_wear_os.presentation
+package com.example.sleephony.presentation
 
 import android.Manifest
 import android.content.Context
@@ -18,32 +18,19 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import androidx.wear.tooling.preview.devices.WearDevices
-import com.example.sleephony_wear.components.HomeScreen
-import com.example.sleephony_wear.components.alarm.SetAlarmScreen
-import com.example.sleephony_wear.screens.SleepAlarmScreen
-import com.example.sleepphony_wear_os.presentation.theme.Sleephony_wearTheme
-import com.example.sleepphony_wear_os.presentation.theme.backGroundGeadientColor
+import com.example.sleephony.components.HomeScreen
+import com.example.sleephony.components.alarm.SetAlarmScreen
+import com.example.sleephony.components.alarm.SleepingScreen
+import com.example.sleephony.presentation.theme.Sleephony_wearTheme
+import com.example.sleephony.presentation.theme.backGroundGeadientColor
+import com.example.sleephony.viewmodel.AlarmViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -70,8 +57,9 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
         }
 
-        // Compose UI 시작
         setContent {
+            val alarmViewModel: AlarmViewModel = viewModel()
+
             Sleephony_wearTheme {
                 val navController = rememberSwipeDismissableNavController()
 
@@ -92,27 +80,19 @@ class MainActivity : ComponentActivity() {
                     composable("setalarm") {
                         SetAlarmScreen(
                             modifier = Modifier,
+                            navController = navController,
+                            viewModel = alarmViewModel
+                        )
+                    }
+                    composable("sleepingscreen") {
+                        SleepingScreen(
+                            modifier = Modifier,
+                            viewModel = alarmViewModel,
                             navController = navController
                         )
                     }
-                    composable("sleepalarm") {
-                        SleepAlarmScreen()
-                    }
-                    composable("sensorList") {
-                        SensorListScreen(sensorList = sensorList)
-                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun SensorListScreen(sensorList: List<Sensor>) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = "센서 리스트:")
-        sensorList.forEach { sensor ->
-            Text(text = "Name: ${sensor.name}, Type: ${sensor.type}", modifier = Modifier.padding(top = 8.dp))
         }
     }
 }

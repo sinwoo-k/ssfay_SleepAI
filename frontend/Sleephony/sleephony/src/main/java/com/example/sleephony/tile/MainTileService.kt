@@ -1,4 +1,4 @@
-package com.example.sleepphony_wear_os.tile
+package com.example.sleephony.tile
 
 import android.content.Context
 import androidx.wear.protolayout.ColorBuilders.argb

@@ -3,12 +3,22 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--    바디 센서 권한-->
     <uses-permission android:name="android.permission.BODY_SENSORS"/>
+    <!--    백그라운드 서비스 권한-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!--    사용자 활동 감지 권한-->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!--    심박수 센서 권한-->
     <uses-feature android:name="android.hardware.sensor.heartrate" android:required="false"/>
+    <!--    건강 백그라운드 권한-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
-
+    <!--    구글 서비스 권한-->
+    <uses-permission android:name="com.google.android.gms.permission.BIND_LISTENER" />
+    <!--    인터넷 권한-->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--    진동 권한-->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +32,13 @@
             android:name=".service.SleepSensorService"
             android:foregroundServiceType="health"
             android:exported="false" />
+
+        <!--        알람 서비스-->
+        <service
+            android:name=".service.SleepAlarmService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health"/>
 
         <service
             android:name=".complication.MainComplicationService"
@@ -56,13 +73,10 @@
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />
-        <!--
-               Set to true if your app is Standalone, that is, it does not require the handheld
-               app to run.
-        -->
+
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="true" />
+            android:value="false" />
 
         <activity
             android:name=".presentation.MainActivity"
@@ -75,6 +89,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

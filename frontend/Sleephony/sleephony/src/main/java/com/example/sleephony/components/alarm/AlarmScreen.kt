@@ -1,4 +1,4 @@
-package com.example.sleephony_wear.presentation.components.alarm
+package com.example.sleephony.presentation.components.alarm
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,9 +20,9 @@ import androidx.navigation.NavController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
-import com.example.sleepphony_wear_os.R
-import com.example.sleepphony_wear_os.presentation.theme.bluePuple
-import com.example.sleepphony_wear_os.presentation.theme.darkNavyBlue
+import com.example.sleephony.R
+import com.example.sleephony.presentation.theme.bluePuple
+import com.example.sleephony.presentation.theme.darkNavyBlue
 
 
 @Composable
@@ -34,7 +33,7 @@ fun AlarmScreen(
         Column(
             modifier = modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -49,7 +48,7 @@ fun AlarmScreen(
                         .fillMaxWidth(0.75f)
                         .height(37.dp)
                         .shadow( elevation = 40.dp, shape = RoundedCornerShape(12.dp)),
-                    onClick = {navController.navigate("sleepalarm")},
+                    onClick = {navController.navigate("setalarm")},
                     interactionSource = interactionSource,
                     colors = ButtonDefaults.buttonColors(backgroundColor = if (isPressed) bluePuple else darkNavyBlue)
                 ) {
