@@ -50,21 +50,19 @@ class AuthRepositoryImpl @Inject constructor(
             val result = resp.results
                 ?: throw RuntimeException("로그인 결과가 없습니다.")
             // 3) JWT 저장
-            Log.d("access_token", result.accessToken)
             tokenProvider.saveToken(result.accessToken)
             result
         }
 
     override suspend fun loginWithGoogle(activity: Activity): Result<SocialLoginResult> =
         runCatching {
-            val idToken = google.signIn(activity)
-            val resp = authApi.loginGoogle(GoogleLoginRequest(credential = idToken.toString()))
+            val email = google.signIn(activity)
+            val resp = authApi.loginGoogle(GoogleLoginRequest(email = email.toString()))
             if (resp.code != "SU") {
                 throw RuntimeException(resp.message)
             }
             val result = resp.results
                 ?: throw RuntimeException("로그인 결과가 없습니다.")
-            Log.d("access_token", result.accessToken)
             tokenProvider.saveToken(result.accessToken)
             result
         }

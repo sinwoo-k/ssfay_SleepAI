@@ -52,9 +52,9 @@ class GoogleAuthDataSource(
             ?: error("Credential is not CustomCredential")
         val googleCred = GoogleIdTokenCredential.createFrom(cred.data)
 
-        Log.d("GOOGLE_ID_TOKEN", googleCred.idToken)      // 토큰 자체도 로그
+        Log.d("GOOGLE_ID_TOKEN", googleCred.id)      // 토큰 자체도 로그
 
-        return googleCred.idToken
+        return googleCred.id
     }
 
     /** 재사용 공격 방지용 16바이트 난수 */
