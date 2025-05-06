@@ -21,7 +21,7 @@ interface AuthApi {
     @GET("auth/validate")
     suspend fun validateToken(
         @Header("Authorization") bearer: String
-    ): ApiResponse<String>
+    ): ApiResponse<ValidateTokenResult>
 
     @PUT("user/profile")
     suspend fun submitProfile(
