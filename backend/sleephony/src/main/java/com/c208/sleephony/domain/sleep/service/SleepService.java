@@ -11,6 +11,7 @@ import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepReportRepository;
 import com.c208.sleephony.global.utils.AuthUtil;
+import com.c208.sleephony.global.utils.GptClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class SleepService {
     private final SleepLevelRepository sleepLevelRepository;
     private final SleepReportRepository sleepReportRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final GptClient gptClient;
 
     public List<SleepPredictionResult> measureSleepStage(BioDataRequestDto requestDto) {
         LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
@@ -148,7 +150,7 @@ public class SleepService {
         int nrem = n1 + n2;
         int deep = n3;
         int cycle = Math.max(1, (rem + nrem + deep) / 90);
-        int score = 100 - (int)(awake * 0.5) + (int)(rem * 0.2) + (int)(deep * 0.3);
+        int score = 100 - (int) (awake * 0.5) + (int) (rem * 0.2) + (int) (deep * 0.3);
         score = Math.max(1, Math.min(score, 100));
 
         SleepReport report = SleepReport.builder()
@@ -191,4 +193,37 @@ public class SleepService {
                         .build())
                 .toList();
     }
+
+    public String advise(SleepReport report) {
+
+        String prompt = String.format("""
+                        당신은 숙면 코치입니다. 아래 사용자의 밤 수면 리포트를 보고
+                        • 최대 2줄짜리 요약
+                        • 한국어로 3개의 핵심 행동 팁(불릿 리스트)만 제시하세요.
+                        
+                        [수면 리포트]
+                        - 수면 점수: %d/100
+                        - 총 수면: %d분
+                        - REM: %d분
+                        - 얕은 수면(N1+N2): %d분
+                        - 깊은 수면(N3): %d분
+                        - 깨어 있음: %d분
+                        - 수면 주기: %d회
+                        """,
+                report.getSleepScore(),
+                toMinutes(report.getSleepTime(), report.getSleepWakeTime()),
+                report.getRemTime(),
+                report.getNremTime(),
+                report.getDeepTime(),
+                report.getAwakeTime(),
+                report.getSleepCycle());
+
+        // WebClient 는 reactive 이므로 block() 으로 동기화
+        return gptClient.getAdvice(prompt).block();
+    }
+
+    private int toMinutes(LocalDateTime from, LocalDateTime to) {
+        return (int) java.time.Duration.between(from, to).toMinutes();
+    }
+
 }
