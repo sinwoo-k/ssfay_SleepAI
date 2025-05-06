@@ -1,4 +1,4 @@
-package com.example.sleepphony_wear_os.presentation.theme
+package com.example.sleephony.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

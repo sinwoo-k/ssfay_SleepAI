@@ -1,4 +1,4 @@
-package com.example.sleepphony_wear_os.complication
+package com.example.sleephony.complication
 
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType

@@ -1,4 +1,4 @@
-package com.example.sleephony_wear.components.mypage
+package com.example.sleephony.components.mypage
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,25 +12,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
-import com.example.sleepphony_wear_os.R
-import com.example.sleepphony_wear_os.presentation.theme.darkGray
-import com.example.sleepphony_wear_os.presentation.theme.darkNavyBlue
+import com.example.sleephony.R
+import com.example.sleephony.presentation.theme.darkGray
+import com.example.sleephony.presentation.theme.darkNavyBlue
 
 
 @Composable
@@ -38,9 +37,10 @@ fun MyPageScreen(
     navController: NavController,
     modifier: Modifier
 ) {
-    LazyColumn(
+    ScalingLazyColumn(
         modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        reverseLayout = true
     ) {
         item {
             Column(
