@@ -195,20 +195,35 @@ public class SleepService {
     }
 
     public String advise(SleepReport report) {
+        Integer userId = AuthUtil.getLoginUserId();
+        LocalDate reportDate = report.getSleepTime().toLocalDate(); // 수면 시작 날짜 기준
 
+        String redisKey = "sleep:advice:" + userId + ":" + reportDate;
+        String cachedAdvice = stringRedisTemplate.opsForValue().get(redisKey);
+
+        // Redis에 값이 있으면 그대로 반환
+        if (cachedAdvice != null) {
+            return cachedAdvice;
+        }
         String prompt = String.format("""
-                        당신은 숙면 코치입니다. 아래 사용자의 밤 수면 리포트를 보고
-                        • 최대 2줄짜리 요약
-                        • 한국어로 3개의 핵심 행동 팁(불릿 리스트)만 제시하세요.
+                        당신은 전문적인 수면 분석 AI 코치입니다. 아래 사용자의 수면 리포트를 기반으로, 최소 500자 이상의 상세한 피드백을 한국어로 작성해 주세요.
                         
                         [수면 리포트]
                         - 수면 점수: %d/100
-                        - 총 수면: %d분
-                        - REM: %d분
+                        - 총 수면 시간: %d분
+                        - 렘수면(REM): %d분
                         - 얕은 수면(N1+N2): %d분
                         - 깊은 수면(N3): %d분
-                        - 깨어 있음: %d분
-                        - 수면 주기: %d회
+                        - 깨어 있는 시간: %d분
+                        - 수면 주기 횟수: %d회
+                        
+                        요구사항:
+                        1. 사용자의 수면 데이터를 해석하여 현재 수면 상태의 특징과 문제점을 설명하세요.
+                        2. 각 수면 단계의 비율이 어떤 의미를 가지며, 건강한 수면과 비교해 어떤 부분이 부족하거나 개선될 수 있는지 구체적으로 설명하세요.
+                        3. 수면 습관, 생활 패턴, 환경 등의 측면에서 개선해야 할 점을 구체적인 예시와 함께 조언하세요.
+                        4. 수면 질을 향상시키기 위한 실천 가능한 조언을 최소 5가지 이상 제시하고, 각 조언의 이유도 설명하세요.
+                        
+                        최소 500자 이상으로 매우 구체적이고 실질적인 피드백을 제공하세요.
                         """,
                 report.getSleepScore(),
                 toMinutes(report.getSleepTime(), report.getSleepWakeTime()),
@@ -219,7 +234,10 @@ public class SleepService {
                 report.getSleepCycle());
 
         // WebClient 는 reactive 이므로 block() 으로 동기화
-        return gptClient.getAdvice(prompt).block();
+        String advice = gptClient.getAdvice(prompt).block();
+        stringRedisTemplate.opsForValue().set(redisKey, Objects.requireNonNull(advice), Duration.ofDays(1));
+
+        return advice;
     }
 
     private int toMinutes(LocalDateTime from, LocalDateTime to) {
