@@ -3,6 +3,7 @@ package com.example.sleephony.navigation
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -12,6 +13,7 @@ import androidx.navigation.navigation
 import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
+import com.example.sleephony.ui.screen.report.ReportScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
@@ -23,7 +25,7 @@ fun AppNavGraph(
 ){
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = "report"
     ){
         composable("splash"){
             val splashVm: SplashViewModel = hiltViewModel()
@@ -82,6 +84,10 @@ fun AppNavGraph(
 
         composable("sleep_setting"){
             SleepSettingScreen()
+        }
+
+        composable("report") {
+            ReportScreen(modifier = Modifier)
         }
 
     }
