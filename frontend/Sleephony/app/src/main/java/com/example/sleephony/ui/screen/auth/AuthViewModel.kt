@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sleephony.data.model.SocialLoginResult
 import com.example.sleephony.domain.repository.AuthRepository
+import com.example.sleephony.domain.repository.UserRepository
 import com.google.gson.Gson
 import com.kakao.sdk.auth.model.OAuthToken
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repo: AuthRepository
+    private val repo: AuthRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     /** 화면에서 관찰할 State */
@@ -37,9 +39,11 @@ class AuthViewModel @Inject constructor(
         uiState = UiState.Loading
         repo.loginWithKakao(activity)
             .onSuccess { result: SocialLoginResult ->
-                uiState = when (result.status) {
-                    "join"  -> UiState.NeedsProfile
-                    else    -> UiState.Authenticated
+                if (result.status == "join") {
+                    uiState = UiState.NeedsProfile
+                } else {
+                    userRepository.getUserProfile()
+                    uiState = UiState.Authenticated
                 }
             }
             .onFailure { e ->
@@ -52,9 +56,11 @@ class AuthViewModel @Inject constructor(
         uiState = UiState.Loading
         repo.loginWithGoogle(activity)
             .onSuccess { result: SocialLoginResult ->
-                uiState = when (result.status) {
-                    "join"  -> UiState.NeedsProfile
-                    else    -> UiState.Authenticated
+                if (result.status == "join") {
+                    uiState = UiState.NeedsProfile
+                } else {
+                    userRepository.getUserProfile()
+                    uiState = UiState.Authenticated
                 }
             }
             .onFailure { e ->

@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.settings
+package com.example.sleephony.ui.screen.report
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -6,23 +6,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
 
 @Composable
-fun SettingsHomeScreen(
-    viewModel: SettingViewModel = hiltViewModel()
-){
+fun ReportScreen (){
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -44,12 +38,5 @@ fun SettingsHomeScreen(
                 .height(300.dp),
             contentScale = ContentScale.FillWidth
         )
-        val profile by viewModel.profileState.collectAsState()
-
-        if (profile != null ) {
-            Text(text = "이메일 : ${profile!!.email}", color = Color.White)
-        } else {
-            Text("프로필 정보를 불러오는 중입니다.")
-        }
     }
 }

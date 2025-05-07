@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sleephony.data.model.UserProfileRequest
 import com.example.sleephony.domain.repository.AuthRepository
+import com.example.sleephony.domain.repository.UserRepository
 import com.example.sleephony.navigation.ProfileStep
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val repo: AuthRepository
+    private val repo: AuthRepository,
+    private val userRepository: UserRepository
 ): ViewModel(){
     private val _values = MutableStateFlow<Map<ProfileStep, String>>(emptyMap())
     val stepValues: StateFlow<Map<ProfileStep, String>> = _values
@@ -70,9 +72,16 @@ class ProfileViewModel @Inject constructor(
                 gender    = genderCode
             )
 
-            _submitState.value = repo.submitProfile(req)
+            repo.submitProfile(req)
+                .onSuccess {
+                    userRepository.getUserProfile()
+                    _submitState.value = Result.success(Unit)
+                }
+                .onFailure { e ->
+                    _submitState.value = Result.failure(e)
+                }
         }
     }
 
-    fun getAllProfileData(): Map<ProfileStep, String> = _values.value
+    private fun getAllProfileData(): Map<ProfileStep, String> = _values.value
 }
