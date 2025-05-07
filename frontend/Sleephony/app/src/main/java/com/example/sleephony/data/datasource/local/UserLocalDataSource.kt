@@ -1,9 +1,7 @@
 package com.example.sleephony.data.datasource.local
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.edit
-import com.example.sleephony.data.model.UserProfileRequest
 import com.example.sleephony.data.model.UserProfileResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

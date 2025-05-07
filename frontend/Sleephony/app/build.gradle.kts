@@ -125,6 +125,9 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 
+    // utils
+    implementation("dev.chrisbanes.snapper:snapper:0.3.0")
+
     // Test
     testImplementation            (libs.junit)
     androidTestImplementation     (libs.androidx.junit)

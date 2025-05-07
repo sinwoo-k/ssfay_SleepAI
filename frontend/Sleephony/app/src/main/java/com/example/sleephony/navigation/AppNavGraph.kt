@@ -1,11 +1,13 @@
 package com.example.sleephony.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -43,6 +45,7 @@ fun AppNavGraph(
     val showBottomBar = currentRoute in bottomRoutes
 
     Scaffold (
+        containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 BottomNavBar(navController)
@@ -52,7 +55,7 @@ fun AppNavGraph(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding).fillMaxSize()
         ){
             composable("splash"){
                 val splashVm: SplashViewModel = hiltViewModel()

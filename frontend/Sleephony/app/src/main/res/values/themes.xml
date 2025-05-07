@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Sleephony" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Sleephony" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 윈도우 배경을 투명으로 설정 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- (선택) 창 전환 애니메이션 스타일 자체를 없애기 -->
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
 </resources>
