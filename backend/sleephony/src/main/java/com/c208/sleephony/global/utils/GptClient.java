@@ -28,7 +28,7 @@ public class GptClient {
                 new Message("user", prompt)
         );
 
-        RequestBody body = new RequestBody("gpt-4o-mini", msgs, 0.8);
+        RequestBody body = new RequestBody("gpt-4o", msgs, 0.7);
 
         return webClient.post()
                 .contentType(MediaType.APPLICATION_JSON)
