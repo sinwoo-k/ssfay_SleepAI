@@ -233,7 +233,7 @@ fun SleepSettingScreen(
                 AlarmMode.entries.forEach { m ->
                     val selected = m == mode
                     OutlinedButton(
-                        onClick = { viewModel.onModeSelected(m) },
+                        onClick = { /*TODO: mode 변경*/ },
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = if (selected) Color.White.copy(alpha = 0.2f) else Color.Transparent
                         ),
