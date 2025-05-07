@@ -1,88 +1,133 @@
 package com.example.sleephony.navigation
 
-import android.util.Log
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.example.sleephony.ui.common.component.BottomNavBar
 import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
+import com.example.sleephony.ui.screen.report.ReportScreen
+import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
+import com.example.sleephony.ui.screen.statistics.StatisticsScreen
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = "splash"
 ){
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ){
-        composable("splash"){
-            val splashVm: SplashViewModel = hiltViewModel()
-            SplashScreen(
-                navController = navController,
-                viewModel = splashVm
-            )
-        }
+    // 현재 경로 가져오기
+    val backStack by navController.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route
 
-        composable("login"){
-            SocialLoginScreen(
-                onNeedsProfile = {
-                    navController.navigate("profile_setup") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                },
-                onLoginSuccess = {
-                    navController.navigate("sleep_setting"){
-                        popUpTo("login"){inclusive = true}
-                    }
-                }
-            )
-        }
+    // 바텀바를 보여줄 라우트 목록
+    val bottomRoutes = listOf(
+        "sleep_setting",
+        "report",
+        "statistics",
+        "settings"
+    )
+    val showBottomBar = currentRoute in bottomRoutes
 
-        navigation(
-            startDestination = ProfileStep.NICKNAME.route,  // 첫 화면: 닉네임
-            route = "profile_setup"
-        ) {
-            ProfileStep.entries.forEach { step ->
-                composable(step.route) { backStackEntry ->
-                    val parentEntry = remember(backStackEntry) {
-                        navController.getBackStackEntry("profile_setup")
-                    }
-
-                    val profileVm: ProfileViewModel = hiltViewModel(parentEntry)
-
-                    ProfileSetupScreen(
-                        step = step,
-                        viewModel = profileVm,
-                        onNext = {
-                            ProfileStep.entries.getOrNull(step.ordinal + 1)?.let { next ->
-                                navController.navigate(next.route)
-                            }
-                            // 마지막 단계: ViewModel 에 제출 요청
-                                ?: profileVm.submitProfile()
-                        },
-                        onComplete = {
-                            navController.navigate("sleep_setting") {
-                                popUpTo("profile_setup") { inclusive = true }
-                            }
-                        }
-                    )
-                }
+    Scaffold (
+        bottomBar = {
+            if (showBottomBar) {
+                BottomNavBar(navController)
             }
         }
+    ){ innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.padding(innerPadding)
+        ){
+            composable("splash"){
+                val splashVm: SplashViewModel = hiltViewModel()
+                SplashScreen(
+                    navController = navController,
+                    viewModel = splashVm
+                )
+            }
 
-        composable("sleep_setting"){
-            SleepSettingScreen()
+            composable("login"){
+                SocialLoginScreen(
+                    onNeedsProfile = {
+                        navController.navigate("profile_setup") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    onLoginSuccess = {
+                        navController.navigate("sleep_setting"){
+                            popUpTo("login"){inclusive = true}
+                        }
+                    }
+                )
+            }
+
+            navigation(
+                startDestination = ProfileStep.NICKNAME.route,  // 첫 화면: 닉네임
+                route = "profile_setup"
+            ) {
+                ProfileStep.entries.forEach { step ->
+                    composable(step.route) { backStackEntry ->
+                        val parentEntry = remember(backStackEntry) {
+                            navController.getBackStackEntry("profile_setup")
+                        }
+
+                        val profileVm: ProfileViewModel = hiltViewModel(parentEntry)
+
+                        ProfileSetupScreen(
+                            step = step,
+                            viewModel = profileVm,
+                            onNext = {
+                                ProfileStep.entries.getOrNull(step.ordinal + 1)?.let { next ->
+                                    navController.navigate(next.route)
+                                }
+                                // 마지막 단계: ViewModel 에 제출 요청
+                                    ?: profileVm.submitProfile()
+                            },
+                            onComplete = {
+                                navController.navigate("sleep_setting") {
+                                    popUpTo("profile_setup") { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            composable("sleep_setting"){
+                SleepSettingScreen()
+            }
+
+            composable("report") {
+                ReportScreen()
+            }
+
+            composable("statistics") {
+                StatisticsScreen()
+            }
+
+            composable("settings"){
+                SettingsHomeScreen()
+            }
+
         }
 
     }
+
+
 }
