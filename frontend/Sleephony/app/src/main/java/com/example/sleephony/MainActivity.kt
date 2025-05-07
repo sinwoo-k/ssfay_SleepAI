@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
                     )
                     // NavigationBar 투명 + 아이콘 흰색
                     sysUi.setNavigationBarColor(
-                        color = Color.Transparent,
+                        color = Color(0xFF182741),
                         darkIcons = false
                     )
                 }
