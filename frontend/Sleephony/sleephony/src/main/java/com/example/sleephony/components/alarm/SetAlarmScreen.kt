@@ -14,10 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.wear.compose.material.Scaffold
+import com.example.sleephony.presentation.components.step.StepIndicator
 import com.example.sleephony.viewmodel.AlarmViewModel
-import com.example.sleephony_wear.components.alarm.SetBedTimeAlarmScreen
-import com.example.sleephony_wear.components.alarm.SetWakeUpTimeAlarmScreen
-import com.example.sleephony_wear.presentation.components.step.StepIndicator
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
