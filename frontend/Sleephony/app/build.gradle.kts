@@ -68,6 +68,9 @@ android {
 }
 
 dependencies {
+    //chart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
 
     // 달력
     implementation("com.kizitonwose.calendar:compose:2.6.0")
