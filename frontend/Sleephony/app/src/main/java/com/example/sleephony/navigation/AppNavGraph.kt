@@ -157,9 +157,9 @@ fun AppNavGraph(
                 SettingsHomeScreen()
             }
 
+        composable("report") {
+            ReportScreen(modifier = Modifier)
         }
 
     }
-
-
 }
