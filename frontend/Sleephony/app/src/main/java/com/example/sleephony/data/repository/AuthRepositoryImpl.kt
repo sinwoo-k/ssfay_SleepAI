@@ -25,17 +25,18 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun isLoggedIn(): Boolean {
         val token = tokenProvider.getToken()
         Log.d("DBG", "토큰 검사 결과 $token")
-        if (token?.isBlank() == true) {
-            return false
-        }
-        return try {
-            val bearer = "Bearer $token"
-            val resp = authApi.validateToken(bearer)   // 또는 검증 전용 API
-            resp.code == "SU"
-        } catch (e: Exception) {
-            Log.e("DBG", "검사 결과 $e")
-            false
-        }
+        return false
+//        if (token?.isBlank() == true) {
+//            return false
+//        }
+//        return try {
+//            val bearer = "Bearer $token"
+//            val resp = authApi.validateToken(bearer)   // 또는 검증 전용 API
+//            resp.code == "SU"
+//        } catch (e: Exception) {
+//            Log.e("DBG", "검사 결과 $e")
+//            false
+//        }
     }
 
     override suspend fun loginWithKakao(activity: Activity): Result<SocialLoginResult> =
@@ -56,8 +57,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun loginWithGoogle(activity: Activity): Result<SocialLoginResult> =
         runCatching {
-            val email = google.signIn(activity)
-            val resp = authApi.loginGoogle(GoogleLoginRequest(email = email.toString()))
+            val signInResult: Result<String> = google.signIn(activity)
+            val email: String = signInResult.getOrThrow()
+            Log.d("DBG", "google email: $email")
+            val resp = authApi.loginGoogle(GoogleLoginRequest(email = email))
             if (resp.code != "SU") {
                 throw RuntimeException(resp.message)
             }

@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 SideEffect {
                     // StatusBar 투명 + 아이콘 흰색(=darkIcons=false)
                     sysUi.setStatusBarColor(
-                        color = Color.Transparent,
+                        color = Color(0xFF182741),
                         darkIcons = false
                     )
                     // NavigationBar 투명 + 아이콘 흰색
