@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -17,17 +19,28 @@ import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.components.AverageSleepScore
 import com.example.sleephony.ui.screen.report.components.SleepSummation
+import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
+import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun WeekReport(
     modifier: Modifier
 ) {
+    val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
+    val today = LocalDate.now()
+    val weekStartState = remember { mutableStateOf(today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))) }
     LazyColumn(
         modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp)
             .fillMaxSize(),
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(25.dp)) {
+                WeeklyCalendar(modifier = modifier,
+                    firstDayOfWeek = firstDayOfWeek,
+                    weekStartState = weekStartState.value,
+                    onPre = { newDate -> weekStartState.value = newDate },
+                    onNext = { newDate -> weekStartState.value = newDate } )
                 Box() {
                     Column {
                         Text(text = "이번주", color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Bold)
