@@ -60,12 +60,12 @@ fun WeekChart(
             }
 
             val dataSet = BarDataSet(entries, "수면 시간").apply {
-                color = ContextCompat.getColor(chart.context,R.color.sleep_blue)
+                color = ContextCompat.getColor(chart.context,R.color.SkyBlue)
                 valueTextSize = 0f
             }
 
             val barData = BarData(dataSet).apply {
-                barWidth = 0.6f
+                barWidth = 0.5f
             }
 
             chart.data = barData
