@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report
+package com.example.sleephony.ui.screen.report.components.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,10 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -19,15 +18,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.ReportTopBar
-import com.example.sleephony.ui.screen.report.week.WeekReport
 
 @Composable
-fun ReportScreen(
+fun SleepDetailScreen(
     modifier: Modifier,
+    page: String,
     navController: NavController
 ) {
-    val step = remember { mutableStateOf(1) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -49,12 +46,20 @@ fun ReportScreen(
                 .height(300.dp),
             contentScale = ContentScale.FillWidth
         )
-        Column {
-            ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
-            when (step.value) {
-                1 -> WeekReport(modifier = modifier, navController = navController)
-                2 -> Text(text = "2")
-                3 -> Text(text = "3")
+        Column(
+            modifier = modifier.padding(top = 35.dp, start = 10.dp, end = 10.dp, bottom =50.dp)
+        ) {
+            DetailTopBar(
+                modifier = modifier,
+                page = page,
+                navController = navController
+            )
+            when(page) {
+                "sleep_time" -> SleepTimeDetailScreen(modifier = modifier)
+                "sleep_latency" -> SleepLatencyDetailScreen()
+                "sleep_REM" -> SleepREMDetailScreen()
+                "sleep_light" -> SleepLightDetailScreen()
+                "sleep_deep" -> SleepDeepDetailScreen()
             }
         }
     }
