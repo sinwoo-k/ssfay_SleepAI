@@ -87,10 +87,6 @@ public class SleepController {
             @Parameter(description = "측정 대상 날짜 (yyyy-MM-dd)", required = true)
             @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        SleepReport report = sleepService.getReportByDate(date);
-        if (report == null) {
-            return ApiResponse.fail(HttpStatus.NOT_FOUND,"해당 날짜 리포트가 없습니다.");
-        }
-        return ApiResponse.success(HttpStatus.OK, sleepService.advise(report));
+        return ApiResponse.success(HttpStatus.OK, sleepService.advise(sleepService.getReportByDate(date)));
     }
 }
