@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation("androidx.core:core-ktx:1.16.0")
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)

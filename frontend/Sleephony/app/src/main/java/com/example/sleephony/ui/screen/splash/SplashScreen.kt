@@ -1,29 +1,44 @@
 package com.example.sleephony.ui.screen.splash
 
 import ShootingStar
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.sleephony.R
 import kotlinx.coroutines.delay
@@ -33,16 +48,49 @@ fun SplashScreen(
     navController: NavHostController,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+
+    var hasRequestedPermission by rememberSaveable { mutableStateOf(false) }
+    var notificationsEnabled by remember { mutableStateOf(viewModel.isNotificationEnabled()) }
+
     val isLoggedIn by viewModel.isLoggedIn.collectAsState(initial = null)
 
-    LaunchedEffect(isLoggedIn) {
-        // 초기 null일 때도 잠깐 띄우고, boolean으로 바뀌면 바로 이동
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        // 설정 화면에서 돌아왔을 때 호출
+        notificationsEnabled = viewModel.isNotificationEnabled()
+        if (!notificationsEnabled && hasRequestedPermission) {
+            // 두 번째(취소)라면 앱 종료
+            activity?.finishAffinity()
+        }
+    }
+
+    LaunchedEffect(isLoggedIn, notificationsEnabled, hasRequestedPermission) {
         if (isLoggedIn != null) {
+            // 알림이 꺼져 있으면 설정으로 보내고 중단
+            if (!notificationsEnabled && !hasRequestedPermission) {
+                hasRequestedPermission = true
+                settingsLauncher.launch(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        putExtra("app_uid", context.applicationInfo.uid)
+                        // FLAG_NEW_TASK는 붙이지 않습니다!
+                    }
+                )
+                return@LaunchedEffect
+            }
+            // 알림 허용된 상태에서 기존 로직
             delay(2000)
             if (isLoggedIn == true) {
-                navController.navigate("sleep_setting") { popUpTo("splash") { inclusive = true } }
+                navController.navigate("sleep_setting") {
+                    popUpTo("splash") { inclusive = true }
+                }
             } else {
-                navController.navigate("login") { popUpTo("splash") { inclusive = true } }
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
+                }
             }
         }
     }

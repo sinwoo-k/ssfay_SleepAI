@@ -1,13 +1,24 @@
 package com.example.sleephony.ui.screen.sleep
 
 
+import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import com.example.sleephony.domain.model.AlarmMode
+import com.example.sleephony.receiver.AlarmReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.Calendar
 import javax.inject.Inject
 
 // 1) UI 상태 정의
@@ -36,7 +47,7 @@ data class SleepSummary(
 // 4) ViewModel
 @HiltViewModel
 class SleepViewModel @Inject constructor(
-
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     // 현재 보여줄 화면 상태 (Setting, Running, Summary)
@@ -59,7 +70,47 @@ class SleepViewModel @Inject constructor(
 
     /** 측정 시작 버튼 클릭 */
     fun onStartClicked() {
+        ensureExactAlarmPermission(appContext)
+
+        val sd = _settingData.value
+        val hour24 = to24Hour(sd.hour, sd.isAm)
+        scheduleWakeUp(appContext, hour24, sd.minute)
         _uiState.value = SleepUiState.Running
+    }
+
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
+    private fun scheduleWakeUp(context: Context, hour: Int, minute: Int){
+        // 1) 시간 계산은 그대로
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = System.currentTimeMillis()
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DATE, 1)
+        }
+
+        // 2) 브로드캐스트용 PendingIntent (AlarmReceiver 호출)
+        val broadcastIntent = Intent(context, AlarmReceiver::class.java)
+        val broadcastPi = PendingIntent.getBroadcast(
+            context, 0, broadcastIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 3) 액티비티용 PendingIntent (풀스크린 인텐트용)
+        val activityIntent = Intent(context, AlarmActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val activityPi = PendingIntent.getActivity(
+            context, 0, activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 4) AlarmClockInfo: 두 번째 파라미터로 Activity용 PendingIntent 전달
+        val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, activityPi)
+
+        // 5) setAlarmClock 에는 “실제로 시간이 되면 호출할” Broadcast용 PendingIntent 사용
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.setAlarmClock(info, broadcastPi)
     }
 
     /** 측정 중단(혹은 알람 발생) 이벤트 */
@@ -79,4 +130,26 @@ class SleepViewModel @Inject constructor(
         _settingData.value = SleepSettingData()
         _uiState.value = SleepUiState.Setting
     }
+
+    private fun to24Hour(hour12: Int, isAm: Boolean): Int {
+        return when {
+            isAm && hour12 == 12 -> 0        // 12 AM → 0시
+            !isAm && hour12 < 12 -> hour12 + 12  // PM이고 1~11시 → 13~23시
+            else -> hour12                  // 나머지 (1~11 AM, 12 PM)
+        }
+    }
+
+    private fun ensureExactAlarmPermission(context: Context) {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!am.canScheduleExactAlarms()) {
+                context.startActivity(
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                )
+            }
+        }
+    }
+
 }

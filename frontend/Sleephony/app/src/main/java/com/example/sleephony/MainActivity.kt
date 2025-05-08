@@ -26,8 +26,14 @@ class MainApplication : Application(){
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private lateinit var initialRoute: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        initialRoute = intent.getStringExtra("start_destination") ?: "splash"
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
