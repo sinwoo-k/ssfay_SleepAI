@@ -35,6 +35,7 @@ import com.example.sleephony.ui.common.component.TimeWheelPicker
 
 @Composable
 fun SleepSettingScreen(
+    onStart: () -> Unit,
     viewModel: SleepViewModel = hiltViewModel()
 ) {
     val settingData by viewModel.settingData.collectAsState()
@@ -135,7 +136,7 @@ fun SleepSettingScreen(
             // 3-4) 모드 설명
             Text(
                 text = when (mode) {
-                    AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다.\n   예정시간 : $comfortRangeText "
+                    AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다.\n  예정 시간 : $comfortRangeText "
                     AlarmMode.EXACT   -> "정해진 시간에 정확히 기상합니다.\n"
                     AlarmMode.NONE    -> "알람 없이 수면만 측정합니다.\n"
                 },
@@ -148,7 +149,7 @@ fun SleepSettingScreen(
 
             // 3-5) 수면 시작 버튼
             Button(
-                onClick = { /*TODO: 수면 시작 */ },
+                onClick = onStart,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
