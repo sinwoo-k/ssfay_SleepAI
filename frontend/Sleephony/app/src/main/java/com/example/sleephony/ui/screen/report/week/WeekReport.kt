@@ -16,6 +16,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.components.AverageSleepScore
 import com.example.sleephony.ui.screen.report.components.SleepSummation
@@ -25,7 +26,8 @@ import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun WeekReport(
-    modifier: Modifier
+    modifier: Modifier,
+    navController: NavController
 ) {
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
     val today = LocalDate.now()
@@ -36,11 +38,11 @@ fun WeekReport(
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(25.dp)) {
-                WeeklyCalendar(modifier = modifier,
-                    firstDayOfWeek = firstDayOfWeek,
+                WeeklyCalendar(
+                    modifier = modifier,
                     weekStartState = weekStartState.value,
-                    onPre = { newDate -> weekStartState.value = newDate },
-                    onNext = { newDate -> weekStartState.value = newDate } )
+                    onChange = { newDate -> weekStartState.value = newDate }
+                )
                 Box() {
                     Column {
                         Text(text = "이번주", color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Bold)
@@ -51,11 +53,11 @@ fun WeekReport(
                 }
                 AverageSleepScore(modifier = modifier)
                 SleepSummation(modifier = modifier)
-                WeekSleepTime(modifier = modifier)
-                WeekLatencyTime(modifier = modifier)
-                WeekREMSleepTime(modifier = modifier)
-                WeekLightSleepTime(modifier = modifier)
-                WeekDeepSleepTime(modifier = modifier)
+                WeekSleepTime(modifier = modifier, navController = navController)
+                WeekLatencyTime(modifier = modifier, navController = navController)
+                WeekREMSleepTime(modifier = modifier, navController = navController)
+                WeekLightSleepTime(modifier = modifier, navController = navController)
+                WeekDeepSleepTime(modifier = modifier, navController = navController)
             }
         }
     }
