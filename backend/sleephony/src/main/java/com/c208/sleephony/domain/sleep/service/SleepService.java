@@ -10,6 +10,9 @@ import com.c208.sleephony.domain.sleep.entity.SleepStage;
 import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepReportRepository;
+import com.c208.sleephony.global.exception.RedisOperationException;
+import com.c208.sleephony.global.exception.SleepPredictionException;
+import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import com.c208.sleephony.global.utils.GptClient;
 import lombok.RequiredArgsConstructor;
@@ -34,26 +37,54 @@ public class SleepService {
     private final GptClient gptClient;
 
     public List<SleepPredictionResult> measureSleepStage(BioDataRequestDto requestDto) {
-        LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
-        Integer userId = AuthUtil.getLoginUserId();
+        try {
+            LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
+            Integer userId = AuthUtil.getLoginUserId();
 
-        List<BioData> entities = requestDto.getData().stream()
-                .map(dataPoint -> BioData.builder()
-                        .userId(userId)
-                        .heartRate(dataPoint.getHeartRate().byteValue())
-                        .gyroX(dataPoint.getGyroX())
-                        .gyroY(dataPoint.getGyroY())
-                        .gyroZ(dataPoint.getGyroZ())
-                        .bodyTemperature(0.0f)
-                        .createdAt(LocalDateTime.now())
-                        .measuredAt(baseTime)
-                        .build())
-                .toList();
+            List<BioData> entities = requestDto.getData().stream()
+                    .map(dataPoint -> BioData.builder()
+                            .userId(userId)
+                            .heartRate(dataPoint.getHeartRate().byteValue())
+                            .gyroX(dataPoint.getGyroX())
+                            .gyroY(dataPoint.getGyroY())
+                            .gyroZ(dataPoint.getGyroZ())
+                            .bodyTemperature(0.0f)
+                            .createdAt(LocalDateTime.now())
+                            .measuredAt(baseTime)
+                            .build())
+                    .toList();
 
-        bioRepository.saveAll(entities);
-        return predictAndSaveAll(entities);
+            bioRepository.saveAll(entities);
+            return predictAndSaveAll(entities);
+        } catch (Exception e) {
+            throw new SleepPredictionException("수면 단계 예측 중 오류가 발생했습니다.", e);
+        }
     }
+    public List<SleepPredictionResult> predictAndSaveAll(List<BioData> dataList) {
+        try {
+            List<SleepLevel> entities = new ArrayList<>();
+            List<SleepPredictionResult> results = new ArrayList<>();
 
+            for (BioData data : dataList) {
+                SleepPredictionResult result = predict(data);
+                entities.add(
+                        SleepLevel.builder()
+                                .userId(data.getUserId())
+                                .level(SleepStage.valueOf(result.getLevel()))
+                                .score(result.getScore())
+                                .measuredAt(data.getMeasuredAt())
+                                .createdAt(LocalDateTime.now())
+                                .build()
+                );
+                results.add(result);
+            }
+
+            sleepLevelRepository.saveAll(entities);
+            return results;
+        } catch (Exception e) {
+            throw new SleepPredictionException("수면 단계 저장 또는 예측 중 오류가 발생했습니다.", e);
+        }
+    }
     public List<SleepPredictionResult> predictFromBioDataByDate(LocalDate date) {
         Integer userId = AuthUtil.getLoginUserId();
         LocalDateTime start = date.atStartOfDay();
@@ -62,28 +93,7 @@ public class SleepService {
         return predictAndSaveAll(dataList);
     }
 
-    public List<SleepPredictionResult> predictAndSaveAll(List<BioData> dataList) {
-        List<SleepLevel> entities = new ArrayList<>();
-        List<SleepPredictionResult> results = new ArrayList<>();
 
-        for (BioData data : dataList) {
-            SleepPredictionResult result = predict(data);
-
-            SleepLevel level = SleepLevel.builder()
-                    .userId(data.getUserId())
-                    .level(SleepStage.valueOf(result.getLevel()))
-                    .score(result.getScore())
-                    .measuredAt(data.getMeasuredAt())
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            entities.add(level);
-            results.add(result);
-        }
-
-        sleepLevelRepository.saveAll(entities);
-        return results;
-    }
 
     private SleepPredictionResult predict(BioData data) {
         double gyroMagnitude = Math.sqrt(
@@ -119,14 +129,24 @@ public class SleepService {
     public String startMeasurement(LocalDateTime startedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
-        stringRedisTemplate.opsForValue().set(key, startedAt.toString(), Duration.ofHours(24));
-        return "측정 시작 시각 저장 완료";
+        try {
+            stringRedisTemplate.opsForValue().set(key, startedAt.toString(), Duration.ofHours(24));
+            return "측정 시작 시각 저장 완료";
+        } catch (Exception e) {
+            throw new RedisOperationException("Redis에 측정 시작 시각 저장 중 오류가 발생했습니다.", e);
+        }
     }
 
     public SleepReport generateSleepReport(LocalDateTime endedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
-        LocalDateTime startedAt = LocalDateTime.parse(Objects.requireNonNull(stringRedisTemplate.opsForValue().getAndDelete(key)));
+        LocalDateTime startedAt;
+        try {
+            String raw = stringRedisTemplate.opsForValue().getAndDelete(key);
+            startedAt = LocalDateTime.parse(Objects.requireNonNull(raw));
+        } catch (Exception e) {
+            throw new RedisOperationException("Redis에서 시작 시각을 조회/삭제하는 중 오류가 발생했습니다.", e);
+        }
         List<SleepLevel> levels = sleepLevelRepository.findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
 
         int awake = 0, rem = 0, n1 = 0, n2 = 0, n3 = 0;
@@ -175,7 +195,9 @@ public class SleepService {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.plusDays(1).atStartOfDay();
 
-        return sleepReportRepository.findFirstByUserIdAndSleepTimeBetween(userId, from, to).orElse(null);
+        return sleepReportRepository
+                .findFirstByUserIdAndSleepTimeBetween(userId, from, to)
+                .orElseThrow(() -> new SleepReportNotFoundException("해당 날짜 리포트가 없습니다."));
     }
 
     public List<SleepGraphPointDto> getSleepGraphPoints(LocalDate date) {

@@ -1,7 +1,6 @@
 package com.c208.sleephony.global.handler;
 
-import com.c208.sleephony.global.exception.ThemeNotFoundException;
-import com.c208.sleephony.global.exception.UserNotFoundException;
+import com.c208.sleephony.global.exception.*;
 import com.c208.sleephony.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Getter;
@@ -14,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -81,5 +81,41 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ThemeNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleThemeNotFound(ThemeNotFoundException e) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(SleepReportNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleSleepReportNotFound(SleepReportNotFoundException e) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidDateRangeException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidDate(InvalidDateRangeException e) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler({SleepPredictionException.class, SleepReportGenerationException.class})
+    public ResponseEntity<ApiResponse<?>> handleReportError(RuntimeException e) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR,
+                "수면 리포트 생성 중 오류가 발생했습니다.");
+    }
+
+    @ExceptionHandler(GptApiException.class)
+    public ResponseEntity<ApiResponse<?>> handleGptError(GptApiException e) {
+        return buildErrorResponse(HttpStatus.BAD_GATEWAY, ErrorCode.INTERNAL_SERVER_ERROR,
+                "AI 분석 서버와의 통신에 실패했습니다.");
+    }
+
+    @ExceptionHandler(RedisOperationException.class)
+    public ResponseEntity<ApiResponse<?>> handleRedisError(RedisOperationException e) {
+        return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.INTERNAL_SERVER_ERROR,
+                "데이터 저장소 연결에 문제가 발생했습니다.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<?>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String param = e.getName();
+        String value = e.getValue() == null ? "" : e.getValue().toString();
+        String msg = String.format("'%s' 파라미터의 값 '%s' 형식이 올바르지 않습니다. 올바른 날짜 포맷은 yyyy-MM-dd 입니다.", param, value);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
     }
 }
