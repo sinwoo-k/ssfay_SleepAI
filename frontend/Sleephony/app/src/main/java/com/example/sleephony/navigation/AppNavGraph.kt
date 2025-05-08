@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
+import com.example.sleephony.ui.screen.report.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
@@ -158,8 +160,12 @@ fun AppNavGraph(
             }
 
         composable("report") {
-            ReportScreen(modifier = Modifier)
+            ReportScreen(modifier = Modifier, navController = navController)
         }
 
+        composable("detail/{page}") { it ->
+            val page = it.arguments?.getString("page") ?: ""
+            SleepDetailScreen(modifier = Modifier,page = page, navController = navController)
+        }
     }
 }
