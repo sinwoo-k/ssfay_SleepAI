@@ -1,0 +1,118 @@
+# Environments
+
+venv/
+.env
+.venv
+env/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+
+\*\$py.class
+
+# C extensions
+
+\*.so
+
+# Distribution / packaging
+
+.Python
+build/
+develop-eggs/
+dist/
+download/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+\*.egg-info/
+.installed.cfg
+\*.egg
+
+# PyInstaller
+__pycache__/
+*.py[cod]
+
+# Usually these files are written by a python script from a template
+
+# before PyInstaller builds the exe, so as to inject date/other infos into it.
+
+\*.manifest
+\*.spec
+
+# Installer logs
+
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.\*
+.cache
+.pytest\_cache/
+nosetests.xml
+coverage.xml
+\*,cover
+
+# Translations
+
+\*.mo
+\*.pot
+
+# Django stuff:
+
+\*.log
+local\_settings.py
+
+# Flask stuff:
+
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+
+.scrapy
+
+# Sphinx documentation
+
+docs/\_build/
+
+# PyBuilder
+
+target/
+
+# Jupyter Notebook
+
+.ipynb\_checkpoints
+
+# IPython
+
+profile\_default/
+ipython\_config.py
+
+
+# VS Code
+
+.vscode/
+
+# macOS
+
+.DS\_Store
+
+# Windows
+
+Thumbs.db
+
+# Model and data files
+
+\*.h5
+\*.keras/
+\`\`
