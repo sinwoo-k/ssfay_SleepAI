@@ -7,7 +7,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
-public class BioDataRequestDto {
+public class BioDataRequest {
     private String measuredAt;
     private List<DataPoint> data;
 

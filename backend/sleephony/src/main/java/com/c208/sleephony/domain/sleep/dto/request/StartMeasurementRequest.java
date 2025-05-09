@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @Builder
-public class EndMeasurementRequestDto {
-    private LocalDateTime endedAt;
+public class StartMeasurementRequest {
+
+    private LocalDateTime startedAt;
 }
