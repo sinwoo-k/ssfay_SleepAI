@@ -73,24 +73,20 @@ public class SleepController {
     }
 
     @Operation(summary = "생체 데이터 기반 수면 단계 재예측", description = "저장된 생체 데이터를 바탕으로 수면 단계 및 점수를 다시 예측하고 저장합니다.")
-    @GetMapping("measure/from-bio")
+    @GetMapping("measure/from-bio/{date}")
     public ApiResponse<List<SleepPredictionResult>> measureSleepLevelsFromBioData(
             @Parameter(description = "측정 대상 날짜 (yyyy-MM-dd)", required = true)
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         return ApiResponse.success(HttpStatus.OK,sleepService.predictFromBioDataByDate(date));
     }
 
     @Operation(summary = "GPT API를 통한 AI 리포트", description = "기록된 리포트를 바탕으로 GPT에게 프롬프트를 이용한 AI 분석 리포트 제공")
-    @GetMapping("report/ai")
+    @GetMapping("ai-report/{date}")
     public ApiResponse<String> measureSleepLevelsFromAIData(
             @Parameter(description = "측정 대상 날짜 (yyyy-MM-dd)", required = true)
-            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        SleepReport report = sleepService.getReportByDate(date);
-        if (report == null) {
-            return ApiResponse.fail(HttpStatus.NOT_FOUND,"해당 날짜 리포트가 없습니다.");
-        }
-        return ApiResponse.success(HttpStatus.OK, sleepService.advise(report));
+        return ApiResponse.success(HttpStatus.OK, sleepService.advise(sleepService.getReportByDate(date)));
     }
 }
