@@ -47,7 +47,7 @@ fun SleepDetailScreen(
             contentScale = ContentScale.FillWidth
         )
         Column(
-            modifier = modifier.padding(top = 35.dp, start = 10.dp, end = 10.dp, bottom =50.dp)
+            modifier = modifier.padding(top = 25.dp, start = 20.dp, end = 20.dp, bottom =50.dp)
         ) {
             DetailTopBar(
                 modifier = modifier,
@@ -56,7 +56,7 @@ fun SleepDetailScreen(
             )
             when(page) {
                 "sleep_time" -> SleepTimeDetailScreen(modifier = modifier)
-                "sleep_latency" -> SleepLatencyDetailScreen()
+                "sleep_latency" -> SleepLatencyDetailScreen(modifier = modifier)
                 "sleep_REM" -> SleepREMDetailScreen()
                 "sleep_light" -> SleepLightDetailScreen()
                 "sleep_deep" -> SleepDeepDetailScreen()
