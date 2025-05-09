@@ -7,17 +7,17 @@ import lombok.*;
 @Builder
 public class SummaryResponse {
     private String period;
-    private int    averageSleepScore;
-    private int    averageSleepTimeMinutes;
-    private int    averageSleepLatencyMinutes;
-    private int    averageLightSleepMinutes;
-    private int    averageLightSleepPercentage;
-    private int    averageRemSleepMinutes;
-    private int    averageRemSleepPercentage;
-    private int    averageDeepSleepMinutes;
-    private int    averageDeepSleepPercentage;
-    private int    averageAwakeMinutes;
-    private int    averageAwakePercentage;
-    private int    averageSleepCycleCount;
+    private Integer    averageSleepScore;
+    private Integer    averageSleepTimeMinutes;
+    private Integer    averageSleepLatencyMinutes;
+    private Integer    averageLightSleepMinutes;
+    private Integer    averageLightSleepPercentage;
+    private Integer    averageRemSleepMinutes;
+    private Integer    averageRemSleepPercentage;
+    private Integer    averageDeepSleepMinutes;
+    private Integer    averageDeepSleepPercentage;
+    private Integer    averageAwakeMinutes;
+    private Integer    averageAwakePercentage;
+    private Integer    averageSleepCycleCount;
 
 }
