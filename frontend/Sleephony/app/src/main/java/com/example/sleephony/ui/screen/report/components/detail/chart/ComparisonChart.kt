@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -33,11 +32,16 @@ fun ComparisonChart(
 ) {
     fun change(value: Float): Float {
         val length = value.toInt().toString().length
-        when (length) {
-            2 -> return ((value / 100) * 300)
-            3 -> return ((value / 1000) * 300)
-            4 -> return ((value / 10000) * 300)
-            else -> return .0f
+        if (length == 2) {
+            val a:Float = ((value / 100) * 150)
+            Log.d("ssafy","$a")
+            return a
+        } else if (length == 3) {
+            val a = ((value / 1000) * 150)
+            Log.d("ssafy","$a")
+           return a
+        } else {
+            return .0f
         }
     }
     Box(modifier = modifier.fillMaxWidth()) {
