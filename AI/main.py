@@ -6,7 +6,7 @@ import numpy as np
 
 app = FastAPI(title="Sleepony Prediction API")  # 앱 이름도 바꿔봄
 
-@app.post("/predict_raw")
+@app.post("/api/ai/sleep-stage")
 def predict_raw(seq: RawSequence):
     feats = []
     for w in seq.windows:
