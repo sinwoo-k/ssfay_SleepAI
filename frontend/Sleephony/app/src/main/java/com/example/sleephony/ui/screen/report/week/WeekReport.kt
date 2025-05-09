@@ -33,7 +33,7 @@ fun WeekReport(
     val today = LocalDate.now()
     val weekStartState = remember { mutableStateOf(today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))) }
     LazyColumn(
-        modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp)
+        modifier = modifier
             .fillMaxSize(),
     ) {
         item {
