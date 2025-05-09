@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +50,7 @@ fun ReportScreen(
                 .height(300.dp),
             contentScale = ContentScale.FillWidth
         )
-        Column {
+        Column(modifier = modifier.padding(top = 25.dp, start = 20.dp, end = 20.dp, bottom =50.dp)) {
             ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
             when (step.value) {
                 1 -> WeekReport(modifier = modifier, navController = navController)
