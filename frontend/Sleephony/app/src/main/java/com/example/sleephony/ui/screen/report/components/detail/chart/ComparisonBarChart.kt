@@ -18,7 +18,9 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 fun ComparisonBarChart(
     modifier: Modifier = Modifier,
     days: List<String>,
-    sleepHours:List<Float>
+    sleepHours:List<Float>,
+    before:Float,
+    after:Float
 ) {
     AndroidView(
         modifier = modifier,
@@ -48,22 +50,22 @@ fun ComparisonBarChart(
                     textColor = android.graphics.Color.WHITE  // Y축 텍스트 색상
 
 
-                    val myAverageLine = LimitLine(8.05f, "").apply {
+                    val beforeAverageLine = LimitLine(before, "").apply {
                         lineColor = ContextCompat.getColor(context,R.color.light_gray)
                         lineWidth = 2f
                         textColor = android.graphics.Color.WHITE
                         textSize = 12f
                     }
 
-                    val maleAverageLine = LimitLine(6.95f, "").apply {
-                        lineColor = ContextCompat.getColor(context,R.color.dark_navy)
+                    val afterAverageLine = LimitLine(after, "").apply {
+                        lineColor = ContextCompat.getColor(context,R.color.steel_blue)
                         lineWidth = 2f
                         textColor = android.graphics.Color.WHITE
                         textSize = 12f
                     }
 
-                    addLimitLine(myAverageLine)
-                    addLimitLine(maleAverageLine)
+                    addLimitLine(beforeAverageLine)
+                    addLimitLine(afterAverageLine)
                 }
 
 
