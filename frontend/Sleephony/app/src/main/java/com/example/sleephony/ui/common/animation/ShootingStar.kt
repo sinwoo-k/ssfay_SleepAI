@@ -1,3 +1,5 @@
+package com.example.sleephony.ui.common.animation
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize

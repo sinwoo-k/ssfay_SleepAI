@@ -4,14 +4,19 @@ package com.example.sleephony.ui.screen.sleep
 import android.Manifest
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresPermission
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.receiver.AlarmReceiver
+import com.example.sleephony.service.SleepMeasurementService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,14 +26,13 @@ import kotlinx.coroutines.flow.update
 import java.util.Calendar
 import javax.inject.Inject
 
-// 1) UI 상태 정의
+
 sealed class SleepUiState {
     data object Setting : SleepUiState()                                  // 설정 화면
     data object Running : SleepUiState()                                  // 측정 중 화면
-    data class Summary(val summary: SleepSummary) : SleepUiState()   // 요약 화면
 }
 
-// 2) 설정 화면에서 사용할 데이터 클래스
+// 설정 화면에서 사용할 데이터 클래스
 data class SleepSettingData(
     val hour: Int = 6,
     val minute: Int = 30,
@@ -36,19 +40,15 @@ data class SleepSettingData(
     val mode: AlarmMode = AlarmMode.COMFORT
 )
 
-// 3) 요약에 표시할 샘플 데이터 클래스
-data class SleepSummary(
-    val durationMillis: Long,
-    val deepSleepRatio: Float,
-    val lightSleepRatio: Float,
-    val wakeCount: Int
-)
 
-// 4) ViewModel
 @HiltViewModel
 class SleepViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+
+    companion object {
+        const val ACTION_STOP_MEASUREMENT = "com.example.sleephony.ACTION_STOP_MEASUREMENT"
+    }
 
     // 현재 보여줄 화면 상태 (Setting, Running, Summary)
     private val _uiState = MutableStateFlow<SleepUiState>(SleepUiState.Setting)
@@ -57,6 +57,30 @@ class SleepViewModel @Inject constructor(
     // 설정 화면에서 조작된 시간·모드 값
     private val _settingData = MutableStateFlow(SleepSettingData())
     val settingData: StateFlow<SleepSettingData> = _settingData.asStateFlow()
+
+    private val stopReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_STOP_MEASUREMENT) {
+                Log.d("DBG", "측정 중단 요청 받기")
+                onStopClicked()
+            }
+        }
+    }
+
+    init {
+        val filter = IntentFilter(ACTION_STOP_MEASUREMENT)
+        ContextCompat.registerReceiver(
+            appContext,
+            stopReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        appContext.unregisterReceiver(stopReceiver)
+    }
 
     /** 시간 변경 이벤트 */
     fun onTimeChanged(hour: Int, minute: Int, isAm: Boolean) {
@@ -70,11 +94,19 @@ class SleepViewModel @Inject constructor(
 
     /** 측정 시작 버튼 클릭 */
     fun onStartClicked() {
+        // 알람 권한 설정
         ensureExactAlarmPermission(appContext)
 
+        // 알람 예약
         val sd = _settingData.value
         val hour24 = to24Hour(sd.hour, sd.isAm)
         scheduleWakeUp(appContext, hour24, sd.minute)
+
+        // 측정 시작
+        Intent(appContext, SleepMeasurementService::class.java).also {
+            ContextCompat.startForegroundService(appContext, it)
+        }
+
         _uiState.value = SleepUiState.Running
     }
 
@@ -115,20 +147,28 @@ class SleepViewModel @Inject constructor(
 
     /** 측정 중단(혹은 알람 발생) 이벤트 */
     fun onStopClicked() {
-        // 임시 더미 요약 생성 예시
-        val dummySummary = SleepSummary(
-            durationMillis = 7 * 60 * 60 * 1000L,
-            deepSleepRatio = 0.25f,
-            lightSleepRatio = 0.60f,
-            wakeCount = 3
-        )
-        _uiState.value = SleepUiState.Summary(dummySummary)
-    }
+        // 알람 취소
+        cancelScheduledWakeUp(appContext)
 
-    /** 다시 설정 화면으로 돌아가기 */
-    fun onRestart() {
+        // 측정 중단
+        appContext.stopService(Intent(appContext, SleepMeasurementService::class.java))
+
+
         _settingData.value = SleepSettingData()
         _uiState.value = SleepUiState.Setting
+    }
+
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
+    private fun cancelScheduledWakeUp(context: Context) {
+        val intent = Intent(context, AlarmReceiver::class.java)
+        // 예약 시와 동일한 PendingIntent 플래그 사용
+        val pi = PendingIntent.getBroadcast(
+            context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.cancel(pi)     // AlarmManager 에서 알람 취소
+        pi.cancel()       // PendingIntent 자체도 해제
     }
 
     private fun to24Hour(hour12: Int, isAm: Boolean): Int {
@@ -139,6 +179,7 @@ class SleepViewModel @Inject constructor(
         }
     }
 
+    // 알람 권한 확인하기
     private fun ensureExactAlarmPermission(context: Context) {
         if (Build.VERSION.SDK_INT >= 33) {
             val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

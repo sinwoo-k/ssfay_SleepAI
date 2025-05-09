@@ -1,6 +1,5 @@
 package com.example.sleephony.ui.screen.sleep
 
-import ShootingStar
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,7 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,14 +26,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
 import com.example.sleephony.domain.model.AlarmMode
+import com.example.sleephony.ui.common.animation.ShootingStar
 
 @Composable
 fun SleepMeasurementScreen(
+    onStop: () -> Unit,
     viewModel: SleepViewModel = hiltViewModel()
 ){
     val settingData by viewModel.settingData.collectAsState()
@@ -138,7 +144,21 @@ fun SleepMeasurementScreen(
                 )
             }
             // 중단 버튼
-            Box {  }
+            Box(
+                modifier = Modifier
+                    .offset(y = (-100).dp)
+            ) {
+                Button(
+                    onClick = onStop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape =  RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5063D4))
+                ) {
+                    Text(text = "측정 중단하기", color = Color.White, fontSize = 18.sp)
+                }
+            }
         }
     }
 }

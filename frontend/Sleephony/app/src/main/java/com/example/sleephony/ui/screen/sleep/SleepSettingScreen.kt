@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
 import com.example.sleephony.domain.model.AlarmMode
@@ -153,9 +155,10 @@ fun SleepSettingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape =  RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5063D4))
             ) {
-                Text(text = "수면 시작하기", color = Color.White)
+                Text(text = "수면 시작하기", color = Color.White, fontSize = 18.sp)
             }
 
             Spacer(Modifier.height(8.dp))

@@ -1,6 +1,5 @@
 package com.example.sleephony.ui.screen.splash
 
-import ShootingStar
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,11 +34,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.sleephony.R
+import com.example.sleephony.ui.common.animation.ShootingStar
 import kotlinx.coroutines.delay
 
 @Composable

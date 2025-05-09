@@ -1,6 +1,5 @@
 package com.example.sleephony.ui.screen.sleep
 
-import ShootingStar
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
@@ -44,6 +43,8 @@ import androidx.compose.ui.unit.sp
 import com.example.sleephony.MainActivity
 import com.example.sleephony.R
 import com.example.sleephony.service.AlarmForegroundService
+import com.example.sleephony.service.SleepMeasurementService
+import com.example.sleephony.ui.common.animation.ShootingStar
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlin.math.roundToInt
 
@@ -56,6 +57,7 @@ class AlarmActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             (getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager)
                 .requestDismissKeyguard(this, null)
         } else {
@@ -158,6 +160,11 @@ class AlarmActivity : ComponentActivity() {
                                             putExtra("start_destination", "sleep_setting")
                                         }
                                         stopService(Intent(this@AlarmActivity, AlarmForegroundService::class.java))
+
+                                        stopService(Intent(this@AlarmActivity, SleepMeasurementService::class.java))
+
+                                        sendBroadcast(Intent(SleepViewModel.ACTION_STOP_MEASUREMENT))
+
                                         startActivity(navIntent)
                                         activity.finish()
                                     } else {
