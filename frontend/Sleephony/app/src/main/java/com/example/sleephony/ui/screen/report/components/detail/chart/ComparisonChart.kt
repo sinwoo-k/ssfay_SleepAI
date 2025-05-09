@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -30,55 +31,80 @@ fun ComparisonChart(
 ) {
     fun change(value:Float):Float {
         val length = value.toInt().toString().length
-        if (length == 2) {
-            val a:Float = ((value / 100) * 150)
-            Log.d("ssafy","$a")
-            return a
-        } else if (length == 3) {
-            val a = ((value / 1000) * 150)
-            Log.d("ssafy","$a")
-           return a
-        } else {
-            return .0f
+        when (length) {
+            2 -> return ((value / 100) * 300)
+            3 -> return ((value / 1000) * 300)
+            4 -> return ((value / 10000) * 300)
+            else -> return .0f
         }
     }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 55.dp, end = 55.dp)
             .background(color = Color.Black.copy(alpha = .3f), shape = RoundedCornerShape(20.dp)),
         contentAlignment = Alignment.Center
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(30.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.Bottom
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+                modifier = modifier.fillMaxWidth()
             ) {
-                Box(
-                    modifier = Modifier
-                        .width(30.dp)
-                        .height(change(before_value).dp)
-                        .background(color = colorResource(R.color.RoyalBlue), shape = RoundedCornerShape(10.dp))
-                )
-                Text(text = "$before_name", color = Color.White.copy(alpha = .3f))
-                Text(text = "$before_value", color = Color.White.copy(alpha = .3f))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(5.dp,Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = modifier.size(15.dp).background(color = colorResource(R.color.steel_blue), shape = RoundedCornerShape(50.dp)))
+                    Text(text = "$before_name", color = Color.White.copy(alpha = .3f))
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(5.dp,Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = modifier.size(15.dp).background(color = colorResource(R.color.SkyBlue), shape = RoundedCornerShape(50.dp)))
+                    Text(text = "$after_name", color = Color.White)
+                }
             }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                modifier = modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(text = "$before_value", color = Color.White.copy(alpha = .3f))
                 Box(
                     modifier = Modifier
-                        .width(30.dp)
-                        .height(change(after_value).dp)
-                        .background(color = colorResource(R.color.SkyBlue), shape = RoundedCornerShape(10.dp))
+                        .width(change(before_value).dp)
+                        .height(30.dp)
+                        .background(
+                            color = colorResource(R.color.steel_blue),
+                            shape = RoundedCornerShape(10.dp)
+                        )
                 )
-                Text(text = "$after_name", color = Color.White)
+            }
+
+            Row(
+                modifier = modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(15.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(text = "$after_value", color = Color.White)
+                Box(
+                    modifier = Modifier
+                        .width(change(after_value).dp)
+                        .height(30.dp)
+                        .background(
+                            color = colorResource(R.color.SkyBlue),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                )
             }
         }
     }
