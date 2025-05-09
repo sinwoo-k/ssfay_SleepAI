@@ -3,7 +3,6 @@ package com.example.sleephony.ui.screen.sleep
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,29 +15,49 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
 import com.example.sleephony.domain.model.AlarmMode
+import com.example.sleephony.ui.common.component.TimeWheelPicker
 
 @Composable
-fun SleepSettingScreen() {
-    // 임시 고정 값
-    val themeLabel = "빗속으로"
-    val hour = 6
-    val minute = 30
-    val mode = AlarmMode.COMFORT
+fun SleepSettingScreen(
+    onStart: () -> Unit,
+    viewModel: SleepViewModel = hiltViewModel()
+) {
+    val settingData by viewModel.settingData.collectAsState()
+    val (hour, minute, isAm, mode) = settingData
+    // 알람 범위 계산
+    fun formatWithPeriod(totalMinutes: Int): String {
+        val normalized = (totalMinutes + 24 * 60) % (24 * 60)
+        val h24 = normalized / 60
+        val m   = normalized % 60
+        val period = if (h24 < 12) "오전" else "오후"
+        val h12 = (h24 % 12).let { if (it == 0) 12 else it }
+        return "$period ${h12}:${m.toString().padStart(2, '0')}"
+    }
+
+    // 기준을 분으로 환산
+    val baseTotal = ((if (hour == 12) 0 else hour) + if (isAm) 0 else 12) * 60 + minute
+    val startTotal = baseTotal - 30
+    val endTotal   = baseTotal + 30
+
+    val comfortRangeText = "${formatWithPeriod(startTotal)} – ${formatWithPeriod(endTotal)}"
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 1) 그라데이션 배경
@@ -74,34 +93,20 @@ fun SleepSettingScreen() {
 
             Spacer(Modifier.height(48.dp))
 
-            // 3-2) 시간 휠 (간단히 텍스트로 배치)
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = String.format("%02d:%02d", (hour + 23) % 24, minute),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White.copy(alpha = 0.5f)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = String.format("%02d:%02d", hour, minute),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = Color.White
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = String.format("%02d:%02d", (hour + 1) % 24, minute),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White.copy(alpha = 0.5f)
-                    )
+            // 3-2) 시간 휠
+            Column(modifier = Modifier.padding(16.dp)) {
+                TimeWheelPicker (
+                    initialHour   = hour,
+                    initialMinute = minute,
+                    initialIsAm   = isAm
+                ) { h, m, am ->
+                    viewModel.onTimeChanged(h, m, am)
                 }
-                // 클릭 영역
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .clickable { /*TODO: TimePickerDialog 띄우기*/ }
-                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
             }
+
 
             Spacer(Modifier.height(48.dp))
 
@@ -113,7 +118,7 @@ fun SleepSettingScreen() {
                 AlarmMode.values().forEach { m ->
                     val selected = m == mode
                     OutlinedButton(
-                        onClick = { /*TODO: mode 변경*/ },
+                        onClick = { viewModel.onModeSelected(m) },
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = if (selected) Color.White.copy(alpha = 0.2f) else Color.Transparent
                         ),
@@ -133,26 +138,27 @@ fun SleepSettingScreen() {
             // 3-4) 모드 설명
             Text(
                 text = when (mode) {
-                    AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다."
-                    AlarmMode.EXACT   -> "정해진 시간에 정확히 기상합니다."
-                    AlarmMode.NONE    -> "알람 없이 수면만 측정합니다."
+                    AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다.\n  예정 시간 : $comfortRangeText "
+                    AlarmMode.EXACT   -> "정해진 시간에 정확히 기상합니다.\n"
+                    AlarmMode.NONE    -> "알람 없이 수면만 측정합니다.\n"
                 },
                 color = Color.White.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(24.dp))
 
             // 3-5) 수면 시작 버튼
             Button(
-                onClick = { /*TODO: 수면 시작 */ },
+                onClick = onStart,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape =  RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5063D4))
             ) {
-                Text(text = "수면 시작하기", color = Color.White)
+                Text(text = "수면 시작하기", color = Color.White, fontSize = 18.sp)
             }
 
             Spacer(Modifier.height(8.dp))

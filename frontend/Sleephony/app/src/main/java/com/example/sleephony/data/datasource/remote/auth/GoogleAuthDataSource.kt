@@ -2,12 +2,10 @@ package com.example.sleephony.data.datasource
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
-import com.example.sleephony.BuildConfig
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.CoroutineDispatcher
@@ -51,8 +49,6 @@ class GoogleAuthDataSource(
         val cred = resp.credential as? CustomCredential
             ?: error("Credential is not CustomCredential")
         val googleCred = GoogleIdTokenCredential.createFrom(cred.data)
-
-        Log.d("GOOGLE_ID_TOKEN", googleCred.id)      // 토큰 자체도 로그
 
         return googleCred.id
     }

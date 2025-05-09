@@ -1,11 +1,15 @@
 package com.example.sleephony.navigation
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -19,7 +23,9 @@ import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
+import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
+import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
 import com.example.sleephony.ui.screen.statistics.StatisticsScreen
@@ -43,6 +49,7 @@ fun AppNavGraph(
     val showBottomBar = currentRoute in bottomRoutes
 
     Scaffold (
+        containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 BottomNavBar(navController)
@@ -52,7 +59,7 @@ fun AppNavGraph(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding).fillMaxSize()
         ){
             composable("splash"){
                 val splashVm: SplashViewModel = hiltViewModel()
@@ -108,9 +115,34 @@ fun AppNavGraph(
                     }
                 }
             }
-
-            composable("sleep_setting"){
-                SleepSettingScreen()
+            // 수면 측정 관련
+            composable("sleep_setting"){backStackEntry ->
+                val vm: SleepViewModel = hiltViewModel(backStackEntry)
+                SleepSettingScreen(
+                    viewModel = vm,
+                    onStart = {
+                        vm.onStartClicked()
+                        navController.navigate("sleep_measurement") {
+                            popUpTo("sleep_setting") { inclusive = false }
+                        }
+                    }
+                )
+            }
+            composable("sleep_measurement"){
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val settingEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry("sleep_setting")
+                }
+                val vm: SleepViewModel = hiltViewModel(settingEntry)
+                SleepMeasurementScreen(
+                    onStop = {
+                        vm.onStopClicked()
+                        navController.navigate("sleep_setting") {
+                            popUpTo("sleep_measurement") { inclusive = false }
+                        }
+                    },
+                    viewModel = vm
+                )
             }
 
             composable("report") {

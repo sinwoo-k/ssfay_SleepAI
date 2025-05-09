@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation("androidx.core:core-ktx:1.16.0")
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
@@ -124,6 +125,9 @@ dependencies {
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+    // utils
+    implementation("dev.chrisbanes.snapper:snapper:0.3.0")
 
     // Test
     testImplementation            (libs.junit)

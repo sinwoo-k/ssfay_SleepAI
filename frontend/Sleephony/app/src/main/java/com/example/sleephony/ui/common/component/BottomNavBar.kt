@@ -1,5 +1,7 @@
 package com.example.sleephony.ui.common.component
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -25,6 +27,15 @@ sealed class BottomNavItem(val route: String, val icon: Int, val title: String) 
 
 @Composable
 fun BottomNavBar(navController: NavHostController){
+
+    // Activity 레퍼런스
+    val activity = LocalActivity.current
+
+    // 뒤로가기 핸들러
+    BackHandler {
+        activity?.finish()
+    }
+
     val items = listOf(
         BottomNavItem.Sleep,
         BottomNavItem.Report,
