@@ -1,8 +1,11 @@
 package com.c208.sleephony.domain.sleep.service;
 
 import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
-import com.c208.sleephony.domain.sleep.dto.request.BioDataRequestDto;
-import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPointDto;
+import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
+import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
+import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
+import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
+import com.c208.sleephony.domain.sleep.dto.response.SummaryResponse;
 import com.c208.sleephony.domain.sleep.entity.BioData;
 import com.c208.sleephony.domain.sleep.entity.SleepLevel;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
@@ -20,10 +23,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -36,7 +41,7 @@ public class SleepService {
     private final StringRedisTemplate stringRedisTemplate;
     private final GptClient gptClient;
 
-    public List<SleepPredictionResult> measureSleepStage(BioDataRequestDto requestDto) {
+    public List<SleepPredictionResult> measureSleepStage(BioDataRequest requestDto) {
         try {
             LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
             Integer userId = AuthUtil.getLoginUserId();
@@ -85,15 +90,99 @@ public class SleepService {
             throw new SleepPredictionException("수면 단계 저장 또는 예측 중 오류가 발생했습니다.", e);
         }
     }
-    public List<SleepPredictionResult> predictFromBioDataByDate(LocalDate date) {
+
+    public List<SleepPredictionResult> predictFromBioDataByRange(
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    ) {
         Integer userId = AuthUtil.getLoginUserId();
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.atTime(23, 59, 59);
-        List<BioData> dataList = bioRepository.findByUserIdAndMeasuredAtBetween(userId, start, end);
-        return predictAndSaveAll(dataList);
+        // 1초 단위로 저장된 전체 리스트
+        List<BioData> dataList =
+                bioRepository.findByUserIdAndMeasuredAtBetween(userId, startDateTime, endDateTime);
+
+        if (dataList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // epoch 초로 변환 (UTC 기준)
+        long startEpoch = startDateTime.toEpochSecond(ZoneOffset.UTC);
+        long endEpoch   = endDateTime.toEpochSecond(ZoneOffset.UTC);
+        final int WINDOW = 30; // 초 단위
+
+        List<SleepLevel> entities = new ArrayList<>();
+        List<SleepPredictionResult> results = new ArrayList<>();
+
+        // startEpoch 부터 endEpoch 까지 WINDOW 간격으로 순회
+        for (long windowStart = startEpoch;
+             windowStart + WINDOW <= endEpoch;
+             windowStart += WINDOW) {
+
+            long windowEnd = windowStart + WINDOW;
+
+            // 각 윈도우에 속하는 30개의 데이터만 필터링
+            long finalWindowStart = windowStart;
+            List<BioData> windowData = dataList.stream()
+                    .filter(d -> {
+                        long epoch = d.getMeasuredAt().toEpochSecond(ZoneOffset.UTC);
+                        return epoch >= finalWindowStart && epoch < windowEnd;
+                    })
+                    .toList();
+
+            if (windowData.isEmpty()) {
+                continue;
+            }
+
+            // 윈도우 내 평균값 계산
+            double avgHeartRate = windowData.stream()
+                    .mapToInt(BioData::getHeartRate)
+                    .average().orElse(0);
+
+            double avgGyroX = windowData.stream()
+                    .mapToDouble(BioData::getGyroX)
+                    .average().orElse(0);
+            double avgGyroY = windowData.stream()
+                    .mapToDouble(BioData::getGyroY)
+                    .average().orElse(0);
+            double avgGyroZ = windowData.stream()
+                    .mapToDouble(BioData::getGyroZ)
+                    .average().orElse(0);
+
+            double avgTemp = windowData.stream()
+                    .mapToDouble(BioData::getBodyTemperature)
+                    .average().orElse(0);
+
+            // 평균값을 가지는 임시 BioData 객체 생성
+            BioData aggregated = new BioData();
+            aggregated.setUserId(userId);
+            aggregated.setMeasuredAt(
+                    LocalDateTime.ofEpochSecond(windowStart, 0, ZoneOffset.UTC)
+            );
+            aggregated.setHeartRate((byte) Math.round(avgHeartRate));
+            aggregated.setGyroX((float)avgGyroX);
+            aggregated.setGyroY((float)avgGyroY);
+            aggregated.setGyroZ((float)avgGyroZ);
+            aggregated.setBodyTemperature((float)avgTemp);
+
+            // 예측 수행
+            SleepPredictionResult result = predict(aggregated);
+
+            // 엔티티로 변환
+            entities.add(
+                    SleepLevel.builder()
+                            .userId(userId)
+                            .level(SleepStage.valueOf(result.getLevel()))
+                            .score(result.getScore())
+                            .measuredAt(aggregated.getMeasuredAt())
+                            .createdAt(LocalDateTime.now())
+                            .build()
+            );
+            results.add(result);
+        }
+
+        // 한 번에 저장
+        sleepLevelRepository.saveAll(entities);
+        return results;
     }
-
-
 
     private SleepPredictionResult predict(BioData data) {
         double gyroMagnitude = Math.sqrt(
@@ -140,50 +229,70 @@ public class SleepService {
     public SleepReport generateSleepReport(LocalDateTime endedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
-        LocalDateTime startedAt;
-        try {
-            String raw = stringRedisTemplate.opsForValue().getAndDelete(key);
-            startedAt = LocalDateTime.parse(Objects.requireNonNull(raw));
-        } catch (Exception e) {
-            throw new RedisOperationException("Redis에서 시작 시각을 조회/삭제하는 중 오류가 발생했습니다.", e);
-        }
-        List<SleepLevel> levels = sleepLevelRepository.findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
+        // Redis에서 시작 시각 조회
+        LocalDateTime startedAt = LocalDateTime.parse(
+                Objects.requireNonNull(stringRedisTemplate.opsForValue().getAndDelete(key))
+        );
 
-        int awake = 0, rem = 0, n1 = 0, n2 = 0, n3 = 0;
+        // 30초 윈도우 단위로 저장된 SleepLevel 조회
+        List<SleepLevel> levels = sleepLevelRepository
+                .findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
+
+        // 각 단계별 윈도우 카운트
+        int awakeCount = 0, remCount = 0, n1Count = 0, n2Count = 0, n3Count = 0;
         LocalDateTime firstN1 = null;
         for (SleepLevel level : levels) {
             switch (level.getLevel()) {
-                case AWAKE -> awake++;
-                case REM -> rem++;
+                case AWAKE -> awakeCount++;
+                case REM   -> remCount++;
                 case NREM1 -> {
-                    n1++;
+                    n1Count++;
                     if (firstN1 == null) firstN1 = level.getMeasuredAt();
                 }
                 case NREM2 -> {
-                    n2++;
+                    n2Count++;
                     if (firstN1 == null) firstN1 = level.getMeasuredAt();
                 }
-                case NREM3 -> n3++;
+                case NREM3 -> n3Count++;
             }
         }
 
-        int nrem = n1 + n2;
-        int deep = n3;
-        int cycle = Math.max(1, (rem + nrem + deep) / 90);
-        int score = 100 - (int) (awake * 0.5) + (int) (rem * 0.2) + (int) (deep * 0.3);
+        int nremCount = n1Count + n2Count;
+        // 1 윈도우 = 30초 이므로, 초 단위로 환산
+        int awakeSeconds = awakeCount * 30;
+        int remSeconds   = remCount   * 30;
+        int nremSeconds  = nremCount  * 30;
+        int deepSeconds  = n3Count    * 30;
+
+        // 분 단위로 변환 (반올림)
+        int awakeMinutes = Math.toIntExact(Math.round(awakeSeconds / 60.0));
+        int remMinutes   = Math.toIntExact(Math.round(remSeconds   / 60.0));
+        int nremMinutes  = Math.toIntExact(Math.round(nremSeconds  / 60.0));
+        int deepMinutes  = Math.toIntExact(Math.round(deepSeconds  / 60.0));
+
+        // 수면 주기 계산 (90분당 1주기 가정)
+        int totalSleepMinutes = (int) Duration.between(startedAt, endedAt).toMinutes();
+        int cycleCount = Math.max(1, totalSleepMinutes / 90);
+
+        // 최종 점수 계산 (예시 로직 그대로)
+        int score = 100
+                - (int)(awakeMinutes * 0.5)
+                + (int)(remMinutes   * 0.2)
+                + (int)(deepMinutes  * 0.3);
         score = Math.max(1, Math.min(score, 100));
 
+        // SleepReport 빌드
         SleepReport report = SleepReport.builder()
                 .userId(userId)
                 .sleepScore(score)
                 .realSleepTime(firstN1)
                 .sleepTime(startedAt)
                 .sleepWakeTime(endedAt)
-                .awakeTime(awake)
-                .remTime(rem)
-                .nremTime(nrem)
-                .deepTime(deep)
-                .sleepCycle(cycle)
+                .awakeTime(awakeMinutes)
+                .remTime(remMinutes)
+                .nremTime(nremMinutes)
+                .deepTime(deepMinutes)
+                .sleepCycle(cycleCount)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -200,7 +309,7 @@ public class SleepService {
                 .orElseThrow(() -> new SleepReportNotFoundException("해당 날짜 리포트가 없습니다."));
     }
 
-    public List<SleepGraphPointDto> getSleepGraphPoints(LocalDate date) {
+    public List<SleepGraphPoint> getSleepGraphPoints(LocalDate date) {
         Integer userId = AuthUtil.getLoginUserId();
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(23, 59, 59);
@@ -208,7 +317,7 @@ public class SleepService {
         List<SleepLevel> levels = sleepLevelRepository.findByUserIdAndMeasuredAtBetween(userId, start, end);
 
         return levels.stream()
-                .map(level -> SleepGraphPointDto.builder()
+                .map(level -> SleepGraphPoint.builder()
                         .measuredAt(level.getMeasuredAt())
                         .level(level.getLevel())
                         .score(level.getScore())
@@ -266,4 +375,165 @@ public class SleepService {
         return (int) java.time.Duration.between(from, to).toMinutes();
     }
 
+    public SummaryResponse summarize(StatisticsRequest req){
+        Integer userId = AuthUtil.getLoginUserId();
+        List<SleepReport> reports = fetchReports(userId, req);
+
+        double avgScore = reports.stream()
+                .mapToInt(SleepReport::getSleepScore)
+                .average().orElse(0);
+
+        double avgTime = reports.stream()
+                .mapToLong(report ->
+                        Duration.between(report.getSleepTime(), report.getSleepWakeTime()).toMinutes()
+                ).average().orElse(0);
+
+        double avgLatency = reports.stream()
+                .mapToLong(report ->
+                        Duration.between(report.getSleepTime(), report.getRealSleepTime()).toMinutes()
+                ).average().orElse(0);
+
+        double avgLight = reports.stream()
+                .mapToInt(SleepReport::getNremTime)
+                .average().orElse(0);
+
+        double avgRem = reports.stream()
+                .mapToInt(SleepReport::getRemTime)
+                .average().orElse(0);
+
+        double avgDeep = reports.stream()
+                .mapToInt(SleepReport::getDeepTime)
+                .average().orElse(0);
+
+        double avgAwake = reports.stream()
+                .mapToInt(SleepReport::getAwakeTime)
+                .average().orElse(0);
+
+        double avgCycles = reports.stream()
+                .mapToInt(SleepReport::getSleepCycle)
+                .average().orElse(0);
+
+        return SummaryResponse.builder()
+                .period(formatPeriod(req.getStartDate(),req.getEndDate()))
+                .averageSleepScore((int) Math.round(avgScore))
+                .averageSleepTimeMinutes((int) Math.round(avgTime))
+                .averageSleepLatencyMinutes((int) Math.round(avgLatency))
+                .averageLightSleepMinutes((int) Math.round(avgLight))
+                .averageLightSleepPercentage(percentage(avgLight, avgTime))
+                .averageRemSleepMinutes((int) Math.round(avgRem))
+                .averageRemSleepPercentage(percentage(avgRem, avgTime))
+                .averageDeepSleepMinutes((int) Math.round(avgDeep))
+                .averageDeepSleepPercentage(percentage(avgDeep, avgTime))
+                .averageAwakeMinutes((int) Math.round(avgAwake))
+                .averageAwakePercentage(percentage(avgAwake, avgTime))
+                .averageSleepCycleCount((int) Math.round(avgCycles))
+                .build();
+    }
+
+    public GraphResponse graph(StatisticsRequest req){
+        Integer userId = AuthUtil.getLoginUserId();
+        List<SleepReport> reports = fetchReports(userId, req);
+
+        Function<SleepReport, Integer> sleepTimeFn = report ->
+                (int) Duration.between(report.getSleepTime(), report.getSleepWakeTime()).toMinutes();
+        Function<SleepReport, Integer> latencyFn = report ->
+                (int) Duration.between(report.getSleepTime(), report.getRealSleepTime()).toMinutes();
+        Function<SleepReport, Integer> deepTimeFn = SleepReport::getDeepTime;
+        Function<SleepReport, Integer> awakeFn = SleepReport::getAwakeTime;
+        Function<SleepReport, Integer> lightFn = SleepReport::getNremTime;
+        Function<SleepReport, Integer> remFn = SleepReport::getRemTime;
+
+        List<GraphResponse.TimePoint> sleepTime = aggregate(reports, req.getPeriodType(), sleepTimeFn);
+        List<GraphResponse.TimePoint> sleepLatency = aggregate(reports, req.getPeriodType(), latencyFn);
+        List<GraphResponse.TimePoint> deepTime = aggregate(reports, req.getPeriodType(), deepTimeFn);
+        List<GraphResponse.TimePoint> awakeTime = aggregate(reports, req.getPeriodType(), awakeFn);
+        List<GraphResponse.TimePoint> lights = aggregate(reports, req.getPeriodType(), lightFn);
+        List<GraphResponse.TimePoint> rems = aggregate(reports, req.getPeriodType(), remFn);
+
+        return GraphResponse.builder()
+                .sleepTime(sleepTime)
+                .sleepLatency(sleepLatency)
+                .lightSleep(lights)
+                .remSleep(rems)
+                .deepSleep(deepTime)
+                .awakeTime(awakeTime)
+                .build();
+    }
+
+    private List<GraphResponse.TimePoint> aggregate(
+            List<SleepReport> reports,
+            StatisticsRequest.PeriodType periodType,
+            Function<SleepReport, Integer> extractor
+    ) {
+        Map<String, Integer> grouped = reports.stream()
+                .collect(Collectors.groupingBy(
+                        report -> makeLabel(report.getSleepTime(), periodType),
+                        LinkedHashMap::new,
+                        Collectors.summingInt(extractor::apply)
+                ));
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparing(this::labelSortKey)))
+                .map(e -> new GraphResponse.TimePoint(e.getKey(),e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private int labelSortKey(String label) {
+        // 1) 요일 우선
+        List<String> days = List.of("월","화","수","목","금","토","일");
+        if (days.contains(label)) {
+            return days.indexOf(label);
+        }
+        // 2) “주” 단위 (ex: “1주”, “2주” → 1, 2)
+        if (label.endsWith("주")) {
+            String num = label.substring(0, label.length() - 1);
+            try {
+                return Integer.parseInt(num);
+            } catch (NumberFormatException ignored) {
+                return 0;
+            }
+        }
+        // 3) “월” 단위 (ex: “1월”, “2월” → 1, 2)
+        if (label.endsWith("월")) {
+            String num = label.substring(0, label.length() - 1);
+            try {
+                return Integer.parseInt(num);
+            } catch (NumberFormatException ignored) {
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+
+    // 레이블 생성 (WEEK→요일, MONTH→몇 주차, YEAR→몇 월)
+    private String makeLabel(LocalDateTime dt, StatisticsRequest.PeriodType type) {
+        return switch (type) {
+            case WEEK -> {
+                DayOfWeek dow = dt.getDayOfWeek();
+                yield dow.getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+            }
+            case MONTH -> {
+                int weekOfMonth = ((dt.getDayOfMonth() - 1) / 7) + 1;
+                yield weekOfMonth + "주";
+            }
+            case YEAR -> dt.getMonthValue() + "월";
+        };
+    }
+    public List<SleepReport> fetchReports(Integer userId, StatisticsRequest req){
+        LocalDateTime startDate = req.getStartDate().atStartOfDay();
+        LocalDateTime endDate = req.getEndDate().atStartOfDay();
+        return sleepReportRepository.findByUserIdAndSleepTimeBetween(userId, startDate, endDate);
+    }
+
+    private String formatPeriod(java.time.LocalDate s, java.time.LocalDate e) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        return fmt.format(s) + " ~ " + fmt.format(e);
+    }
+
+    private int percentage(double part, double total) {
+        if (total <= 0) {
+            return 0;
+        }
+        return (int) Math.round(part / total * 100);
+    }
 }
