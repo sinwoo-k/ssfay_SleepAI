@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @Builder
-public class SleepGraphPointDto {
+public class SleepGraphPoint {
     private LocalDateTime measuredAt;
     private SleepStage level;
     private Integer score;
