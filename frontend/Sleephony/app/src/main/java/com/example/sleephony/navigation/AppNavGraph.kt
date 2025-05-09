@@ -134,7 +134,15 @@ fun AppNavGraph(
                     navController.getBackStackEntry("sleep_setting")
                 }
                 val vm: SleepViewModel = hiltViewModel(settingEntry)
-                SleepMeasurementScreen(viewModel = vm)
+                SleepMeasurementScreen(
+                    onStop = {
+                        vm.onStopClicked()
+                        navController.navigate("sleep_setting") {
+                            popUpTo("sleep_measurement") { inclusive = false }
+                        }
+                    },
+                    viewModel = vm
+                )
             }
 
             composable("report") {
