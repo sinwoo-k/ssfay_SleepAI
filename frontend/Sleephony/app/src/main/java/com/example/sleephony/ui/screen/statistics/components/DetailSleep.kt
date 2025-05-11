@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components
+package com.example.sleephony.ui.screen.statistics.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,7 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.week.WeekChart
+import com.example.sleephony.ui.screen.statistics.week.WeekChart
 
 @Composable
 fun DetailSleep(

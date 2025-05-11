@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components
+package com.example.sleephony.ui.screen.statistics.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -22,7 +22,7 @@ fun ReportTopBar (
 ) {
     Row(
         modifier = modifier
-            .padding(top = 50.dp, start = 15.dp, end = 15.dp)
+            .padding(start = 15.dp, end = 15.dp)
             .fillMaxWidth()
             .background(color = colorResource(R.color.dark_blue), shape = RoundedCornerShape(20.dp)),
     ) {

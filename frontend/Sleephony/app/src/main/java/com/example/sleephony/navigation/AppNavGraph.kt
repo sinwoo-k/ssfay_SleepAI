@@ -1,12 +1,9 @@
 package com.example.sleephony.navigation
 
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,7 +20,7 @@ import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
-import com.example.sleephony.ui.screen.report.components.detail.SleepDetailScreen
+import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
@@ -36,7 +33,7 @@ import com.example.sleephony.ui.screen.statistics.StatisticsScreen
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = "splash"
-){
+) {
     // 현재 경로 가져오기
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -50,20 +47,20 @@ fun AppNavGraph(
     )
     val showBottomBar = currentRoute in bottomRoutes
 
-    Scaffold (
+    Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 BottomNavBar(navController)
             }
         }
-    ){ innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding).fillMaxSize()
-        ){
-            composable("splash"){
+        ) {
+            composable("splash") {
                 val splashVm: SplashViewModel = hiltViewModel()
                 SplashScreen(
                     navController = navController,
@@ -71,7 +68,7 @@ fun AppNavGraph(
                 )
             }
 
-            composable("login"){
+            composable("login") {
                 SocialLoginScreen(
                     onNeedsProfile = {
                         navController.navigate("profile_setup") {
@@ -79,8 +76,8 @@ fun AppNavGraph(
                         }
                     },
                     onLoginSuccess = {
-                        navController.navigate("sleep_setting"){
-                            popUpTo("login"){inclusive = true}
+                        navController.navigate("sleep_setting") {
+                            popUpTo("login") { inclusive = true }
                         }
                     }
                 )
@@ -118,7 +115,7 @@ fun AppNavGraph(
                 }
             }
             // 수면 측정 관련
-            composable("sleep_setting"){backStackEntry ->
+            composable("sleep_setting") { backStackEntry ->
                 val vm: SleepViewModel = hiltViewModel(backStackEntry)
                 SleepSettingScreen(
                     viewModel = vm,
@@ -130,7 +127,7 @@ fun AppNavGraph(
                     }
                 )
             }
-            composable("sleep_measurement"){
+            composable("sleep_measurement") {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val settingEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry("sleep_setting")
@@ -152,27 +149,29 @@ fun AppNavGraph(
             }
 
             composable("statistics") {
-                StatisticsScreen()
+                StatisticsScreen(modifier = Modifier, navController = navController)
             }
 
-            composable("settings"){
+            composable("settings") {
                 SettingsHomeScreen()
             }
 
-        composable("report") {
-            ReportScreen(modifier = Modifier, navController = navController)
-        }
 
-        composable("detail/{page}/{period}") { it ->
-            val page = it.arguments?.getString("page") ?: ""
-            val period = it.arguments?.getString("period") ?: ""
-            val days = when (period) {
-                "week" ->  listOf("월", "화", "수", "목", "금", "토", "일")
-                "month" ->  listOf("1주","2주","3주","4주","5주")
-                "year" -> listOf("1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월")
-                else -> emptyList()
+            composable("detail/{page}/{period}") { it ->
+                val page = it.arguments?.getString("page") ?: ""
+                val period = it.arguments?.getString("period") ?: ""
+                val days = when (period) {
+                    "week" -> listOf("월", "화", "수", "목", "금", "토", "일")
+                    "month" -> listOf("1주", "2주", "3주", "4주", "5주")
+                    "year" -> listOf("1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월")
+                    else -> emptyList()
+                }
+                SleepDetailScreen(
+                    page = page,
+                    navController = navController,
+                    days = days
+                )
             }
-            SleepDetailScreen(modifier = Modifier,page = page, navController = navController, days = days)
         }
     }
 }

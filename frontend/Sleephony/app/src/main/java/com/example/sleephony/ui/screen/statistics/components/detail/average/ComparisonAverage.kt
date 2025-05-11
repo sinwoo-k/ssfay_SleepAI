@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail.average
+package com.example.sleephony.ui.screen.statistics.components.detail.average
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.detail.chart.ComparisonBarChart
+import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonBarChart
 
 @Composable
 fun ComparisonAverage(

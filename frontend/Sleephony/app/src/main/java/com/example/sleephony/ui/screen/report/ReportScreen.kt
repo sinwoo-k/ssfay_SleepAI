@@ -3,34 +3,20 @@ package com.example.sleephony.ui.screen.report
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.ReportTopBar
-import com.example.sleephony.ui.screen.report.month.MonthReport
-import com.example.sleephony.ui.screen.report.week.WeekReport
-import com.example.sleephony.ui.screen.report.year.YearReport
 
 @Composable
-fun ReportScreen(
-    modifier: Modifier,
-    navController: NavController
-) {
-    val step = remember { mutableStateOf(1) }
+fun ReportScreen(){
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -52,13 +38,5 @@ fun ReportScreen(
                 .height(300.dp),
             contentScale = ContentScale.FillWidth
         )
-        Column(modifier = modifier.padding( start = 20.dp, end = 20.dp, bottom =50.dp)) {
-            ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
-            when (step.value) {
-                1 -> WeekReport(modifier = modifier, navController = navController)
-                2 -> MonthReport(modifier = modifier, navController = navController)
-                3 -> YearReport(modifier = modifier, navController = navController)
-            }
-        }
     }
 }

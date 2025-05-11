@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail.chart
+package com.example.sleephony.ui.screen.statistics.components.detail.chart
 
 import android.util.Log
 import androidx.compose.foundation.background

@@ -1,21 +1,10 @@
-package com.example.sleephony.ui.screen.report.month
+package com.example.sleephony.ui.screen.statistics.month
 
-import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -24,25 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.detail.White_text
-import com.example.sleephony.ui.screen.report.week.Day
-import com.kizitonwose.calendar.compose.HorizontalCalendar
+import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 import com.kizitonwose.calendar.compose.HorizontalYearCalendar
-import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.compose.yearcalendar.rememberYearCalendarState
-import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
-import java.time.format.TextStyle
-import java.util.Locale
 
 
 @OptIn(com.kizitonwose.calendar.core.ExperimentalCalendarApi::class)

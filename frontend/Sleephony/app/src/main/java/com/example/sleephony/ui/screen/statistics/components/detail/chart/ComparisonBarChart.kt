@@ -1,8 +1,7 @@
-package com.example.sleephony.ui.screen.report.components.detail.chart
+package com.example.sleephony.ui.screen.statistics.components.detail.chart
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.sleephony.R

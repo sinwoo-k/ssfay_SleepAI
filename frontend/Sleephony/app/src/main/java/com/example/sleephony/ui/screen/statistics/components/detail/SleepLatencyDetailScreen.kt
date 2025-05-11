@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail
+package com.example.sleephony.ui.screen.statistics.components.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.detail.chart.ComparisonChart
-import com.example.sleephony.ui.screen.report.components.detail.average.ComparisonAverage
+import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonChart
+import com.example.sleephony.ui.screen.statistics.components.detail.average.ComparisonAverage
 
 @Composable
 fun SleepLatencyDetailScreen(
