@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.week
+package com.example.sleephony.ui.screen.report.year
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -18,26 +18,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.report.month.MonthlyCalendarAlert
 import java.time.LocalDate
-
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
-fun WeeklyCalendar(
+fun YearlyCalendar(
     modifier: Modifier = Modifier,
-    weekStartState: LocalDate,
+    yearState: LocalDate,
     onChange:(LocalDate) -> Unit,
 ) {
 
-    val weekStart = weekStartState
-    val weekEnd = remember(weekStart) { weekStart.plusDays(6) }
-
-    val startMonth = weekStart.monthValue.toString().padStart(2, '0')
-    val startDay = weekStart.dayOfMonth.toString().padStart(2, '0')
-    val endMonth = weekEnd.monthValue.toString().padStart(2, '0')
-    val endDay = weekEnd.dayOfMonth.toString().padStart(2, '0')
-
     val isOpenWeekAlert = remember { mutableStateOf(false) }
-
+    val year = yearState.format(DateTimeFormatter.ofPattern("yyyy년").withLocale(Locale.KOREAN))
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -50,12 +44,12 @@ fun WeeklyCalendar(
             modifier = modifier
                 .size(25.dp)
                 .clickable {
-                    onChange(weekStart.minusWeeks(1))
+                    onChange(yearState.minusYears(1))
                 }
         )
 
         Text(
-            text = "${startMonth}.${startDay} ~ ${endMonth}.${endDay}",
+            text = "${year}",
             fontWeight = FontWeight.Bold,
             color = Color.White,
             fontSize = 35.sp,
@@ -69,17 +63,16 @@ fun WeeklyCalendar(
             modifier = modifier
                 .size(25.dp)
                 .clickable {
-                    onChange(weekStart.plusWeeks(1))
+                    onChange(yearState.plusYears(1))
                 }
         )
         if (isOpenWeekAlert.value) {
-            WeekCalendarAlert(
-                weekStart = weekStart,
-                weekEnd = weekEnd,
-                onRequest = { isOpenWeekAlert.value = false},
+            YearlyCalendarAlert(
+                onRequest = { isOpenWeekAlert.value = false },
                 modifier = modifier,
-                changRequest = {day -> onChange(day) }
-                )
+                changRequest = { day -> onChange(day) },
+                yearState = yearState
+            )
         }
     }
 }
