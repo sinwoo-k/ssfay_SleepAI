@@ -156,7 +156,6 @@ fun AppNavGraph(
                 SettingsHomeScreen()
             }
 
-
             composable("detail/{page}/{period}") { it ->
                 val page = it.arguments?.getString("page") ?: ""
                 val period = it.arguments?.getString("period") ?: ""
