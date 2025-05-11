@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail.sleepcycle.sleep_latency
+package com.example.sleephony.ui.screen.report.components.detail.average
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,15 +24,20 @@ import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.components.detail.chart.ComparisonBarChart
 
 @Composable
-fun ComparisonSleepLatency(
+fun ComparisonAverage(
     modifier: Modifier,
-    days:List<String>,
-    sleepHours:List<Float>
+    days: List<String>,
+    sleepHours: List<Float>,
+    title:String,
+    my_name: String,
+    other_name:String,
+    my_value:Float,
+    other_value:Float
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
         Column(modifier = modifier.fillMaxWidth()) {
             Text(
-                text = stringResource(R.string.non_sleep),
+                text = title,
                 color = Color.White,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold
@@ -55,7 +59,7 @@ fun ComparisonSleepLatency(
                             .height(250.dp)
                             .padding(top = 15.dp),
                         days = days, sleepHours = sleepHours,
-                        before = 20f, after = 14f
+                        before = my_value, after = other_value
                     )
                     Column(
                         modifier = modifier.fillMaxWidth().padding(15.dp),
@@ -78,7 +82,7 @@ fun ComparisonSleepLatency(
                                         )
                                 )
                                 Text(
-                                    text = "내 평균",
+                                    text = my_name,
                                     color = colorResource(R.color.light_gray),
                                     fontSize = 20.sp
                                 )
@@ -87,7 +91,7 @@ fun ComparisonSleepLatency(
                             Spacer(modifier = Modifier.weight(1f))
 
                             Text(
-                                text = "7시간 3분",
+                                text = "$my_value",
                                 color = Color.White.copy(alpha = .3f),
                                 fontSize = 20.sp
                             )
@@ -109,7 +113,7 @@ fun ComparisonSleepLatency(
                                         )
                                 )
                                 Text(
-                                    text = "남성 평균",
+                                    text = other_name,
                                     color = colorResource(R.color.steel_blue),
                                     fontSize = 20.sp
                                 )
@@ -118,7 +122,7 @@ fun ComparisonSleepLatency(
                             Spacer(modifier = Modifier.weight(1f))
 
                             Text(
-                                text = "6시간 53분",
+                                text = "$other_value",
                                 color = Color.White.copy(alpha = .3f),
                                 fontSize = 20.sp
                             )

@@ -23,7 +23,8 @@ import com.example.sleephony.R
 fun SleepDetailScreen(
     modifier: Modifier,
     page: String,
-    navController: NavController
+    navController: NavController,
+    days:List<String>,
 ) {
     Box(
         modifier = Modifier
@@ -55,11 +56,11 @@ fun SleepDetailScreen(
                 navController = navController
             )
             when(page) {
-                "sleep_time" -> SleepTimeDetailScreen(modifier = modifier)
-                "sleep_latency" -> SleepLatencyDetailScreen(modifier = modifier)
-                "sleep_REM" -> SleepREMDetailScreen()
-                "sleep_light" -> SleepLightDetailScreen()
-                "sleep_deep" -> SleepDeepDetailScreen()
+                "sleep_time" -> SleepTimeDetailScreen(modifier = modifier, days= days)
+                "sleep_latency" -> SleepLatencyDetailScreen(modifier = modifier, days= days)
+                "sleep_REM" -> SleepREMDetailScreen(modifier =  modifier, days= days)
+                "sleep_light" -> SleepLightDetailScreen(modifier = modifier, days= days)
+                "sleep_deep" -> SleepDeepDetailScreen(modifier = modifier, days= days)
             }
         }
     }
