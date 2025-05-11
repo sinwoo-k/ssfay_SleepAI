@@ -21,6 +21,7 @@ import com.example.sleephony.ui.screen.statistics.components.detail.Blue_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Comparison_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
 import com.example.sleephony.ui.screen.statistics.components.detail.White_text
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
@@ -29,7 +30,8 @@ import java.util.Locale
 @Composable
 fun MonthReport(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    statisticsViewModel: StatisticsViewModel
 ) {
     val today = LocalDate.now()
     val monthState = remember { mutableStateOf(today.with(TemporalAdjusters.firstDayOfMonth())) }

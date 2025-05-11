@@ -21,13 +21,15 @@ import com.example.sleephony.ui.screen.statistics.components.detail.Blue_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Comparison_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
 import com.example.sleephony.ui.screen.statistics.components.detail.White_text
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun YearReport(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    statisticsViewModel: StatisticsViewModel
 ) {
     val today = LocalDate.now()
     val yearState = remember { mutableStateOf(today.with(TemporalAdjusters.firstDayOfYear())) }

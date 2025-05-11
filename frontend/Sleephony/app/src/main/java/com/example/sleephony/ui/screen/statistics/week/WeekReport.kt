@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import com.example.sleephony.ui.screen.statistics.components.detail.Blue_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Comparison_text
 import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
 import com.example.sleephony.ui.screen.statistics.components.detail.White_text
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -28,16 +31,27 @@ import java.time.temporal.TemporalAdjusters
 @Composable
 fun WeekReport(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    statisticsViewModel: StatisticsViewModel
 ) {
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
     val today = LocalDate.now()
     val weekStartState = remember { mutableStateOf(today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))) }
+    val weekEnd = weekStartState.value.plusDays(6)
 
-
-
+    val statistics = statisticsViewModel.statistics.collectAsState().value
     val days = remember { listOf("월", "화", "수", "목", "금", "토", "일") }
     val period = "week"
+
+    LaunchedEffect(weekStartState.value) {
+        statisticsViewModel.loadStatistics(
+            startDate = weekStartState.value.toString(),
+            endDate = weekEnd.toString(),
+            periodType = period
+        )
+    }
+
+
 
     LazyColumn(
         modifier = modifier
