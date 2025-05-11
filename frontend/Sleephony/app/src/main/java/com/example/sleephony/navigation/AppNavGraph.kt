@@ -163,9 +163,16 @@ fun AppNavGraph(
             ReportScreen(modifier = Modifier, navController = navController)
         }
 
-        composable("detail/{page}") { it ->
+        composable("detail/{page}/{period}") { it ->
             val page = it.arguments?.getString("page") ?: ""
-            SleepDetailScreen(modifier = Modifier,page = page, navController = navController)
+            val period = it.arguments?.getString("period") ?: ""
+            val days = when (period) {
+                "week" ->  listOf("월", "화", "수", "목", "금", "토", "일")
+                "month" ->  listOf("1주","2주","3주","4주","5주")
+                "year" -> listOf("1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월")
+                else -> emptyList()
+            }
+            SleepDetailScreen(modifier = Modifier,page = page, navController = navController, days = days)
         }
     }
 }
