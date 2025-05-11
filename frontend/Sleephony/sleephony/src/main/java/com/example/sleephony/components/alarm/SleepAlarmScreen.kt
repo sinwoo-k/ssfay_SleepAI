@@ -1,4 +1,4 @@
-package com.example.sleephony_wear.screens
+package com.example.sleephony.screens
 
 import android.content.Context
 import android.content.Intent
@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.sleepphony_wear_os.service.SleepSensorService
+import com.example.sleephony.service.SleepSensorService
 import kotlinx.coroutines.flow.MutableStateFlow
 
 // 공유할 Flow 객체
