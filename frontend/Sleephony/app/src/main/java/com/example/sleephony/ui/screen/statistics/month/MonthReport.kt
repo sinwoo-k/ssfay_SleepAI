@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.month
+package com.example.sleephony.ui.screen.statistics.month
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,15 +14,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.AverageSleepScore
-import com.example.sleephony.ui.screen.report.components.DetailSleep
-import com.example.sleephony.ui.screen.report.components.SleepSummation
-import com.example.sleephony.ui.screen.report.components.detail.Blue_text
-import com.example.sleephony.ui.screen.report.components.detail.Comparison_text
-import com.example.sleephony.ui.screen.report.components.detail.Gray_text
-import com.example.sleephony.ui.screen.report.components.detail.White_text
-import com.example.sleephony.ui.screen.report.week.WeeklyCalendar
-import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
+import com.example.sleephony.ui.screen.statistics.components.AverageSleepScore
+import com.example.sleephony.ui.screen.statistics.components.DetailSleep
+import com.example.sleephony.ui.screen.statistics.components.SleepSummation
+import com.example.sleephony.ui.screen.statistics.components.detail.Blue_text
+import com.example.sleephony.ui.screen.statistics.components.detail.Comparison_text
+import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
+import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters

@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.year
+package com.example.sleephony.ui.screen.statistics.year
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
-import com.example.sleephony.ui.screen.report.components.detail.White_text
+import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 import java.time.LocalDate
 import java.time.Year
 

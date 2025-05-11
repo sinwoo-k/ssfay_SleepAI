@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail
+package com.example.sleephony.ui.screen.statistics.components.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,7 +39,6 @@ fun DetailTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(7.dp),
 
     ) {
         Image(

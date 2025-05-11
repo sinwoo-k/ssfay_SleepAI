@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.week
+package com.example.sleephony.ui.screen.statistics.week
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components
+package com.example.sleephony.ui.screen.statistics.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

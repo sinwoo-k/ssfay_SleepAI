@@ -1,6 +1,5 @@
-package com.example.sleephony.ui.screen.report.week
+package com.example.sleephony.ui.screen.statistics.week
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +27,6 @@ import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
-import java.time.Month
 import java.time.YearMonth
 
 @Composable

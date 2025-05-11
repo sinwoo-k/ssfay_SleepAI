@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.report.components.detail
+package com.example.sleephony.ui.screen.statistics.components.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -21,11 +20,11 @@ import com.example.sleephony.R
 
 @Composable
 fun SleepDetailScreen(
-    modifier: Modifier,
     page: String,
     navController: NavController,
     days:List<String>,
 ) {
+    val modifier = Modifier
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -48,7 +47,7 @@ fun SleepDetailScreen(
             contentScale = ContentScale.FillWidth
         )
         Column(
-            modifier = modifier.padding(top = 25.dp, start = 20.dp, end = 20.dp, bottom =50.dp)
+            modifier = modifier.padding(start = 20.dp, end = 20.dp)
         ) {
             DetailTopBar(
                 modifier = modifier,
