@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.components.ReportTopBar
+import com.example.sleephony.ui.screen.report.month.MonthReport
 import com.example.sleephony.ui.screen.report.week.WeekReport
+import com.example.sleephony.ui.screen.report.year.YearReport
 
 @Composable
 fun ReportScreen(
@@ -50,12 +52,12 @@ fun ReportScreen(
                 .height(300.dp),
             contentScale = ContentScale.FillWidth
         )
-        Column(modifier = modifier.padding(top = 25.dp, start = 20.dp, end = 20.dp, bottom =50.dp)) {
+        Column(modifier = modifier.padding( start = 20.dp, end = 20.dp, bottom =50.dp)) {
             ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
             when (step.value) {
                 1 -> WeekReport(modifier = modifier, navController = navController)
-                2 -> Text(text = "2")
-                3 -> Text(text = "3")
+                2 -> MonthReport(modifier = modifier, navController = navController)
+                3 -> YearReport(modifier = modifier, navController = navController)
             }
         }
     }

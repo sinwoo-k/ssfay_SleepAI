@@ -56,12 +56,13 @@ fun WeekCalendarAlert(
         title = {
             val data = calendar_state.firstVisibleMonth
             Text(text = "${data.yearMonth.year}년 ${data.yearMonth.monthValue}월",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )},
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )},
         text = {
             HorizontalCalendar(
+                modifier = modifier.fillMaxWidth(),
                 state = calendar_state,
                 dayContent = {
                     val data = calendar_state.firstVisibleMonth
@@ -70,10 +71,9 @@ fun WeekCalendarAlert(
                         weekStart = weekStart,
                         weekEnd = weekEnd,
                         currentMonth = data.yearMonth,
-                        modifier = modifier,
                         changeDay = { day -> changRequest(day) }
                     )
-                             },
+                },
 
                 monthHeader = { month ->
                     Row(
@@ -100,7 +100,6 @@ fun WeekCalendarAlert(
 
 @Composable
 fun Day(
-    modifier: Modifier,
     day: CalendarDay,
     weekStart:LocalDate,
     weekEnd:LocalDate,
@@ -110,17 +109,18 @@ fun Day(
     val thisWeek = day.date in weekStart..weekEnd
     val thisMonth = currentMonth.month == day.date.month
     Box(
-        modifier = modifier
+        modifier = Modifier.fillMaxWidth()
             .aspectRatio(1f),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = day.date.dayOfMonth.toString(),
-                modifier = modifier.clickable {
+                lineHeight = 10.sp,
+                modifier = Modifier.clickable {
                     val clickDay = day.date
                     val dayOfWeek = clickDay.dayOfWeek.value
                     val startOfWeek = clickDay.plusDays((7-dayOfWeek).toLong()).minusWeeks(1)
@@ -130,17 +130,17 @@ fun Day(
                     true -> Color.White
                     false -> Color.White.copy(alpha = .3f)
                 }
+            )
+            if (thisWeek) {
+                Box(
+                    modifier = Modifier
+                        .size(15.dp)
+                        .background(
+                            color = colorResource(R.color.SkyBlue),
+                            shape = RoundedCornerShape(50.dp)
                         )
-                        if (thisWeek) {
-                            Box(
-                                modifier = modifier
-                                    .size(10.dp)
-                                    .background(
-                                        color = colorResource(R.color.SkyBlue),
-                                        shape = RoundedCornerShape(50.dp)
-                                    )
-                            )
-                        }
-                }
+                )
+            }
         }
     }
+}
