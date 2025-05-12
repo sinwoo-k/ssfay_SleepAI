@@ -9,6 +9,8 @@
 
     <!--  인터넷 사용 권한 설정  -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--  네트워크 상태 확인  -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--알람 권한-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -55,6 +57,7 @@
             android:name=".service.AlarmForegroundService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
 
         <!--   측정     -->
         <service

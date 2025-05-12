@@ -1,4 +1,4 @@
-package com.example.sleephony.data.model
+package com.example.sleephony.data.model.user
 
 data class UserProfileResult(
     val email: String,

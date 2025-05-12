@@ -1,4 +1,4 @@
-package com.example.sleephony.data.model
+package com.example.sleephony.data.model.auth
 
 class SocialLoginResult(
     val status: String,

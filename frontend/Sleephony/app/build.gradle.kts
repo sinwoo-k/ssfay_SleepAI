@@ -92,6 +92,7 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+    implementation("androidx.datastore:datastore-preferences-core:1.1.6")
 
     // Retrofit & Gson & OkHttp
     implementation(libs.retrofit)
@@ -128,6 +129,7 @@ dependencies {
 
     // utils
     implementation("dev.chrisbanes.snapper:snapper:0.3.0")
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
     // Test
     testImplementation            (libs.junit)

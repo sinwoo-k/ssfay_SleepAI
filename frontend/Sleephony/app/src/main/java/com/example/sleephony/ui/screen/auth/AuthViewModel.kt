@@ -1,17 +1,14 @@
 package com.example.sleephony.ui.screen.auth
 
 import android.app.Activity
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sleephony.data.model.SocialLoginResult
+import com.example.sleephony.data.model.auth.SocialLoginResult
 import com.example.sleephony.domain.repository.AuthRepository
 import com.example.sleephony.domain.repository.UserRepository
-import com.google.gson.Gson
-import com.kakao.sdk.auth.model.OAuthToken
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

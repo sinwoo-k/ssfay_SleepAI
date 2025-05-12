@@ -1,9 +1,8 @@
 package com.example.sleephony.ui.screen.auth
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sleephony.data.model.UserProfileRequest
+import com.example.sleephony.data.model.user.UserProfileRequest
 import com.example.sleephony.domain.repository.AuthRepository
 import com.example.sleephony.domain.repository.UserRepository
 import com.example.sleephony.navigation.ProfileStep

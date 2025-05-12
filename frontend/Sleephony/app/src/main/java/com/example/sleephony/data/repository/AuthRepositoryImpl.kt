@@ -5,10 +5,10 @@ import android.util.Log
 import com.example.sleephony.data.datasource.GoogleAuthDataSource
 import com.example.sleephony.data.datasource.remote.auth.AuthApi
 import com.example.sleephony.data.datasource.remote.auth.KakaoAuthDataSource
-import com.example.sleephony.data.model.GoogleLoginRequest
-import com.example.sleephony.data.model.KakaoLoginRequest
-import com.example.sleephony.data.model.SocialLoginResult
-import com.example.sleephony.data.model.UserProfileRequest
+import com.example.sleephony.data.model.auth.GoogleLoginRequest
+import com.example.sleephony.data.model.auth.KakaoLoginRequest
+import com.example.sleephony.data.model.auth.SocialLoginResult
+import com.example.sleephony.data.model.user.UserProfileRequest
 import com.example.sleephony.domain.repository.AuthRepository
 import com.example.sleephony.utils.TokenProvider
 import retrofit2.HttpException
