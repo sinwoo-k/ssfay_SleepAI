@@ -3,19 +3,21 @@ package com.c208.sleephony.domain.sleep.service;
 import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
 import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
+import com.c208.sleephony.domain.sleep.dto.response.CombinedStatResponse;
 import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
 import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
 import com.c208.sleephony.domain.sleep.dto.response.SummaryResponse;
-import com.c208.sleephony.domain.sleep.entity.BioData;
-import com.c208.sleephony.domain.sleep.entity.SleepLevel;
-import com.c208.sleephony.domain.sleep.entity.SleepReport;
-import com.c208.sleephony.domain.sleep.entity.SleepStage;
+import com.c208.sleephony.domain.sleep.entity.*;
 import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
 import com.c208.sleephony.domain.sleep.repositroy.SleepReportRepository;
+import com.c208.sleephony.domain.sleep.repositroy.SleepStatisticRepository;
+import com.c208.sleephony.domain.user.entity.User;
+import com.c208.sleephony.domain.user.repsotiry.UserRepository;
 import com.c208.sleephony.global.exception.RedisOperationException;
 import com.c208.sleephony.global.exception.SleepPredictionException;
 import com.c208.sleephony.global.exception.SleepReportNotFoundException;
+import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import com.c208.sleephony.global.utils.GptClient;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,8 @@ public class SleepService {
     private final SleepReportRepository sleepReportRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final GptClient gptClient;
+    private final UserRepository userRepository;
+    private final SleepStatisticRepository sleepStatisticRepository;
 
     public List<SleepPredictionResult> measureSleepStage(BioDataRequest requestDto) {
         try {
@@ -535,5 +539,30 @@ public class SleepService {
             return 0;
         }
         return (int) Math.round(part / total * 100);
+    }
+
+    public CombinedStatResponse getCombinedStats(StatisticsRequest req){
+        SummaryResponse summary = summarize(req);
+
+        Integer userId = AuthUtil.getLoginUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        int age = AuthUtil.getLoginUserAge(user.getBirthDate());
+        String ageGroup = AuthUtil.toAgeGroup(age);
+
+        SleepStatistics.Gender genderEnum = SleepStatistics.Gender.valueOf(user.getGender());
+
+        System.out.println(age);
+        System.out.println(ageGroup);
+        System.out.println(genderEnum);
+        List<SleepStatistics> myStats =
+                sleepStatisticRepository.findByAgeGroupAndGender(ageGroup, genderEnum);
+
+        System.out.println(myStats);
+        return CombinedStatResponse.builder()
+                .summary(summary)
+                .myStatistics(myStats)
+                .build();
     }
 }

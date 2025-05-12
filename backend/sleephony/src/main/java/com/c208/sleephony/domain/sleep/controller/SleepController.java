@@ -5,9 +5,9 @@ import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
 import com.c208.sleephony.domain.sleep.dto.request.EndMeasurementRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StartMeasurementRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
+import com.c208.sleephony.domain.sleep.dto.response.CombinedStatResponse;
 import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
 import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
-import com.c208.sleephony.domain.sleep.dto.response.SummaryResponse;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
@@ -113,12 +113,11 @@ public class SleepController {
     }
 
     @PostMapping("/stat/summary")
-    public ApiResponse<SummaryResponse> getSummary(
+    public ApiResponse<CombinedStatResponse> getSummary(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "통계 요청 DTO")
             @RequestBody StatisticsRequest req
     ) {
-        SummaryResponse summary = sleepService.summarize(req);
-        return ApiResponse.success(HttpStatus.OK, summary);
+        return ApiResponse.success(HttpStatus.OK, sleepService.getCombinedStats(req));
     }
 
     @Operation(
