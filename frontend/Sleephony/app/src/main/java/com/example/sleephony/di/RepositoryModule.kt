@@ -1,10 +1,12 @@
 package com.example.sleephony.di
 
 import com.example.sleephony.data.repository.AuthRepositoryImpl
+import com.example.sleephony.data.repository.MeasurementRepositoryImpl
 import com.example.sleephony.data.repository.ReportRepositoryImpl
 import com.example.sleephony.data.repository.ThemeRepositoryImpl
 import com.example.sleephony.data.repository.UserRepositoryImpl
 import com.example.sleephony.domain.repository.AuthRepository
+import com.example.sleephony.domain.repository.MeasurementRepository
 import com.example.sleephony.domain.repository.ReportRepository
 import com.example.sleephony.domain.repository.ThemeRepository
 import com.example.sleephony.domain.repository.UserRepository
@@ -31,6 +33,11 @@ abstract class RepositoryModule {
     abstract fun bindThemeRepository(
         impl : ThemeRepositoryImpl
     ) : ThemeRepository
+
+    @Binds @Singleton
+    abstract fun bindMeasurementRepository(
+        impl: MeasurementRepositoryImpl
+    ) : MeasurementRepository
 
     @Binds @Singleton
     abstract fun bindReportRepository(

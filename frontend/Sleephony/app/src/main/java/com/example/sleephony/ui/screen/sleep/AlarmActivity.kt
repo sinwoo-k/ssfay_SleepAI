@@ -70,9 +70,6 @@ class AlarmActivity : ComponentActivity() {
         }
 
         setContent {
-            // Activity 레퍼런스
-            val activity = LocalContext.current as ComponentActivity
-
             // 화면의 Y offset 상태
             val offsetY = remember { mutableFloatStateOf(0f) }
             // 드래그가 끝났을 때 애니메이션으로 돌아올 수 있게
@@ -155,18 +152,17 @@ class AlarmActivity : ComponentActivity() {
                                     // 위로 충분히 당겼으면 종료, 아니면 원위치로 돌아가기
                                     val threshold = size.height * 0.25f
                                     if (offsetY.floatValue < -threshold) {
-                                        val navIntent = Intent(this@AlarmActivity, MainActivity::class.java).apply {
-                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                            putExtra("start_destination", "sleep_setting")
-                                        }
                                         stopService(Intent(this@AlarmActivity, AlarmForegroundService::class.java))
 
                                         stopService(Intent(this@AlarmActivity, SleepMeasurementService::class.java))
 
-                                        sendBroadcast(Intent(SleepViewModel.ACTION_STOP_MEASUREMENT))
+                                        val stopIntent = Intent(SleepViewModel.ACTION_STOP_MEASUREMENT).apply {
+                                            // 반드시 우리 앱의 패키지로만 보낸다고 명시
+                                            setPackage(packageName)
+                                        }
+                                        applicationContext.sendBroadcast(stopIntent)
 
-                                        startActivity(navIntent)
-                                        activity.finish()
+                                        finish()
                                     } else {
                                         offsetY.floatValue = 0f
                                     }

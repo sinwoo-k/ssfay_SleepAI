@@ -1,0 +1,245 @@
+{
+  "measuredAt": "2025-05-12T12:00:00",
+  "data": [
+    {
+      "time": "2025-05-12T12:00:00",
+      "heartRate": 65,
+      "temperature": 36.5,
+      "gyroX": 0.00,
+      "gyroY": -0.00,
+      "gyroZ": 0.00
+    },
+    {
+      "time": "2025-05-12T12:00:01",
+      "heartRate": 66,
+      "temperature": 36.6,
+      "gyroX": 0.01,
+      "gyroY": -0.01,
+      "gyroZ": 0.005
+    },
+    {
+      "time": "2025-05-12T12:00:02",
+      "heartRate": 67,
+      "temperature": 36.7,
+      "gyroX": 0.02,
+      "gyroY": -0.02,
+      "gyroZ": 0.010
+    },
+    {
+      "time": "2025-05-12T12:00:03",
+      "heartRate": 68,
+      "temperature": 36.5,
+      "gyroX": 0.03,
+      "gyroY": -0.03,
+      "gyroZ": 0.015
+    },
+    {
+      "time": "2025-05-12T12:00:04",
+      "heartRate": 69,
+      "temperature": 36.6,
+      "gyroX": 0.04,
+      "gyroY": -0.04,
+      "gyroZ": 0.020
+    },
+    {
+      "time": "2025-05-12T12:00:05",
+      "heartRate": 70,
+      "temperature": 36.7,
+      "gyroX": 0.05,
+      "gyroY": -0.05,
+      "gyroZ": 0.025
+    },
+    {
+      "time": "2025-05-12T12:00:06",
+      "heartRate": 65,
+      "temperature": 36.5,
+      "gyroX": 0.06,
+      "gyroY": -0.06,
+      "gyroZ": 0.030
+    },
+    {
+      "time": "2025-05-12T12:00:07",
+      "heartRate": 66,
+      "temperature": 36.6,
+      "gyroX": 0.07,
+      "gyroY": -0.07,
+      "gyroZ": 0.035
+    },
+    {
+      "time": "2025-05-12T12:00:08",
+      "heartRate": 67,
+      "temperature": 36.7,
+      "gyroX": 0.08,
+      "gyroY": -0.08,
+      "gyroZ": 0.040
+    },
+    {
+      "time": "2025-05-12T12:00:09",
+      "heartRate": 68,
+      "temperature": 36.5,
+      "gyroX": 0.09,
+      "gyroY": -0.09,
+      "gyroZ": 0.045
+    },
+    {
+      "time": "2025-05-12T12:00:10",
+      "heartRate": 69,
+      "temperature": 36.6,
+      "gyroX": 0.10,
+      "gyroY": -0.10,
+      "gyroZ": 0.050
+    },
+    {
+      "time": "2025-05-12T12:00:11",
+      "heartRate": 70,
+      "temperature": 36.7,
+      "gyroX": 0.11,
+      "gyroY": -0.11,
+      "gyroZ": 0.055
+    },
+    {
+      "time": "2025-05-12T12:00:12",
+      "heartRate": 65,
+      "temperature": 36.5,
+      "gyroX": 0.12,
+      "gyroY": -0.12,
+      "gyroZ": 0.060
+    },
+    {
+      "time": "2025-05-12T12:00:13",
+      "heartRate": 66,
+      "temperature": 36.6,
+      "gyroX": 0.13,
+      "gyroY": -0.13,
+      "gyroZ": 0.065
+    },
+    {
+      "time": "2025-05-12T12:00:14",
+      "heartRate": 67,
+      "temperature": 36.7,
+      "gyroX": 0.14,
+      "gyroY": -0.14,
+      "gyroZ": 0.070
+    },
+    {
+      "time": "2025-05-12T12:00:15",
+      "heartRate": 68,
+      "temperature": 36.5,
+      "gyroX": 0.15,
+      "gyroY": -0.15,
+      "gyroZ": 0.075
+    },
+    {
+      "time": "2025-05-12T12:00:16",
+      "heartRate": 69,
+      "temperature": 36.6,
+      "gyroX": 0.16,
+      "gyroY": -0.16,
+      "gyroZ": 0.080
+    },
+    {
+      "time": "2025-05-12T12:00:17",
+      "heartRate": 70,
+      "temperature": 36.7,
+      "gyroX": 0.17,
+      "gyroY": -0.17,
+      "gyroZ": 0.085
+    },
+    {
+      "time": "2025-05-12T12:00:18",
+      "heartRate": 65,
+      "temperature": 36.5,
+      "gyroX": 0.18,
+      "gyroY": -0.18,
+      "gyroZ": 0.090
+    },
+    {
+      "time": "2025-05-12T12:00:19",
+      "heartRate": 66,
+      "temperature": 36.6,
+      "gyroX": 0.19,
+      "gyroY": -0.19,
+      "gyroZ": 0.095
+    },
+    {
+      "time": "2025-05-12T12:00:20",
+      "heartRate": 67,
+      "temperature": 36.7,
+      "gyroX": 0.20,
+      "gyroY": -0.20,
+      "gyroZ": 0.100
+    },
+    {
+      "time": "2025-05-12T12:00:21",
+      "heartRate": 68,
+      "temperature": 36.5,
+      "gyroX": 0.21,
+      "gyroY": -0.21,
+      "gyroZ": 0.105
+    },
+    {
+      "time": "2025-05-12T12:00:22",
+      "heartRate": 69,
+      "temperature": 36.6,
+      "gyroX": 0.22,
+      "gyroY": -0.22,
+      "gyroZ": 0.110
+    },
+    {
+      "time": "2025-05-12T12:00:23",
+      "heartRate": 70,
+      "temperature": 36.7,
+      "gyroX": 0.23,
+      "gyroY": -0.23,
+      "gyroZ": 0.115
+    },
+    {
+      "time": "2025-05-12T12:00:24",
+      "heartRate": 65,
+      "temperature": 36.5,
+      "gyroX": 0.24,
+      "gyroY": -0.24,
+      "gyroZ": 0.120
+    },
+    {
+      "time": "2025-05-12T12:00:25",
+      "heartRate": 66,
+      "temperature": 36.6,
+      "gyroX": 0.25,
+      "gyroY": -0.25,
+      "gyroZ": 0.125
+    },
+    {
+      "time": "2025-05-12T12:00:26",
+      "heartRate": 67,
+      "temperature": 36.7,
+      "gyroX": 0.26,
+      "gyroY": -0.26,
+      "gyroZ": 0.130
+    },
+    {
+      "time": "2025-05-12T12:00:27",
+      "heartRate": 68,
+      "temperature": 36.5,
+      "gyroX": 0.27,
+      "gyroY": -0.27,
+      "gyroZ": 0.135
+    },
+    {
+      "time": "2025-05-12T12:00:28",
+      "heartRate": 69,
+      "temperature": 36.6,
+      "gyroX": 0.28,
+      "gyroY": -0.28,
+      "gyroZ": 0.140
+    },
+    {
+      "time": "2025-05-12T12:00:29",
+      "heartRate": 70,
+      "temperature": 36.7,
+      "gyroX": 0.29,
+      "gyroY": -0.29,
+      "gyroZ": 0.145
+    }
+  ]
+}
