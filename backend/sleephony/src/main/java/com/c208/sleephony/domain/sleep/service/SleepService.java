@@ -58,7 +58,7 @@ public class SleepService {
                             .gyroX(dataPoint.getGyroX())
                             .gyroY(dataPoint.getGyroY())
                             .gyroZ(dataPoint.getGyroZ())
-                            .bodyTemperature(0.0f)
+                            .bodyTemperature(dataPoint.getTemperature())
                             .createdAt(LocalDateTime.now())
                             .measuredAt(baseTime)
                             .build())
