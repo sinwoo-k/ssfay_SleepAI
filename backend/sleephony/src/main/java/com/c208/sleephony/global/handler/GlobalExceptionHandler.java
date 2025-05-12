@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -118,4 +119,11 @@ public class GlobalExceptionHandler {
         String msg = String.format("'%s' 파라미터의 값 '%s' 형식이 올바르지 않습니다. 올바른 날짜 포맷은 yyyy-MM-dd 입니다.", param, value);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
     }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidMonthFormat(DateTimeParseException e) {
+        String msg = "month 파라미터의 형식이 올바르지 않습니다. 올바른 포맷은 yyyy-MM 입니다.";
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
+    }
+
 }

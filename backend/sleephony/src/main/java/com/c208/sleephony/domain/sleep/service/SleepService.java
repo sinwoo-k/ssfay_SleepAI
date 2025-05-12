@@ -31,6 +31,7 @@ import java.time.format.TextStyle;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Transactional
@@ -381,58 +382,57 @@ public class SleepService {
         return (int) java.time.Duration.between(from, to).toMinutes();
     }
 
-    public SummaryResponse summarize(StatisticsRequest req){
+    public SummaryResponse summarize(StatisticsRequest req) {
         Integer userId = AuthUtil.getLoginUserId();
         List<SleepReport> reports = fetchReports(userId, req);
 
-        double avgScore = reports.stream()
-                .mapToInt(SleepReport::getSleepScore)
-                .average().orElse(0);
+        if (reports.isEmpty()) {
+            throw new SleepReportNotFoundException("해당 기간 중 기록된 수면 리포트가 없습니다.");
+        }
 
-        double avgTime = reports.stream()
-                .mapToLong(report ->
-                        Duration.between(report.getSleepTime(), report.getSleepWakeTime()).toMinutes()
-                ).average().orElse(0);
+        // “리포트가 있는 날짜 수” 계산
+        long daysWithReport = reports.stream()
+                .map(r -> r.getSleepTime().toLocalDate())
+                .distinct()
+                .count();
+        // 합계 계산
+        double sumScore   = reports.stream().mapToInt(SleepReport::getSleepScore).sum();
+        double sumTime    = reports.stream()
+                .mapToLong(r -> Duration.between(r.getSleepTime(), r.getSleepWakeTime()).toMinutes())
+                .sum();
+        double sumLatency = reports.stream()
+                .mapToLong(r -> Duration.between(r.getSleepTime(), r.getRealSleepTime()).toMinutes())
+                .sum();
+        double sumLight   = reports.stream().mapToInt(SleepReport::getNremTime).sum();
+        double sumRem     = reports.stream().mapToInt(SleepReport::getRemTime).sum();
+        double sumDeep    = reports.stream().mapToInt(SleepReport::getDeepTime).sum();
+        double sumAwake   = reports.stream().mapToInt(SleepReport::getAwakeTime).sum();
+        double sumCycles  = reports.stream().mapToInt(SleepReport::getSleepCycle).sum();
 
-        double avgLatency = reports.stream()
-                .mapToLong(report ->
-                        Duration.between(report.getSleepTime(), report.getRealSleepTime()).toMinutes()
-                ).average().orElse(0);
-
-        double avgLight = reports.stream()
-                .mapToInt(SleepReport::getNremTime)
-                .average().orElse(0);
-
-        double avgRem = reports.stream()
-                .mapToInt(SleepReport::getRemTime)
-                .average().orElse(0);
-
-        double avgDeep = reports.stream()
-                .mapToInt(SleepReport::getDeepTime)
-                .average().orElse(0);
-
-        double avgAwake = reports.stream()
-                .mapToInt(SleepReport::getAwakeTime)
-                .average().orElse(0);
-
-        double avgCycles = reports.stream()
-                .mapToInt(SleepReport::getSleepCycle)
-                .average().orElse(0);
+        // “리포트 있는 일수”로 나눈 평균
+        float avgScore     = (float)(sumScore   / daysWithReport);
+        float avgTime      = (float)(sumTime    / daysWithReport);
+        float avgLatency   = (float)(sumLatency / daysWithReport);
+        float avgLight     = (float)(sumLight   / daysWithReport);
+        float avgRem       = (float)(sumRem     / daysWithReport);
+        float avgDeep      = (float)(sumDeep    / daysWithReport);
+        float avgAwake     = (float)(sumAwake   / daysWithReport);
+        float avgCycles    = (float)(sumCycles  / daysWithReport);
 
         return SummaryResponse.builder()
-                .period(formatPeriod(req.getStartDate(),req.getEndDate()))
-                .averageSleepScore((int) Math.round(avgScore))
-                .averageSleepTimeMinutes((int) Math.round(avgTime))
-                .averageSleepLatencyMinutes((int) Math.round(avgLatency))
-                .averageLightSleepMinutes((int) Math.round(avgLight))
+                .period(formatPeriod(req.getStartDate(), req.getEndDate()))
+                .averageSleepScore(avgScore)
+                .averageSleepTimeMinutes(avgTime)
+                .averageSleepLatencyMinutes(avgLatency)
+                .averageLightSleepMinutes(avgLight)
                 .averageLightSleepPercentage(percentage(avgLight, avgTime))
-                .averageRemSleepMinutes((int) Math.round(avgRem))
+                .averageRemSleepMinutes(avgRem)
                 .averageRemSleepPercentage(percentage(avgRem, avgTime))
-                .averageDeepSleepMinutes((int) Math.round(avgDeep))
+                .averageDeepSleepMinutes(avgDeep)
                 .averageDeepSleepPercentage(percentage(avgDeep, avgTime))
-                .averageAwakeMinutes((int) Math.round(avgAwake))
+                .averageAwakeMinutes(avgAwake)
                 .averageAwakePercentage(percentage(avgAwake, avgTime))
-                .averageSleepCycleCount((int) Math.round(avgCycles))
+                .averageSleepCycleCount(avgCycles)
                 .build();
     }
 
@@ -449,12 +449,12 @@ public class SleepService {
         Function<SleepReport, Integer> lightFn = SleepReport::getNremTime;
         Function<SleepReport, Integer> remFn = SleepReport::getRemTime;
 
-        List<GraphResponse.TimePoint> sleepTime = aggregate(reports, req.getPeriodType(), sleepTimeFn);
-        List<GraphResponse.TimePoint> sleepLatency = aggregate(reports, req.getPeriodType(), latencyFn);
-        List<GraphResponse.TimePoint> deepTime = aggregate(reports, req.getPeriodType(), deepTimeFn);
-        List<GraphResponse.TimePoint> awakeTime = aggregate(reports, req.getPeriodType(), awakeFn);
-        List<GraphResponse.TimePoint> lights = aggregate(reports, req.getPeriodType(), lightFn);
-        List<GraphResponse.TimePoint> rems = aggregate(reports, req.getPeriodType(), remFn);
+        List<GraphResponse.TimePoint> sleepTime = aggregateAverage(reports, req.getPeriodType(), sleepTimeFn);
+        List<GraphResponse.TimePoint> sleepLatency = aggregateAverage(reports, req.getPeriodType(), latencyFn);
+        List<GraphResponse.TimePoint> deepTime = aggregateAverage(reports, req.getPeriodType(), deepTimeFn);
+        List<GraphResponse.TimePoint> awakeTime = aggregateAverage(reports, req.getPeriodType(), awakeFn);
+        List<GraphResponse.TimePoint> lights = aggregateAverage(reports, req.getPeriodType(), lightFn);
+        List<GraphResponse.TimePoint> rems = aggregateAverage(reports, req.getPeriodType(), remFn);
 
         return GraphResponse.builder()
                 .sleepTime(sleepTime)
@@ -466,72 +466,42 @@ public class SleepService {
                 .build();
     }
 
-    private List<GraphResponse.TimePoint> aggregate(
+    private List<GraphResponse.TimePoint> aggregateAverage(
             List<SleepReport> reports,
             StatisticsRequest.PeriodType periodType,
-            Function<SleepReport, Integer> extractor
+            Function<SleepReport, Integer> valueFn
     ) {
-        // 1) 해당 periodType에 맞는 전체 레이블 목록 생성
+        // 1) 레이블별 리스트 수집
+        Map<String, List<Integer>> buckets = reports.stream()
+                .collect(Collectors.groupingBy(
+                        report -> makeLabel(report.getSleepTime(), periodType),
+                        LinkedHashMap::new,
+                        Collectors.mapping(valueFn, Collectors.toList())
+                ));
+        // 2) 정렬된 레이블 순서 확보
         List<String> allLabels = switch (periodType) {
             case WEEK -> List.of("월","화","수","목","금","토","일");
-            case MONTH -> {
-                // 보고 기간의 월별 주차 개수에 맞춰 생성하도록 변경 가능
-                // 예시로 최대 5주까지
-                yield List.of("1주","2주","3주","4주","5주");
-            }
-            case YEAR -> List.of(
-                    "1월","2월","3월","4월","5월","6월",
-                    "7월","8월","9월","10월","11월","12월"
-            );
+            case MONTH -> List.of("1주","2주","3주","4주","5주");
+            case YEAR -> IntStream.rangeClosed(1,12)
+                    .mapToObj(i -> i + "월")
+                    .toList();
         };
 
-        // 2) 레이블별 0으로 초기화된 LinkedHashMap 준비 (순서 유지)
-        Map<String, Integer> aggregated = new LinkedHashMap<>();
-        allLabels.forEach(label -> aggregated.put(label, 0));
 
-        // 3) 실제 데이터 채워넣기
-        for (SleepReport report : reports) {
-            String label = makeLabel(report.getSleepTime(), periodType);
-            Integer value = extractor.apply(report);
-            // 해당 레이블이 있을 때만 누적, 없으면 무시
-            if (aggregated.containsKey(label)) {
-                aggregated.put(label, aggregated.get(label) + value);
-            }
-        }
-
-        // 4) TimePoint 리스트로 변환
-        return aggregated.entrySet().stream()
-                .map(e -> new GraphResponse.TimePoint(e.getKey(), e.getValue()))
-                .toList();
+        // 3) 평균으로 변환
+        return allLabels.stream()
+                .filter(buckets::containsKey)  // 결측 레이블(리포트 없는 주/월/년)은 건너뜀
+                .map(label -> {
+                    List<Integer> vals = buckets.get(label);
+                    float avg = (float) vals.stream()
+                            .mapToInt(Integer::intValue)
+                            .average()
+                            .orElse(0.0);
+                    return new GraphResponse.TimePoint(label, avg);
+                })
+                .collect(Collectors.toList());
     }
 
-    private int labelSortKey(String label) {
-        // 1) 요일 우선
-        List<String> days = List.of("월","화","수","목","금","토","일");
-        if (days.contains(label)) {
-            return days.indexOf(label);
-        }
-        // 2) “주” 단위 (ex: “1주”, “2주” → 1, 2)
-        if (label.endsWith("주")) {
-            String num = label.substring(0, label.length() - 1);
-            try {
-                return Integer.parseInt(num);
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-        // 3) “월” 단위 (ex: “1월”, “2월” → 1, 2)
-        if (label.endsWith("월")) {
-            String num = label.substring(0, label.length() - 1);
-            try {
-                return Integer.parseInt(num);
-            } catch (NumberFormatException ignored) {
-                return 0;
-            }
-        }
-
-        return 0;
-    }
 
     // 레이블 생성 (WEEK→요일, MONTH→몇 주차, YEAR→몇 월)
     private String makeLabel(LocalDateTime dt, StatisticsRequest.PeriodType type) {
@@ -558,7 +528,7 @@ public class SleepService {
         return fmt.format(s) + " ~ " + fmt.format(e);
     }
 
-    private int percentage(double part, double total) {
+    private float percentage(double part, double total) {
         if (total <= 0) {
             return 0;
         }
@@ -596,6 +566,10 @@ public class SleepService {
         LocalDateTime endDate = end.atTime(LocalTime.MAX);
 
         List<SleepReport> reports = sleepReportRepository.findByUserIdAndSleepTimeBetween(userId,startDate,endDate);
+
+        if (reports.isEmpty()) {
+            throw new SleepReportNotFoundException("해당 월(" + month + ")에 등록된 수면 리포트가 없습니다.");
+        }
 
         return reports.stream()
                 .map(report -> report.getSleepTime().toLocalDate())
