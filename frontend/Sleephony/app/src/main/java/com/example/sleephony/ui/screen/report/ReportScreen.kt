@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
 
 @Composable
-fun ReportScreen (){
+fun ReportScreen(){
     Box(
         modifier = Modifier
             .fillMaxSize()

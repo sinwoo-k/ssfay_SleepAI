@@ -68,6 +68,14 @@ android {
 }
 
 dependencies {
+
+    // 달력
+    implementation("com.kizitonwose.calendar:compose:2.6.0")
+    implementation("com.kizitonwose.calendar:view:2.6.0")
+
+    //chart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
         // wear 통신
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
@@ -75,6 +83,7 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.56.1")
+    implementation(libs.places)
     ksp("com.google.dagger:hilt-android-compiler:2.56.1")
     implementation(libs.hilt.navigation.compose)
 
