@@ -165,8 +165,14 @@ fun SleepSettingScreen(
                     onPlay = { theme ->
                         viewModel.previewTheme(theme.id)
                     },
+                    onStop = {
+                        viewModel.stopPlayback()
+                    },
                     playingThemeId = playingThemeId,
-                    onClose = { showThemeDialog = false }
+                    onClose = {
+                        showThemeDialog = false
+                        viewModel.stopPlayback()
+                    }
                 )
             }
         }

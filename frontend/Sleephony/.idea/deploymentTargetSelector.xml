@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="sleephony">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-05-07T08:14:19.159713300Z">
+        <DropdownSelection timestamp="2025-05-12T06:41:20.602789200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CW60CGZRD" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\SSAFY\.android\avd\Wear_OS_Large_Round.avd" />
             </handle>
           </Target>
         </DropdownSelection>

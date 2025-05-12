@@ -3,10 +3,12 @@ package com.example.sleephony.ui.screen.settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,7 +23,8 @@ import com.example.sleephony.R
 
 @Composable
 fun SettingsHomeScreen(
-    viewModel: SettingViewModel = hiltViewModel()
+    viewModel: SettingViewModel = hiltViewModel(),
+    logout: () -> Unit
 ){
     Box(
         modifier = Modifier
@@ -45,11 +48,24 @@ fun SettingsHomeScreen(
             contentScale = ContentScale.FillWidth
         )
         val profile by viewModel.profileState.collectAsState()
+        Column(
 
-        if (profile != null ) {
-            Text(text = "이메일 : ${profile!!.email}", color = Color.White)
-        } else {
-            Text("프로필 정보를 불러오는 중입니다.")
+        ) {
+            if (profile != null ) {
+                Text(text = "이메일 : ${profile!!.email}", color = Color.White)
+            } else {
+                Text("프로필 정보를 불러오는 중입니다.")
+            }
+            TextButton(
+                onClick = {
+                    viewModel.logout()
+                    logout()
+                }
+
+            ) {
+                Text("로그아웃", color = Color.Red)
+            }
         }
+
     }
 }

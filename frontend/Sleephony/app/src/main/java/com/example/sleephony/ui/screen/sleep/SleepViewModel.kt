@@ -23,6 +23,7 @@ import com.example.sleephony.data.datasource.local.ThemeLocalDataSource
 import com.example.sleephony.data.model.theme.SoundDto
 import com.example.sleephony.data.model.theme.ThemeListResult
 import com.example.sleephony.domain.model.AlarmMode
+import com.example.sleephony.domain.repository.MeasurementRepository
 import com.example.sleephony.domain.repository.ThemeRepository
 import com.example.sleephony.receiver.AlarmReceiver
 import com.example.sleephony.service.SleepMeasurementService
@@ -60,6 +61,7 @@ class SleepViewModel @Inject constructor(
     private val settingsLocalDataSource: SettingsLocalDataSource,
     private val soundLocalDataSource: SoundLocalDataSource,
     private val themeRepository: ThemeRepository,
+    private val measurementRepository: MeasurementRepository,
     private val soundPlayer: SoundPlayer
 ) : ViewModel() {
 
@@ -81,6 +83,8 @@ class SleepViewModel @Inject constructor(
 
     private val _selectedThemeId = MutableStateFlow<Int>(1)
     val selectedThemeId : StateFlow<Int> = _selectedThemeId.asStateFlow()
+
+    private var isStopReceiverRegistered = false
 
     init {
         // 설정한 테마 id 가져오기
@@ -106,25 +110,6 @@ class SleepViewModel @Inject constructor(
         }
     }
 
-    // 알람 종료 요청 받기
-    private val stopReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_STOP_MEASUREMENT) {
-                Log.d("DBG", "측정 중단 요청 받기")
-                onStopClicked()
-            }
-        }
-    }
-
-    init {
-        val filter = IntentFilter(ACTION_STOP_MEASUREMENT)
-        ContextCompat.registerReceiver(
-            appContext,
-            stopReceiver,
-            filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-    }
 
     // wifi 연결없이 다운로드 허용 여부
     private val _allowMobileDownload = MutableStateFlow(false)
@@ -246,7 +231,11 @@ class SleepViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        appContext.unregisterReceiver(stopReceiver)
+        if (isStopReceiverRegistered) {
+            appContext.unregisterReceiver(stopReceiver)
+            isStopReceiverRegistered = false
+        }
+
     }
 
     /** 시간 변경 이벤트 */
@@ -259,22 +248,49 @@ class SleepViewModel @Inject constructor(
         _settingData.update { it.copy(mode = mode) }
     }
 
+    // 알람 종료 요청 받기
+    private val stopReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_STOP_MEASUREMENT) {
+                Log.d("DBG", "측정 중단 요청 받기")
+                onStopClicked()
+            }
+        }
+    }
+
     /** 측정 시작 버튼 클릭 */
     fun onStartClicked() {
-        // 알람 권한 설정
-        ensureExactAlarmPermission(appContext)
-
-        // 알람 예약
-        val sd = _settingData.value
-        val hour24 = to24Hour(sd.hour, sd.isAm)
-        scheduleWakeUp(appContext, hour24, sd.minute)
-
-        // 측정 시작
-        Intent(appContext, SleepMeasurementService::class.java).also {
-            ContextCompat.startForegroundService(appContext, it)
+        if (!isStopReceiverRegistered) {
+            val filter = IntentFilter(ACTION_STOP_MEASUREMENT)
+            ContextCompat.registerReceiver(
+                appContext,
+                stopReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            isStopReceiverRegistered = true
         }
 
         _uiState.value = SleepUiState.Running
+
+        viewModelScope.launch {
+            // 알람 권한 설정
+            ensureExactAlarmPermission(appContext)
+
+            // 알람 예약
+            val sd = _settingData.value
+            val hour24 = to24Hour(sd.hour, sd.isAm)
+            scheduleWakeUp(appContext, hour24, sd.minute)
+
+
+            // 측정 시작
+            measurementRepository.startMeasurement()
+
+
+            Intent(appContext, SleepMeasurementService::class.java).also {
+                ContextCompat.startForegroundService(appContext, it)
+            }
+        }
     }
 
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
@@ -314,15 +330,29 @@ class SleepViewModel @Inject constructor(
 
     /** 측정 중단(혹은 알람 발생) 이벤트 */
     fun onStopClicked() {
-        // 알람 취소
-        cancelScheduledWakeUp(appContext)
+        viewModelScope.launch {
+            // 알람 취소
+            cancelScheduledWakeUp(appContext)
 
-        // 측정 중단
-        appContext.stopService(Intent(appContext, SleepMeasurementService::class.java))
+            // 측정 중단
+            measurementRepository.endMeasurement()
+                .onSuccess { data ->
+                    Log.d("DBG", "✅ 측정 종료 성공: $data")
+                }
+                .onFailure { error ->
+                    Log.e("DBG", "❌ 측정 종료 실패", error)
+                }
 
+            appContext.stopService(Intent(appContext, SleepMeasurementService::class.java))
 
-        _settingData.value = SleepSettingData()
-        _uiState.value = SleepUiState.Setting
+            _settingData.value = SleepSettingData()
+            _uiState.value = SleepUiState.Setting
+
+            if (isStopReceiverRegistered) {
+                appContext.unregisterReceiver(stopReceiver)
+                isStopReceiverRegistered = false
+            }
+        }
     }
 
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)

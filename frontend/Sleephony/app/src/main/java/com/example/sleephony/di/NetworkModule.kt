@@ -2,6 +2,7 @@ package com.example.sleephony.di
 
 import com.example.sleephony.BuildConfig
 import com.example.sleephony.data.datasource.remote.auth.AuthApi
+import com.example.sleephony.data.datasource.remote.measurement.MeasurementApi
 import com.example.sleephony.data.datasource.remote.theme.ThemeApi
 import com.example.sleephony.data.datasource.remote.user.UserApi
 import com.google.gson.Gson
@@ -38,6 +39,11 @@ object NetworkModule {
 
     // ThemeApi 제공
     @Provides @Singleton
-    fun providerThemeApi(retrofit: Retrofit) :ThemeApi =
+    fun providerThemeApi(retrofit: Retrofit): ThemeApi =
         retrofit.create(ThemeApi::class.java)
+
+    // MeasurementApi 제공
+    @Provides @Singleton
+    fun providerMeasurementApi(retrofit: Retrofit): MeasurementApi =
+        retrofit.create(MeasurementApi::class.java)
  }

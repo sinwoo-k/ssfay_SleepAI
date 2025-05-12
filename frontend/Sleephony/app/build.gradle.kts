@@ -139,6 +139,7 @@ dependencies {
     // utils
     implementation("dev.chrisbanes.snapper:snapper:0.3.0")
     implementation("io.coil-kt:coil-compose:2.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
     // Test
     testImplementation            (libs.junit)

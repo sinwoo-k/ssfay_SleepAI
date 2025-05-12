@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -24,6 +26,7 @@ import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailS
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
+import com.example.sleephony.ui.screen.sleep.SleepUiState
 import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
@@ -133,6 +136,16 @@ fun AppNavGraph(
                     navController.getBackStackEntry("sleep_setting")
                 }
                 val vm: SleepViewModel = hiltViewModel(settingEntry)
+                val uiState by vm.uiState.collectAsState()
+
+                LaunchedEffect(uiState) {
+                    if(uiState is SleepUiState.Setting) {
+                        navController.navigate("sleep_setting") {
+                            popUpTo("sleep_measurement") { inclusive = true }
+                        }
+                    }
+                }
+
                 SleepMeasurementScreen(
                     onStop = {
                         vm.onStopClicked()
@@ -153,7 +166,13 @@ fun AppNavGraph(
             }
 
             composable("settings") {
-                SettingsHomeScreen()
+                SettingsHomeScreen(
+                    logout = {
+                        navController.navigate("login") {
+                            popUpTo("settings") { inclusive = true}
+                        }
+                    }
+                )
             }
 
             composable("detail/{page}/{period}") { it ->
