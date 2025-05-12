@@ -285,11 +285,13 @@ public class SleepService {
                 + (int)(deepMinutes  * 0.3);
         score = Math.max(1, Math.min(score, 100));
 
+        LocalDateTime realSleepTime = (firstN1 != null ? firstN1 : startedAt);
+
         // SleepReport 빌드
         SleepReport report = SleepReport.builder()
                 .userId(userId)
                 .sleepScore(score)
-                .realSleepTime(firstN1)
+                .realSleepTime(realSleepTime)
                 .sleepTime(startedAt)
                 .sleepWakeTime(endedAt)
                 .awakeTime(awakeMinutes)
@@ -469,16 +471,38 @@ public class SleepService {
             StatisticsRequest.PeriodType periodType,
             Function<SleepReport, Integer> extractor
     ) {
-        Map<String, Integer> grouped = reports.stream()
-                .collect(Collectors.groupingBy(
-                        report -> makeLabel(report.getSleepTime(), periodType),
-                        LinkedHashMap::new,
-                        Collectors.summingInt(extractor::apply)
-                ));
-        return grouped.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.comparing(this::labelSortKey)))
-                .map(e -> new GraphResponse.TimePoint(e.getKey(),e.getValue()))
-                .collect(Collectors.toList());
+        // 1) 해당 periodType에 맞는 전체 레이블 목록 생성
+        List<String> allLabels = switch (periodType) {
+            case WEEK -> List.of("월","화","수","목","금","토","일");
+            case MONTH -> {
+                // 보고 기간의 월별 주차 개수에 맞춰 생성하도록 변경 가능
+                // 예시로 최대 5주까지
+                yield List.of("1주","2주","3주","4주","5주");
+            }
+            case YEAR -> List.of(
+                    "1월","2월","3월","4월","5월","6월",
+                    "7월","8월","9월","10월","11월","12월"
+            );
+        };
+
+        // 2) 레이블별 0으로 초기화된 LinkedHashMap 준비 (순서 유지)
+        Map<String, Integer> aggregated = new LinkedHashMap<>();
+        allLabels.forEach(label -> aggregated.put(label, 0));
+
+        // 3) 실제 데이터 채워넣기
+        for (SleepReport report : reports) {
+            String label = makeLabel(report.getSleepTime(), periodType);
+            Integer value = extractor.apply(report);
+            // 해당 레이블이 있을 때만 누적, 없으면 무시
+            if (aggregated.containsKey(label)) {
+                aggregated.put(label, aggregated.get(label) + value);
+            }
+        }
+
+        // 4) TimePoint 리스트로 변환
+        return aggregated.entrySet().stream()
+                .map(e -> new GraphResponse.TimePoint(e.getKey(), e.getValue()))
+                .toList();
     }
 
     private int labelSortKey(String label) {
@@ -553,16 +577,30 @@ public class SleepService {
 
         SleepStatistics.Gender genderEnum = SleepStatistics.Gender.valueOf(user.getGender());
 
-        System.out.println(age);
-        System.out.println(ageGroup);
-        System.out.println(genderEnum);
         List<SleepStatistics> myStats =
                 sleepStatisticRepository.findByAgeGroupAndGender(ageGroup, genderEnum);
 
-        System.out.println(myStats);
         return CombinedStatResponse.builder()
                 .summary(summary)
                 .myStatistics(myStats)
                 .build();
+    }
+
+    public List<LocalDate> getReportedDatesForMonth(String month){
+        Integer userId = AuthUtil.getLoginUserId();
+        YearMonth ym = YearMonth.parse(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+
+        LocalDateTime startDate = start.atStartOfDay();
+        LocalDateTime endDate = end.atTime(LocalTime.MAX);
+
+        List<SleepReport> reports = sleepReportRepository.findByUserIdAndSleepTimeBetween(userId,startDate,endDate);
+
+        return reports.stream()
+                .map(report -> report.getSleepTime().toLocalDate())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 }
