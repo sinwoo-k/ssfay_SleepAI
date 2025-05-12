@@ -17,6 +17,7 @@ public class BioDataRequest {
     public static class DataPoint {
         private String time;
         private Integer heartRate;
+        private Float temperature;
         private Float gyroX;
         private Float gyroY;
         private Float gyroZ;
