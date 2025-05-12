@@ -1,4 +1,4 @@
-package com.c208.sleephony.domain.sleep.repositroy;
+package com.c208.sleephony.domain.sleep.repository;
 
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import org.springframework.data.jpa.repository.JpaRepository;
