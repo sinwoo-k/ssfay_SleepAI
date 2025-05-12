@@ -1,5 +1,6 @@
 package com.example.sleephony.ui.screen.statistics.year
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -22,6 +25,7 @@ import com.example.sleephony.ui.screen.statistics.components.detail.Comparison_t
 import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
 import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
@@ -34,8 +38,26 @@ fun YearReport(
     val today = LocalDate.now()
     val yearState = remember { mutableStateOf(today.with(TemporalAdjusters.firstDayOfYear())) }
     val year = yearState.value.year
+    val yearEnd = yearState.value.with(TemporalAdjusters.lastDayOfYear())
     val days = remember { listOf("1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월") }
-    val period = "year"
+
+    val statistics = statisticsViewModel.statistics.collectAsState().value
+    val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
+    val period = "YEAR"
+
+    LaunchedEffect(yearState.value) {
+        statisticsViewModel.loadStatistics(
+            startDate = yearState.value.toString(),
+            endDate = yearEnd.toString(),
+            periodType = period
+        )
+        statisticsViewModel.loadStatisticSummary(
+            startDate = yearState.value.toString(),
+            endDate = yearEnd.toString(),
+            periodType = period
+        )
+        Log.d("ssafy","summmary $statisticSummary")
+    }
 
     LazyColumn(
         modifier = modifier
@@ -56,8 +78,23 @@ fun YearReport(
                         Gray_text("꿀잠을 주무셨어요!!")
                     }
                 }
-                AverageSleepScore(modifier = modifier)
-                SleepSummation(modifier = modifier)
+                AverageSleepScore(
+                    modifier = modifier,
+                    averageSleepScore = statisticSummary?.averageSleepScore?.toInt() ?: 0,
+                    averageSleepTimeMinutes = statisticSummary?.averageSleepTimeMinutes?.toInt() ?: 0,
+                    averageSleepLatencyMinutes = statisticSummary?.averageSleepLatencyMinutes?.toInt() ?: 0
+                )
+                SleepSummation(
+                    modifier = modifier,
+                    averageSleepLatencyMinutes = statisticSummary?.averageSleepLatencyMinutes ?: 0f,
+                    averageRemSleepMinutes = statisticSummary?.averageRemSleepMinutes ?: 0f,
+                    averageRemSleepPercentage = statisticSummary?.averageRemSleepPercentage?.toInt() ?: 0,
+                    averageLightSleepMinutes = statisticSummary?.averageLightSleepMinutes ?: 0f,
+                    averageLightSleepPercentage =statisticSummary?.averageLightSleepPercentage?.toInt() ?: 0,
+                    averageDeepSleepMinutes = statisticSummary?.averageDeepSleepMinutes ?: 0f,
+                    averageDeepSleepPercentage = statisticSummary?.averageDeepSleepPercentage?.toInt() ?: 0,
+                    averageSleepCycleCount = statisticSummary?.averageSleepCycleCount?.toInt() ?: 0,
+                )
                 DetailSleep(
                     modifier = modifier,
                     navController = navController,
@@ -65,7 +102,7 @@ fun YearReport(
                         White_text(stringResource(R.string.sleep_time))
                     },
                     days = days,
-                    sleepHours = listOf(7.5f, 6.8f, 8.2f, 7.0f, 6.5f,7.5f, 6.8f, 8.2f, 7.0f, 6.5f, 7.2f, 7.3f),
+                    sleepHours = statistics?.sleepTime?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     path = "sleep_time",
                     period = period
                 )
@@ -77,7 +114,7 @@ fun YearReport(
                         Comparison_text(blue_text = "1시간 13분", white_text = "이에요" )
                     },
                     days = days,
-                    sleepHours = listOf(5f, 14f, 8f, 21f, 11f,5f, 14f, 8f, 21f, 11f,5f, 14f),
+                    sleepHours = statistics?.sleepLatency?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     path = "sleep_latency",
                     period = period
                 )
@@ -89,7 +126,7 @@ fun YearReport(
                         Comparison_text(blue_text = "1시간 37분", white_text = "이에요")
                     },
                     days = days,
-                    sleepHours = listOf(1.6f, 1f, 1.3f, 1.4f, 1.3f,1.6f, 1f, 1.3f, 1.4f, 1.3f,1.6f, 1f,),
+                    sleepHours = statistics?.remSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     path = "sleep_REM",
                     period = period
                 )
@@ -101,7 +138,7 @@ fun YearReport(
                         Comparison_text(blue_text = "4시간 43분", white_text = "이에요")
                     },
                     days = days,
-                    sleepHours = listOf(4.8f, 4.5f, 3.8f, 3.6f, 3.4f,4.8f, 4.5f, 3.8f, 3.6f, 3.4f,4.8f, 4.5f),
+                    sleepHours = statistics?.lightSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     path = "sleep_light",
                     period = period
                 )
@@ -113,7 +150,7 @@ fun YearReport(
                         Comparison_text(blue_text = "1시간 13분", white_text = "이에요")
                     },
                     days = days,
-                    sleepHours = listOf(1.5f, 1f, 1.2f, 1.4f, 1.3f,1.5f, 1f, 1.2f, 1.4f, 1.3f,1.5f, 1f),
+                    sleepHours = statistics?.deepSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     path = "sleep_deep",
                     period = period
                 )
