@@ -1,5 +1,11 @@
 package com.example.sleephony.ui.screen.sleep
 
+import android.app.DownloadManager
+import android.content.IntentFilter
+import android.util.Log
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,21 +25,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
+import com.example.sleephony.data.model.theme.ThemeListResult
 import com.example.sleephony.domain.model.AlarmMode
+import com.example.sleephony.receiver.DownloadCompleteReceiver
+import com.example.sleephony.ui.common.component.ThemeImageButton
 import com.example.sleephony.ui.common.component.TimeWheelPicker
+import com.example.sleephony.ui.screen.sleep.component.DownloadConfirmDialog
+import com.example.sleephony.ui.screen.sleep.component.ThemeSelectSheet
 
 @Composable
 fun SleepSettingScreen(
@@ -42,6 +60,44 @@ fun SleepSettingScreen(
 ) {
     val settingData by viewModel.settingData.collectAsState()
     val (hour, minute, isAm, mode) = settingData
+
+    val themes by viewModel.themes.collectAsState()
+    val selectedThemeId by viewModel.selectedThemeId.collectAsState()
+
+    var showThemeDialog by remember { mutableStateOf(false) }
+
+    val scale by animateFloatAsState(
+        targetValue = if (showThemeDialog) 1f else 0.8f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium)
+    )
+
+    val allowMobile by viewModel.allowMobileDownload.collectAsState()
+    var pendingTheme by remember { mutableStateOf<ThemeListResult?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val downloadReceiver = remember {
+        DownloadCompleteReceiver(
+            onSuccess = { id -> /* 성공 처리 */ },
+            onFailure = { id, reason -> /* 실패 처리 */ }
+        )
+    }
+
+    DisposableEffect (Unit) {
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        ContextCompat.registerReceiver(
+            context,
+            downloadReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        onDispose { context.unregisterReceiver(downloadReceiver) }
+    }
+
+    val playingThemeId by viewModel.playingThemeId.collectAsState()
+
+
+
     // 알람 범위 계산
     fun formatWithPeriod(totalMinutes: Int): String {
         val normalized = (totalMinutes + 24 * 60) % (24 * 60)
@@ -84,12 +140,71 @@ fun SleepSettingScreen(
             contentScale = ContentScale.FillWidth
         )
 
+        if (showThemeDialog) {
+            Dialog(
+                onDismissRequest = { showThemeDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                ThemeSelectSheet(
+                    themes = themes,
+                    currentThemeId = selectedThemeId,
+                    onThemeSelected = { theme ->
+                        // Wi-Fi 이거나, 모바일 다운로드 허용 여부가 켜져 있으면 바로 다운로드 시작
+                        if (viewModel.isOnWifi() || allowMobile) {
+                            viewModel.onThemeSelected(theme)
+                            viewModel.downloadTheme(theme.id)
+                            showThemeDialog = false
+                        }
+                        // 아니면 다이얼로그 띄우기
+                        else {
+                            pendingTheme = theme
+                            showDialog = true
+                        }
+                        Log.d("DBG", "$theme")
+                    },
+                    onPlay = { theme ->
+                        viewModel.previewTheme(theme.id)
+                    },
+                    playingThemeId = playingThemeId,
+                    onClose = { showThemeDialog = false }
+                )
+            }
+        }
+
+        if (showDialog && pendingTheme != null) {
+            DownloadConfirmDialog(
+                allowMobile = allowMobile,
+                onAllowChange = { viewModel.setAllowMobileDownload(it) },
+                onConfirm = {
+                    viewModel.onThemeSelected(pendingTheme!!)
+                    viewModel.downloadTheme(pendingTheme!!.id)
+                    showDialog = false
+                    pendingTheme = null
+                    showThemeDialog = false
+                },
+                onDismiss = {
+                    showDialog = false
+                    pendingTheme = null
+                }
+            )
+        }
+
         // 3) UI 오버레이
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 24.dp)
         ) {
+
+            Spacer(Modifier.height(48.dp))
+
+            // 3-1) 테마 선택 창 열기
+            themes.firstOrNull { it.id == selectedThemeId}?.let { currentTheme ->
+                ThemeImageButton(
+                    theme = currentTheme,
+                    onClickSettings = { showThemeDialog = true }
+                )
+            }
 
             Spacer(Modifier.height(48.dp))
 
@@ -108,14 +223,14 @@ fun SleepSettingScreen(
             }
 
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(24.dp))
 
             // 3-3) 알람 모드 버튼
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AlarmMode.values().forEach { m ->
+                AlarmMode.entries.forEach { m ->
                     val selected = m == mode
                     OutlinedButton(
                         onClick = { viewModel.onModeSelected(m) },
@@ -147,7 +262,7 @@ fun SleepSettingScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(48.dp))
 
             // 3-5) 수면 시작 버튼
             Button(

@@ -1,7 +1,7 @@
 package com.example.sleephony.data.datasource.remote.user
 
 import com.example.sleephony.data.model.ApiResponse
-import com.example.sleephony.data.model.UserProfileResult
+import com.example.sleephony.data.model.user.UserProfileResult
 import retrofit2.http.GET
 import retrofit2.http.Header
 

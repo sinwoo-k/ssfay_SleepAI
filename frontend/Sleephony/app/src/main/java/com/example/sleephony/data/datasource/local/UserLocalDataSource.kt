@@ -2,7 +2,7 @@ package com.example.sleephony.data.datasource.local
 
 import android.content.Context
 import androidx.core.content.edit
-import com.example.sleephony.data.model.UserProfileResult
+import com.example.sleephony.data.model.user.UserProfileResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
