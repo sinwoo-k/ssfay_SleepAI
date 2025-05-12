@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.theme.entity;
 
+import com.c208.sleephony.domain.sleep.entity.SleepStage;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -28,7 +29,7 @@ public class Sound {
     private String url;
 
     @Column(name = "sleep_stage", length = 5)
-    private String sleepStage;
+    private SleepStage sleepStage;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
