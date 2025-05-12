@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -17,14 +18,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 
 @Composable
 fun SleepDetailScreen(
     page: String,
     navController: NavController,
     days:List<String>,
+    statisticsViewModel : StatisticsViewModel
 ) {
     val modifier = Modifier
+    val statistics = statisticsViewModel.statistics.collectAsState().value
+    val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
+    val statisticComparisonSummary = statisticsViewModel.statisticMySummary.collectAsState().value
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -55,11 +62,41 @@ fun SleepDetailScreen(
                 navController = navController
             )
             when(page) {
-                "sleep_time" -> SleepTimeDetailScreen(modifier = modifier, days= days)
-                "sleep_latency" -> SleepLatencyDetailScreen(modifier = modifier, days= days)
-                "sleep_REM" -> SleepREMDetailScreen(modifier =  modifier, days= days)
-                "sleep_light" -> SleepLightDetailScreen(modifier = modifier, days= days)
-                "sleep_deep" -> SleepDeepDetailScreen(modifier = modifier, days= days)
+                "sleep_time" -> SleepTimeDetailScreen(
+                    modifier = modifier,
+                    days= days,
+                    statisticSummary = statisticSummary,
+                    statisticComparisonSummary = statisticComparisonSummary,
+                    statistics = statistics
+                )
+                "sleep_latency" -> SleepLatencyDetailScreen(
+                    modifier = modifier,
+                    days= days,
+                    statisticSummary = statisticSummary,
+                    statisticComparisonSummary = statisticComparisonSummary,
+                    statistics = statistics
+                )
+                "sleep_REM" -> SleepREMDetailScreen(
+                    modifier = modifier,
+                    days= days,
+                    statisticSummary = statisticSummary,
+                    statisticComparisonSummary = statisticComparisonSummary,
+                    statistics = statistics
+                )
+                "sleep_light" -> SleepLightDetailScreen(
+                    modifier = modifier,
+                    days= days,
+                    statisticSummary = statisticSummary,
+                    statisticComparisonSummary = statisticComparisonSummary,
+                    statistics = statistics
+                )
+                "sleep_deep" -> SleepDeepDetailScreen(
+                    modifier = modifier,
+                    days= days,
+                    statisticSummary = statisticSummary,
+                    statisticComparisonSummary = statisticComparisonSummary,
+                    statistics = statistics
+                )
             }
         }
     }

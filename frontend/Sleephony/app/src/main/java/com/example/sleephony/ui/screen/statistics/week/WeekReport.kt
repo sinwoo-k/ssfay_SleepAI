@@ -50,7 +50,7 @@ fun WeekReport(
     val period = "WEEK"
 
 
-    LaunchedEffect(weekStartState.value) {
+    LaunchedEffect(Unit, weekStartState.value) {
         statisticsViewModel.loadStatistics(
             startDate = weekStartState.value.toString(),
             endDate = weekEnd.toString(),

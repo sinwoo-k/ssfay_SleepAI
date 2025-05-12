@@ -31,10 +31,10 @@ import com.example.sleephony.ui.screen.statistics.year.YearReport
 @Composable
 fun StatisticsScreen(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    statisticsViewModel:StatisticsViewModel
 ) {
     val step = remember { mutableStateOf(1) }
-    val statisticsViewModel: StatisticsViewModel = hiltViewModel()
     Box(
         modifier = Modifier
             .fillMaxSize()
