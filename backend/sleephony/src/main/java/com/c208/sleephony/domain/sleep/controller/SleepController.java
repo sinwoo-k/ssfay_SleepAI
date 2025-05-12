@@ -112,6 +112,7 @@ public class SleepController {
         return ApiResponse.success(HttpStatus.OK, sleepService.advise(sleepService.getReportByDate(date)));
     }
 
+    @Operation(summary = "통계 요약 API", description = "주, 월, 년 별로 데이터 통계 요약 API")
     @PostMapping("/stat/summary")
     public ApiResponse<CombinedStatResponse> getSummary(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "통계 요청 DTO")
@@ -132,4 +133,16 @@ public class SleepController {
         GraphResponse graph = sleepService.graph(req);
         return ApiResponse.success(HttpStatus.OK, graph);
     }
+
+    @Operation(
+            summary = "월별 수면 리포트 날짜 조회",
+            description = "로그인된 사용자의 지정된 연월(month)에 수면 리포트가 존재하는 날짜 목록을 반환합니다."
+    )
+    @GetMapping("/reports/dates")
+    public ApiResponse<List<LocalDate>> getReportDates(
+            @RequestParam String month
+    ){
+        return ApiResponse.success(HttpStatus.OK,sleepService.getReportedDatesForMonth(month));
+    }
+
 }
