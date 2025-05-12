@@ -35,12 +35,12 @@ data class StatisticMySummary(
     val gender : String,
     val bedtime : String,
     val wakeupTime: String,
-    val sleepDurationMinutes : String,
-    val sleepLatencyMinutes : String,
-    val remSleepMinutes : String,
-    val remSleepRatio : String,
-    val lightSleepMinutes : String,
-    val lightSleepRatio :String,
-    val deepSleepMinutes : String,
-    val deepSleepRatio : String
+    val sleepDurationMinutes : Int,
+    val sleepLatencyMinutes : Int,
+    val remSleepMinutes : Int,
+    val remSleepRatio : Int,
+    val lightSleepMinutes : Int,
+    val lightSleepRatio :Int,
+    val deepSleepMinutes : Int,
+    val deepSleepRatio : Int
 )

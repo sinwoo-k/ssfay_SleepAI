@@ -45,7 +45,7 @@ fun YearReport(
     val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
     val period = "YEAR"
 
-    LaunchedEffect(yearState.value) {
+    LaunchedEffect(Unit, yearState.value) {
         statisticsViewModel.loadStatistics(
             startDate = yearState.value.toString(),
             endDate = yearEnd.toString(),

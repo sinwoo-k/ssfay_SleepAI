@@ -49,7 +49,8 @@ fun MonthReport(
     val days = remember { listOf("1주","2주","3주","4주","5주") }
     val period = "MONTH"
 
-    LaunchedEffect(monthState.value) {
+
+    LaunchedEffect(Unit,monthState.value) {
         statisticsViewModel.loadStatistics(
             startDate = monthState.value.toString(),
             endDate = monthEnd.toString(),
