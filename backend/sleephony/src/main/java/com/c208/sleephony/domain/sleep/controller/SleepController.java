@@ -33,7 +33,7 @@ public class SleepController {
 
     @Operation(summary = "생체 데이터 저장 및 수면 단계 예측", description = "사용자가 전송한 생체 데이터를 저장하고 수면 단계 및 점수를 예측합니다.")
     @PostMapping("bio-data")
-    public ApiResponse<List<SleepPredictionResult>> saveBioData(
+    public ApiResponse<SleepPredictionResult> saveBioData(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "생체 데이터 요청 DTO")
             @RequestBody BioDataRequest requestDto
     ) {

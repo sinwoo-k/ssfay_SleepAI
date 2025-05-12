@@ -46,7 +46,7 @@ public class SleepService {
     private final UserRepository userRepository;
     private final SleepStatisticRepository sleepStatisticRepository;
 
-    public List<SleepPredictionResult> measureSleepStage(BioDataRequest requestDto) {
+    public SleepPredictionResult measureSleepStage(BioDataRequest requestDto) {
         try {
             LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
             Integer userId = AuthUtil.getLoginUserId();
@@ -65,7 +65,14 @@ public class SleepService {
                     .toList();
 
             bioRepository.saveAll(entities);
-            return predictAndSaveAll(entities);
+
+            // 전체 예측 결과 리스트 중 첫 번째만 꺼내서 리턴
+            List<SleepPredictionResult> allResults = predictAndSaveAll(entities);
+            if (allResults.isEmpty()) {
+                throw new SleepPredictionException("예측 결과가 없습니다.");
+            }
+            return allResults.get(0);
+
         } catch (Exception e) {
             throw new SleepPredictionException("수면 단계 예측 중 오류가 발생했습니다.", e);
         }
