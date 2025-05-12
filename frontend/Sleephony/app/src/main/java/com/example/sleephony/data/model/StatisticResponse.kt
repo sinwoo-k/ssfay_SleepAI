@@ -18,5 +18,5 @@ data class StatisticResults(
 
 data class StatisticData (
     val label : String,
-    val value : Int
+    val value : Float
 )
