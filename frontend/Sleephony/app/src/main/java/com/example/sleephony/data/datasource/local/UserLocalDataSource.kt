@@ -46,4 +46,16 @@ class UserLocalDataSource @Inject constructor(
             weight    = weight
         )
     }
+
+    fun clearProfile() {
+        prefs.edit {
+            clear()
+        }
+    }
+
+    fun updateProfileField(key: String, value: String) {
+        prefs.edit {
+            putString(key, value)
+        }
+    }
 }

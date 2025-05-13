@@ -32,7 +32,8 @@ import com.example.sleephony.ui.screen.settings.components.UserProfileBox
 @Composable
 fun SettingsHomeScreen(
     viewModel: SettingViewModel = hiltViewModel(),
-    logout: () -> Unit
+    logout: () -> Unit,
+    goUserProfile: () -> Unit
 ){
     Box(
         modifier = Modifier
@@ -64,7 +65,11 @@ fun SettingsHomeScreen(
                 .verticalScroll(scrollState)
         ) {
             UserProfileBox(
-                profile = profile
+                profile = profile,
+                logout = {
+                    viewModel.logout()
+                    logout()
+                }
             )
             HorizontalDivider(
                 thickness = 1.dp,
@@ -77,7 +82,7 @@ fun SettingsHomeScreen(
                     .padding(vertical = 24.dp)
             ) {
                 SettingTextButton(
-                    onClick = {},
+                    onClick = goUserProfile,
                     text = "개인 정보 변경"
                 )
                 Spacer(Modifier.height(24.dp))

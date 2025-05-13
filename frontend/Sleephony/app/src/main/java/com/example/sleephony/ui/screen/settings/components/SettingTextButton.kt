@@ -19,7 +19,7 @@ fun SettingTextButton(
     text: String
 ){
     TextButton (
-        onClick = {},
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(75.dp)

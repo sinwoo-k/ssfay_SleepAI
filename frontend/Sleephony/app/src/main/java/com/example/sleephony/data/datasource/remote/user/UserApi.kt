@@ -21,11 +21,11 @@ interface UserApi{
     suspend fun patchUserProfile(
         @Header("Authorization") bearer: String,
         @Body req: UserProfileRequest
-    )
+    ) : ApiResponse<String>
 
     // 회원 탈퇴
     @DELETE("user/delete")
     suspend fun deleteUser(
         @Header("Authorization") bearer: String,
-    )
+    ) : ApiResponse<String>
 }

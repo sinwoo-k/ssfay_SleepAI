@@ -12,18 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.example.sleephony.ui.common.components.BottomNavBar
 import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
+import com.example.sleephony.ui.screen.settings.SettingViewModel
 import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
+import com.example.sleephony.ui.screen.settings.SettingsUserProfileScreen
+import com.example.sleephony.ui.screen.settings.SettingsUserProfileUpdateScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
 import com.example.sleephony.ui.screen.sleep.SleepUiState
@@ -174,9 +179,56 @@ fun AppNavGraph(
                         navController.navigate("login") {
                             popUpTo("settings") { inclusive = true}
                         }
+                    },
+                    goUserProfile = {
+                      navController.navigate("settings_profile")
                     }
                 )
             }
+
+            composable("settings_profile") {
+                SettingsUserProfileScreen(
+                    backSettingHome = {
+                        navController.navigate("settings") {
+                            popUpTo("settings_profile") { inclusive = true }
+                        }
+                    },
+                    deleteUser = {
+                        navController.navigate("login") {
+                            popUpTo("settings_profile") { inclusive = true }
+                        }
+                    },
+                    goUpdateScreen = { key ->
+                        navController.navigate("settings_profile/$key") {
+                            popUpTo("setting_profile") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = "settings_profile/{key}",
+                arguments = listOf(
+                    navArgument("key") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val settingsEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("settings")
+                }
+                val viewModel: SettingViewModel = hiltViewModel(settingsEntry)
+                val key =  backStackEntry.arguments?.getString("key")!!
+                SettingsUserProfileUpdateScreen(
+                    viewModel = viewModel,
+                    key = key,
+                    updateProfile = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
 
             composable("detail/{page}/{period}") { it ->
                 val page = it.arguments?.getString("page") ?: ""
