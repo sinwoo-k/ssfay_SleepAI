@@ -19,7 +19,9 @@ import com.example.sleephony.ui.common.component.BottomNavBar
 import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
+import com.example.sleephony.ui.screen.report.AiReportScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
+import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
 import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
@@ -36,6 +38,7 @@ fun AppNavGraph(
     startDestination: String = "splash"
 ) {
     val statisticsViewModel: StatisticsViewModel = hiltViewModel()
+    val reportViewModel: ReportViewModel = hiltViewModel()
 
     // 현재 경로 가져오기
     val backStack by navController.currentBackStackEntryAsState()
@@ -149,7 +152,11 @@ fun AppNavGraph(
             }
 
             composable("report") {
-                ReportScreen()
+                ReportScreen(navController = navController, reportViewModel = reportViewModel)
+            }
+
+            composable("ai_report") {
+                AiReportScreen(navController = navController)
             }
 
             composable("statistics") {
