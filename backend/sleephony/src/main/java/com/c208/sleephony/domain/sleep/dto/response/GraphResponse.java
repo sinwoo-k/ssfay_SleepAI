@@ -21,6 +21,6 @@ public class GraphResponse {
     @NoArgsConstructor
     public static class TimePoint {
         private String label;
-        private Float value;
+        private Integer value;
     }
 }
