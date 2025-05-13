@@ -24,15 +24,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.data.model.StatisticMySummary
+import com.example.sleephony.data.model.StatisticResults
+import com.example.sleephony.data.model.StatisticSummaryData
 import com.example.sleephony.ui.screen.statistics.components.detail.average.ComparisonAverage
 import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonChart
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 
 @Composable
 fun SleepREMDetailScreen(
     modifier: Modifier,
     days:List<String>,
+    statisticSummary : StatisticSummaryData?,
+    statisticComparisonSummary : List<StatisticMySummary?>,
+    statistics : StatisticResults?
 ) {
-    val sleepHours = remember { listOf(130f, 100f,110f, 120f, 120f, 150f, 110f) }
+    val other = if (statisticComparisonSummary[0]?.gender == "M") "${statisticComparisonSummary[0]?.ageGroup} 남성" else "${statisticComparisonSummary[0]?.ageGroup} 여성"
+    val mySleepREMAverage = statisticSummary?.averageRemSleepMinutes?.toInt() ?: 0
+    val myREMRatio = statisticSummary?.averageRemSleepPercentage ?: 0
+    val otherSleepREMAverage = statisticComparisonSummary[0]?.remSleepMinutes?.toInt() ?: 0
+    val otherREMRatio: Int = statisticComparisonSummary[0]?.remSleepRatio ?: 0
+    val averageDifference = if (mySleepREMAverage> otherSleepREMAverage) true else false
     LazyColumn(
         modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp),
     ) {
@@ -41,35 +53,35 @@ fun SleepREMDetailScreen(
                 ComparisonAverage(
                     modifier = modifier,
                     days = days,
-                    sleepHours = sleepHours,
+                    sleepHours = statistics?.remSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.REM_sleep),
                     my_name = "내 평균",
-                    my_value = 137f,
-                    other_name = "20대 남성 평균",
-                    other_value = 144f
+                    my_value = mySleepREMAverage.toFloat(),
+                    other_name = "${other} 평균",
+                    other_value = otherSleepREMAverage.toFloat()
                 )
                 ComparisonChart(
                     modifier = modifier,
-                    before_name="남성 평균",
-                    before_value= 144f,
+                    before_name="${other} 평균",
+                    before_value= otherSleepREMAverage.toFloat(),
                     after_name = "내평균",
-                    after_value = 113f,
+                    after_value = mySleepREMAverage.toFloat(),
                     title = {
-                        White_text("20대 남서 평균 렘 수면 시간")
-                        Comparison_text(blue_text = "1시간 44분", white_text = "보다")
-                        Comparison_text(blue_text = "평균 31분", white_text = "덜 주무셨어요")
+                        White_text("${other} 평균 렘 수면 시간")
+                        Comparison_text(blue_text = "${SummarTime(otherSleepREMAverage)}", white_text = "보다")
+                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepREMAverage - otherSleepREMAverage)}분", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(
                     modifier = modifier,
-                    before_name="남성 평균",
-                    before_value= 25f,
+                    before_name="${other} 평균",
+                    before_value= (otherREMRatio.toFloat()),
                     after_name = "내 평균",
-                    after_value = 20f,
+                    after_value = (myREMRatio.toFloat()),
                     title = {
-                        White_text("20대 남서 평균 렘 수면 비율")
-                        Comparison_text(blue_text = "25%" , white_text = "보다")
-                        Comparison_text(blue_text = "5%", white_text = "더 적게 주무셨어요")
+                        White_text("${other} 평균 렘 수면 비율")
+                        Comparison_text(blue_text = "${otherREMRatio}%" , white_text = "보다")
+                        Comparison_text(blue_text = "${Math.abs(myREMRatio - otherREMRatio)}%", white_text = if (myREMRatio < otherREMRatio) "더 적게 주무셨어요" else "더 많이 주무셨어요" )
                     }
                 )
                 Help_comment(
@@ -122,7 +134,7 @@ fun Help_comment(
             ) {
                 Row(
                     modifier = modifier
-                        .padding(10.dp,0.dp)
+                        .padding(10.dp, 0.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp,Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
@@ -160,7 +172,7 @@ fun Help_comment(
             ) {
                 Row(
                     modifier = modifier
-                        .padding(10.dp,0.dp)
+                        .padding(10.dp, 0.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp,Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
@@ -198,7 +210,7 @@ fun Help_comment(
             ) {
                 Row(
                     modifier = modifier
-                        .padding(10.dp,0.dp)
+                        .padding(10.dp, 0.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp,Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
