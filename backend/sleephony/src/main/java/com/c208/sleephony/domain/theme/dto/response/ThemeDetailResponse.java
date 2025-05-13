@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.theme.dto.response;
 
+import com.c208.sleephony.domain.sleep.entity.SleepStage;
 import com.c208.sleephony.domain.theme.entity.Sound;
 import com.c208.sleephony.domain.theme.entity.Theme;
 import lombok.*;
@@ -36,7 +37,7 @@ public class ThemeDetailResponse {
         private Integer soundId;
         private String soundName;
         private String soundUrl;
-        private String sleepStage;
+        private SleepStage sleepStage;
         private LocalDateTime createdAt;
 
         public static SoundDto from(Sound sound) {

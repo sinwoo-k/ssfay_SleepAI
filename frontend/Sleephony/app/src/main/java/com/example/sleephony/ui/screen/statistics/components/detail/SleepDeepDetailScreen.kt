@@ -11,15 +11,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
+import com.example.sleephony.data.model.StatisticMySummary
+import com.example.sleephony.data.model.StatisticResults
+import com.example.sleephony.data.model.StatisticSummaryData
 import com.example.sleephony.ui.screen.statistics.components.detail.average.ComparisonAverage
 import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonChart
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 
 @Composable
 fun SleepDeepDetailScreen(
     modifier: Modifier,
-    days:List<String>
+    days:List<String>,
+    statisticSummary : StatisticSummaryData?,
+    statisticComparisonSummary : List<StatisticMySummary?>,
+    statistics : StatisticResults?
 ) {
-    val sleepHours = remember { listOf(130f, 100f,110f, 120f, 120f, 150f, 110f) }
+
+    val other = if (statisticComparisonSummary[0]?.gender == "M") "${statisticComparisonSummary[0]?.ageGroup} 남성" else "${statisticComparisonSummary[0]?.ageGroup} 여성"
+    val mySleepDeepAverage = statisticSummary?.averageDeepSleepMinutes?.toInt() ?: 0
+    val mySleepDeepRatio = statisticSummary?.averageDeepSleepPercentage ?: 0
+    val otherSleepDeepAverage = statisticComparisonSummary[0]?.deepSleepMinutes ?: 0
+    val otherSleepDeepRatio = statisticComparisonSummary[0]?.deepSleepRatio ?: 0
+
     LazyColumn(
         modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp),
     ) {
@@ -28,35 +41,35 @@ fun SleepDeepDetailScreen(
                 ComparisonAverage(
                     modifier = modifier,
                     days = days,
-                    sleepHours = sleepHours,
+                    sleepHours = statistics?.deepSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.deep_sleep),
                     my_name = "내 평균",
-                    my_value = 113f,
-                    other_name = "20대 남성 평균",
-                    other_value = 102f
+                    my_value = mySleepDeepAverage.toFloat(),
+                    other_name = "${other} 평균",
+                    other_value = otherSleepDeepAverage.toFloat(),
                 )
                 ComparisonChart(
                     modifier = modifier,
-                    before_name="남성 평균",
-                    before_value= 102f,
+                    before_name="${other} 평균",
+                    before_value= otherSleepDeepAverage.toFloat(),
                     after_name = "내평균",
-                    after_value = 113f,
+                    after_value = mySleepDeepAverage.toFloat(),
                     title = {
-                        White_text("20대 남서 평균 깊은 수면 시간")
-                        Comparison_text(blue_text = "1시간 2분", white_text = "보다")
-                        Comparison_text(blue_text = "평균 11분", white_text = "더 주무셨어요")
+                        White_text("${other} 평균 깊은 수면 시간")
+                        Comparison_text(blue_text = "${SummarTime(otherSleepDeepAverage)}", white_text = "보다")
+                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepDeepAverage - otherSleepDeepAverage)}분", white_text =if (mySleepDeepAverage > otherSleepDeepAverage ) "더 주무셨어요" else "적게 주무셨어요")
                     }
                 )
                 ComparisonChart(
                     modifier = modifier,
-                    before_name="남성 평균",
-                    before_value= 15f,
+                    before_name="${other} 평균",
+                    before_value= otherSleepDeepRatio.toFloat(),
                     after_name = "내 평균",
-                    after_value = 13f,
+                    after_value = mySleepDeepRatio.toFloat(),
                     title = {
-                        White_text("20대 남서 평균 렘 수면 비율")
-                        Comparison_text(blue_text = "15%" , white_text = "보다")
-                        Comparison_text(blue_text = "2%", white_text = "더 주무셨어요")
+                        White_text("${other} 평균 렘 수면 비율")
+                        Comparison_text(blue_text = "${otherSleepDeepRatio}%" , white_text = "보다")
+                        Comparison_text(blue_text = "${Math.abs(mySleepDeepRatio - otherSleepDeepRatio)}%", white_text = if (mySleepDeepRatio > otherSleepDeepRatio ) "더 주무셨어요" else "적게 주무셨어요")
                     }
                 )
                 Help_comment(

@@ -23,7 +23,15 @@ import com.example.sleephony.R
 
 @Composable
 fun SleepSummation(
-    modifier: Modifier
+    modifier:Modifier,
+    averageSleepLatencyMinutes : Float,
+    averageRemSleepMinutes : Float,
+    averageRemSleepPercentage : Int,
+    averageLightSleepMinutes :Float,
+    averageLightSleepPercentage :Int,
+    averageDeepSleepMinutes :Float,
+    averageDeepSleepPercentage :Int,
+    averageSleepCycleCount :Int,
 ) {
     val alphaWhite = Color.White.copy(alpha = .7f)
 
@@ -54,7 +62,7 @@ fun SleepSummation(
                             Text(text = stringResource(R.string.non_sleep),fontSize = 20.sp, color = alphaWhite)
                         }
                     }
-                    Text(text = "13분(3%)",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageSleepLatencyMinutes.toInt())}",fontSize = 20.sp, color = alphaWhite)
                 }
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -68,7 +76,7 @@ fun SleepSummation(
                             Text(text = stringResource(R.string.REM_sleep),fontSize = 20.sp, color = alphaWhite)
                         }
                     }
-                    Text(text = "1시간 37분(22%)",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageRemSleepMinutes.toInt())}(${averageRemSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
                 }
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -82,7 +90,7 @@ fun SleepSummation(
                             Text(text = stringResource(R.string.light_sleep),fontSize = 20.sp, color = alphaWhite)
                         }
                     }
-                    Text(text = "4시간 24분(62%)",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageLightSleepMinutes.toInt())}(${averageLightSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
                 }
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,7 +104,7 @@ fun SleepSummation(
                             Text(text = stringResource(R.string.deep_sleep),fontSize = 20.sp, color = alphaWhite)
                         }
                     }
-                    Text(text = "2시간 23분(13%)",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageDeepSleepMinutes.toInt())}(${averageDeepSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
                 }
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,7 +118,7 @@ fun SleepSummation(
                             Text(text = stringResource(R.string.sleep_cycle),fontSize = 20.sp, color = alphaWhite)
                         }
                     }
-                    Text(text = "3회",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${averageSleepCycleCount}회",fontSize = 20.sp, color = alphaWhite)
                 }
             }
         }

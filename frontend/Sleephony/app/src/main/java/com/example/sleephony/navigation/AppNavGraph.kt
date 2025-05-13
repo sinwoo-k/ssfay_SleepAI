@@ -31,12 +31,15 @@ import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
 import com.example.sleephony.ui.screen.statistics.StatisticsScreen
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = "splash"
 ) {
+    val statisticsViewModel: StatisticsViewModel = hiltViewModel()
+
     // 현재 경로 가져오기
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -162,7 +165,7 @@ fun AppNavGraph(
             }
 
             composable("statistics") {
-                StatisticsScreen(modifier = Modifier, navController = navController)
+                StatisticsScreen(modifier = Modifier, navController = navController, statisticsViewModel = statisticsViewModel)
             }
 
             composable("settings") {
@@ -187,7 +190,8 @@ fun AppNavGraph(
                 SleepDetailScreen(
                     page = page,
                     navController = navController,
-                    days = days
+                    days = days,
+                    statisticsViewModel = statisticsViewModel
                 )
             }
         }

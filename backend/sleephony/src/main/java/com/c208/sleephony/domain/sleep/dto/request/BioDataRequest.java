@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 public class BioDataRequest {
@@ -17,6 +18,7 @@ public class BioDataRequest {
     public static class DataPoint {
         private String time;
         private Integer heartRate;
+        private Float temperature;
         private Float gyroX;
         private Float gyroY;
         private Float gyroZ;

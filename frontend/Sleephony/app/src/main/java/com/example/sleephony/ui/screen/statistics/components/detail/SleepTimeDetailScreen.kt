@@ -18,15 +18,29 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.data.model.StatisticData
+import com.example.sleephony.data.model.StatisticMySummary
+import com.example.sleephony.data.model.StatisticResults
+import com.example.sleephony.data.model.StatisticSummaryData
 import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonChart
 import com.example.sleephony.ui.screen.statistics.components.detail.average.ComparisonAverage
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
+import com.example.sleephony.ui.screen.statistics.week.StatisticsTime
 
 @Composable
 fun SleepTimeDetailScreen(
     modifier: Modifier,
     days:List<String>,
+    statisticSummary : StatisticSummaryData?,
+    statisticComparisonSummary : List<StatisticMySummary?>,
+    statistics : StatisticResults?
 ) {
-    val sleepHours = remember { listOf(7.5f, 6.8f, 8.2f, 7.0f, 6.5f, 8.5f, 9.0f) }
+    val other = if (statisticComparisonSummary[0]?.gender == "M") "${statisticComparisonSummary[0]?.ageGroup} 남성" else "${statisticComparisonSummary[0]?.ageGroup} 여성"
+    val mySleepTimeAverage = statisticSummary?.averageSleepTimeMinutes?.toInt() ?: 0
+    val otherSleepTimeAverage = statisticComparisonSummary[0]?.sleepDurationMinutes?.toInt() ?: 0
+    val averageDifference = if (mySleepTimeAverage> otherSleepTimeAverage) true else false
+
+
     LazyColumn(
         modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp),
     ) {
@@ -35,23 +49,23 @@ fun SleepTimeDetailScreen(
                 ComparisonAverage(
                     modifier = modifier,
                     days = days,
-                    sleepHours = sleepHours,
+                    sleepHours = statistics?.sleepTime?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.sleep_time),
                     my_name = "내 평균",
-                    my_value = 703f,
-                    other_name = "20대 남성 평균",
-                    other_value = 658f,
+                    my_value = mySleepTimeAverage.toFloat(),
+                    other_name = "${other} 평균",
+                    other_value = otherSleepTimeAverage.toFloat()
                 )
                 ComparisonChart(
                     modifier = modifier,
-                    before_name="남성 평균",
-                    before_value= 657f,
+                    before_name="${other} 평균",
+                    before_value= otherSleepTimeAverage.toFloat(),
                     after_name = "내 평균",
-                    after_value = 703f,
+                    after_value = mySleepTimeAverage.toFloat(),
                     title = {
-                        White_text("20대 남성 평균 수명시간")
-                        Comparison_text(blue_text = "6시간 57분", white_text ="보다" )
-                        Comparison_text(blue_text = "평균 6분", white_text = "더 주무셨어요")
+                        White_text("${other} 평균 수면시간")
+                        Comparison_text(blue_text = "${SummarTime(otherSleepTimeAverage)}", white_text ="보다" )
+                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepTimeAverage - otherSleepTimeAverage)}분", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(
@@ -147,3 +161,10 @@ fun Comparison_text(
     })
 }
 
+fun SummarTime(value: Int): String {
+    if (value == 0) return "0분"
+    val hour = value / 60
+    val min = value % 60
+
+    return if (hour != 0) "${hour}시간 ${min}분" else "${min}분"
+}

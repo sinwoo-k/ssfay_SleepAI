@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -17,19 +18,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.statistics.components.ReportTopBar
 import com.example.sleephony.ui.screen.statistics.month.MonthReport
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import com.example.sleephony.ui.screen.statistics.week.WeekReport
 import com.example.sleephony.ui.screen.statistics.year.YearReport
 
 @Composable
 fun StatisticsScreen(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    statisticsViewModel:StatisticsViewModel
 ) {
-    val step = remember { mutableStateOf(1) }
+    var step = statisticsViewModel.step
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -52,11 +57,11 @@ fun StatisticsScreen(
             contentScale = ContentScale.FillWidth
         )
         Column(modifier = modifier.padding( start = 20.dp, end = 20.dp)) {
-            ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
-            when (step.value) {
-                1 -> WeekReport(modifier = modifier, navController = navController)
-                2 -> MonthReport(modifier = modifier, navController = navController)
-                3 -> YearReport(modifier = modifier, navController = navController)
+            ReportTopBar(modifier = modifier, step = step, onChange = {newStep -> statisticsViewModel.step =newStep})
+            when (step) {
+                1 -> WeekReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)
+                2 -> MonthReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)
+                3 -> YearReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)
             }
         }
     }
