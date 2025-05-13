@@ -39,8 +39,6 @@ fun WeekReport(
     navController: NavController,
     statisticsViewModel: StatisticsViewModel
 ) {
-    val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
-    val today = LocalDate.now()
     val weekStartState = statisticsViewModel.selectedWeek
     val weekEnd = weekStartState.plusDays(6)
 
@@ -48,7 +46,6 @@ fun WeekReport(
     val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
     val days = remember { listOf("월","화","수","목","금","토","일") }
     val period = "WEEK"
-
 
     LaunchedEffect(Unit, weekStartState) {
         statisticsViewModel.loadStatistics(

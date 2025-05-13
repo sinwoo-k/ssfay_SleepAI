@@ -67,7 +67,8 @@ fun AppNavGraph(
                 val splashVm: SplashViewModel = hiltViewModel()
                 SplashScreen(
                     navController = navController,
-                    viewModel = splashVm
+                    viewModel = splashVm,
+                    statisticsViewModel = statisticsViewModel
                 )
             }
 
