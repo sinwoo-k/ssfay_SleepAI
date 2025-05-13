@@ -30,7 +30,6 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -439,14 +438,6 @@ public class SleepService {
         StatisticsRequest prevReq = new StatisticsRequest(prevStartDate, prevEndDate, req.getPeriodType());
         List<SleepReport> previousReports = fetchReports(userId, prevReq);
 
-        Function<ToLongFunction<SleepReport>, Integer> avgPerDay = sumFn -> {
-            long sum = currentReports.stream()
-                    .mapToLong(sumFn)
-                    .sum();
-            return days == 0
-                    ? 0
-                    : (int) Math.round((double) sum / days);
-        };
         long prevDaysWithReport = previousReports.stream()
                 .map(r -> r.getSleepTime().toLocalDate())
                 .distinct()
