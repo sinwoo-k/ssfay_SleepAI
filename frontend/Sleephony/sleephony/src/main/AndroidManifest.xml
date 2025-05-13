@@ -40,6 +40,17 @@
             android:exported="false"
             android:foregroundServiceType="health"/>
 
+        <!-- app  통신 -->
+        <service
+            android:name=".service.AppMessageListener"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/alarm" />
+            </intent-filter>
+        </service>
+
         <service
             android:name=".complication.MainComplicationService"
             android:exported="true"

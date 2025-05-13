@@ -1,7 +1,9 @@
 package com.example.sleephony.ui.screen.splash
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,13 +38,24 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.sleephony.R
+import com.example.sleephony.data.datasource.local.UserLocalDataSource
 import com.example.sleephony.ui.common.animation.ShootingStar
+import com.example.sleephony.ui.screen.auth.ProfileViewModel
+import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
 
 @Composable
 fun SplashScreen(
     navController: NavHostController,
-    viewModel: SplashViewModel = hiltViewModel()
+    viewModel: SplashViewModel = hiltViewModel(),
+    statisticsViewModel: StatisticsViewModel
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -62,6 +75,44 @@ fun SplashScreen(
             activity?.finishAffinity()
         }
     }
+
+    val weekStartState = statisticsViewModel.selectedWeek
+    val weekEnd = weekStartState.plusDays(6)
+
+    LaunchedEffect(Unit) {
+        statisticsViewModel.loadStatistics(
+            startDate = weekStartState.toString(),
+            endDate = weekEnd.toString(),
+            periodType = "WEEK"
+        )
+    }
+
+    val statistics = statisticsViewModel.statistics.collectAsState().value
+    statistics?.sleepTime
+    val profile = remember {
+        UserLocalDataSource(context).getProfile()
+    }
+    LaunchedEffect(profile,statistics) {
+        profile?.let {
+            SendProfile(
+                context = context,
+                email = it.email,
+                height = it.height.toString(),
+                gender = it.gender,
+                weight = it.weight.toString(),
+                nickname = it.nickname,
+                birthDate = it.birthDate
+            )
+        }
+        statistics?.sleepTime?.forEach {
+            SendHistory(
+                context = context,
+                label = it.label,
+                value = SummarTime(it.value.toInt())
+            )
+        }
+    }
+
 
     LaunchedEffect(isLoggedIn, notificationsEnabled, hasRequestedPermission) {
         if (isLoggedIn != null) {
@@ -162,3 +213,61 @@ fun SplashScreen(
     }
 }
 
+fun SendProfile(context: Context, email:String, nickname:String, height:String, weight:String, birthDate: String,gender:String ){
+    CoroutineScope(Dispatchers.IO).launch {
+        try{
+            val nodeClient = Wearable.getNodeClient(context)
+            val messageClient = Wearable.getMessageClient(context)
+
+            val jsonData = JSONObject().apply {
+                put("mode","profile")
+                put("email",email)
+                put("nickname",nickname)
+                put("height",height)
+                put("weight",weight)
+                put("birthDate",birthDate)
+                put("gender",gender)
+            }
+            val jsonString = jsonData.toString()
+
+            val nodes = nodeClient.connectedNodes.await()
+            for (node in nodes) {
+                messageClient.sendMessage(
+                    node.id,
+                    "/alarm",
+                    "$jsonString ".toByteArray()
+                ).await()
+            }
+        } catch (error: Exception){
+            Log.e("ssafy","$error")
+        }
+    }
+}
+
+fun SendHistory(context: Context, label:String, value: String){
+    CoroutineScope(Dispatchers.IO).launch {
+        try{
+            val nodeClient = Wearable.getNodeClient(context)
+            val messageClient = Wearable.getMessageClient(context)
+
+            val jsonData = JSONObject().apply {
+                put("mode","history")
+                put("day",label)
+                put("value",value)
+            }
+            val jsonString = jsonData.toString()
+
+            val nodes = nodeClient.connectedNodes.await()
+            for (node in nodes) {
+                messageClient.sendMessage(
+                    node.id,
+                    "/alarm",
+                    "$jsonString ".toByteArray()
+                ).await()
+            }
+            Log.d("ssafy","send history success")
+        } catch (error: Exception){
+            Log.e("ssafy","$error")
+        }
+    }
+}
