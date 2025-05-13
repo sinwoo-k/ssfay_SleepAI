@@ -11,11 +11,24 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val userLocalDataSource: UserLocalDataSource,
+    userLocalDataSource: UserLocalDataSource,
     private val tokenProvider: TokenProvider
 ) : ViewModel(){
-    private val _profileState = MutableStateFlow<UserProfileResult?>(null)
-    val profileState: StateFlow<UserProfileResult?> = _profileState
+
+    companion object {
+        private val DEFAULT_PROFILE = UserProfileResult(
+            email     = "",
+            nickname  = "",
+            birthDate = "",
+            gender    = "",
+            height    = 0,
+            weight    = 0
+        )
+    }
+
+
+    private val _profileState = MutableStateFlow(DEFAULT_PROFILE)
+    val profileState: StateFlow<UserProfileResult> = _profileState
 
     init {
         _profileState.value = userLocalDataSource.getProfile()
@@ -26,5 +39,9 @@ class SettingViewModel @Inject constructor(
         if (token != null)  {
             tokenProvider.clearToken(token)
         }
+    }
+
+    fun deleteUserInfo() {
+
     }
 }

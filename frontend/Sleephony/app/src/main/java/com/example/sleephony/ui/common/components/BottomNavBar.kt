@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.common.component
+package com.example.sleephony.ui.common.components
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
