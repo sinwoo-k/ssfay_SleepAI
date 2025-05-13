@@ -17,7 +17,8 @@ class UserRepositoryImpl @Inject constructor(
         val token = tokenProvider.getToken()
         val bearer = "Bearer $token"
         val response = api.getUserProfile(bearer)
-            response.results?.let { userLocalDataSource.saveProfile(it) }
+
+        response.results?.let { userLocalDataSource.saveProfile(it) }
 
         response.results
             ?: throw IllegalStateException("유저 정보를 찾을 수 없습니다.")
