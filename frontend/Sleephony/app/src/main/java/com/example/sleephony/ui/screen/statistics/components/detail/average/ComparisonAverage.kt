@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
 import com.example.sleephony.ui.screen.statistics.components.detail.chart.ComparisonBarChart
 
 @Composable
@@ -91,7 +92,7 @@ fun ComparisonAverage(
                             Spacer(modifier = Modifier.weight(1f))
 
                             Text(
-                                text = "$my_value",
+                                text = "${SummarTime(my_value.toInt())}",
                                 color = Color.White.copy(alpha = .3f),
                                 fontSize = 20.sp
                             )
@@ -122,7 +123,7 @@ fun ComparisonAverage(
                             Spacer(modifier = Modifier.weight(1f))
 
                             Text(
-                                text = "$other_value",
+                                text = "${SummarTime(other_value.toInt())}",
                                 color = Color.White.copy(alpha = .3f),
                                 fontSize = 20.sp
                             )

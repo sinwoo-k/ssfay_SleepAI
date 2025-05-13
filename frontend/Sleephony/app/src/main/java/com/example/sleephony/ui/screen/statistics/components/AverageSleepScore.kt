@@ -24,10 +24,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.data.model.StatisticData
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
+import com.example.sleephony.ui.screen.statistics.week.StatisticsTime
 
 @Composable
 fun AverageSleepScore(
-    modifier: Modifier
+    modifier: Modifier,
+    averageSleepScore:Int,
+    averageSleepTimeMinutes:Int,
+    averageSleepLatencyMinutes:Int
 ) {
     val alphaWhite = Color.White.copy(alpha = .7f)
 
@@ -55,7 +61,7 @@ fun AverageSleepScore(
                     Box {
                         Row(verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text(text = "95점", fontSize = 20.sp, color = alphaWhite)
+                            Text(text = "${averageSleepScore}점", fontSize = 20.sp, color = alphaWhite)
                             Image(
                                 modifier = modifier.size(15.dp),
                                 painter = painterResource(R.drawable.question),
@@ -75,7 +81,7 @@ fun AverageSleepScore(
                     Box(
                         modifier = modifier
                             .height(25.dp)
-                            .fillMaxWidth(.9f)
+                            .fillMaxWidth( averageSleepScore/100f)
                             .background(color = colorResource(R.color.SkyBlue), shape = RoundedCornerShape(20.dp))
                     )
                 }
@@ -83,7 +89,7 @@ fun AverageSleepScore(
                     .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = stringResource(R.string.average_sleep_time),fontSize = 20.sp, color = alphaWhite)
-                    Text(text = "7시간 15분",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageSleepTimeMinutes)}",fontSize = 20.sp, color = alphaWhite)
                 }
                 Divider(
                     thickness = 1.dp,
@@ -93,9 +99,18 @@ fun AverageSleepScore(
                     .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = stringResource(R.string.average_sleep_latency),fontSize = 20.sp, color = alphaWhite)
-                    Text(text = "14분",fontSize = 20.sp, color = alphaWhite)
+                    Text(text = "${parsingTime(averageSleepLatencyMinutes)}",fontSize = 20.sp, color = alphaWhite)
                 }
             }
         }
     }
+}
+
+fun parsingTime(value: Int): String {
+    if (value == 0) return "0분"
+
+    val hour = value / 60
+    val min = value % 60
+
+    return if (hour != 0) "${hour}시간 ${min}분" else "${min}분"
 }
