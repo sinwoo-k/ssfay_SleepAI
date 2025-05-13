@@ -73,7 +73,7 @@ class SettingViewModel @Inject constructor(
 
             val updated = userLocalDataSource.getProfile()
 
-            _profileState.value = userLocalDataSource.getProfile()
+            _profileState.value = updated
 
             val req = UserProfileRequest(
                 nickname = updated.nickname,

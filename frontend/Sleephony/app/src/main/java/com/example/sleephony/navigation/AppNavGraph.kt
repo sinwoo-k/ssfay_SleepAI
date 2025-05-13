@@ -200,7 +200,7 @@ fun AppNavGraph(
                     },
                     goUpdateScreen = { key ->
                         navController.navigate("settings_profile/$key") {
-                            popUpTo("setting_profile") { inclusive = true }
+                            popUpTo("settings_profile") { inclusive = true }
                             launchSingleTop = true
                         }
                     }
