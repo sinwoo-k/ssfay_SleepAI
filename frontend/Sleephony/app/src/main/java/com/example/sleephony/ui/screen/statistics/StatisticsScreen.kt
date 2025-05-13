@@ -34,7 +34,7 @@ fun StatisticsScreen(
     navController: NavController,
     statisticsViewModel:StatisticsViewModel
 ) {
-    val step = remember { mutableStateOf(1) }
+    var step = statisticsViewModel.step
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -57,8 +57,8 @@ fun StatisticsScreen(
             contentScale = ContentScale.FillWidth
         )
         Column(modifier = modifier.padding( start = 20.dp, end = 20.dp)) {
-            ReportTopBar(modifier = modifier, step = step.value, onChange = {newStep -> step.value = newStep})
-            when (step.value) {
+            ReportTopBar(modifier = modifier, step = step, onChange = {newStep -> statisticsViewModel.step =newStep})
+            when (step) {
                 1 -> WeekReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)
                 2 -> MonthReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)
                 3 -> YearReport(modifier = modifier, navController = navController, statisticsViewModel = statisticsViewModel)

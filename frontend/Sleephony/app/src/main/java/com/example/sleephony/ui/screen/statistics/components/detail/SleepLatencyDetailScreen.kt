@@ -57,20 +57,20 @@ fun SleepLatencyDetailScreen(
                     sleepHours = statistics?.sleepLatency?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.non_sleep),
                     my_name = "내 평균",
-                    my_value = StatisticsSleepHour(mySleepLatencyAverage),
+                    my_value = mySleepLatencyAverage.toFloat(),
                     other_name = "${other} 평균",
-                    other_value = StatisticsSleepHour(otherSleepLantencyAverage)
+                    other_value = otherSleepLantencyAverage.toFloat()
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= StatisticsSleepHour(otherSleepLantencyAverage),
+                    before_value= otherSleepLantencyAverage.toFloat(),
                     after_name = "내 평균",
-                    after_value = StatisticsSleepHour(mySleepLatencyAverage),
+                    after_value = mySleepLatencyAverage.toFloat(),
                     title = {
                         White_text("${other} 평균 취침 시간")
-                        Comparison_text(blue_text = "${StatisticsSleepHour(otherSleepLantencyAverage)}" , white_text = "보다")
-                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepLatencyAverage - otherSleepLantencyAverage)}분", white_text = "더 늦게 주무셨어요")
+                        Comparison_text(blue_text = "${SummarTime(otherSleepLantencyAverage)}" , white_text = "보다")
+                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepLatencyAverage - otherSleepLantencyAverage)}분", white_text = if (mySleepLatencyAverage > otherSleepLantencyAverage) "더 늦게 주무셨어요" else "더 일찍 주무셨어요")
                     }
                 )
                 ComparisonChart(

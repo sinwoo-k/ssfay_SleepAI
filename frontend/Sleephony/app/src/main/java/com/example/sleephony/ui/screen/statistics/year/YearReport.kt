@@ -26,6 +26,7 @@ import com.example.sleephony.ui.screen.statistics.components.detail.Gray_text
 import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
+import com.example.sleephony.ui.screen.statistics.week.StatisticsTime
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
@@ -36,23 +37,23 @@ fun YearReport(
     statisticsViewModel: StatisticsViewModel
 ) {
     val today = LocalDate.now()
-    val yearState = remember { mutableStateOf(today.with(TemporalAdjusters.firstDayOfYear())) }
-    val year = yearState.value.year
-    val yearEnd = yearState.value.with(TemporalAdjusters.lastDayOfYear())
+    val yearState = statisticsViewModel.selectedYear
+    val year = yearState.year
+    val yearEnd = yearState.with(TemporalAdjusters.lastDayOfYear())
     val days = remember { listOf("1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월") }
 
     val statistics = statisticsViewModel.statistics.collectAsState().value
     val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
     val period = "YEAR"
 
-    LaunchedEffect(Unit, yearState.value) {
+    LaunchedEffect(Unit, yearState) {
         statisticsViewModel.loadStatistics(
-            startDate = yearState.value.toString(),
+            startDate = yearState.toString(),
             endDate = yearEnd.toString(),
             periodType = period
         )
         statisticsViewModel.loadStatisticSummary(
-            startDate = yearState.value.toString(),
+            startDate = yearState.toString(),
             endDate = yearEnd.toString(),
             periodType = period
         )
@@ -67,14 +68,14 @@ fun YearReport(
             YearlyCalendar(
                 modifier = modifier.
                 padding(0.dp,5.dp),
-                yearState = yearState.value,
-                onChange = { newDate -> yearState.value = newDate }
+                yearState = yearState,
+                onChange = { newDate -> statisticsViewModel.selectedYear = newDate }
             )
             Column(verticalArrangement = Arrangement.spacedBy(25.dp)) {
                 Box() {
                     Column {
                         White_text("${year}년 에는")
-                        Blue_text("평균 7시간 3분")
+                        Blue_text("평균 ${StatisticsTime(statistics?.sleepTime ?: emptyList())}")
                         Gray_text("꿀잠을 주무셨어요!!")
                     }
                 }
@@ -111,7 +112,7 @@ fun YearReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.sleep_latency_time))
-                        Comparison_text(blue_text = "1시간 13분", white_text = "이에요" )
+                        Comparison_text(blue_text = "${StatisticsTime(statistics?.sleepLatency ?: emptyList())}", white_text = "이에요" )
                     },
                     days = days,
                     sleepHours = statistics?.sleepLatency?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
@@ -123,7 +124,7 @@ fun YearReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_REM_sleep))
-                        Comparison_text(blue_text = "1시간 37분", white_text = "이에요")
+                        Comparison_text(blue_text = "${ StatisticsTime(statistics?.remSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.remSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
@@ -135,7 +136,7 @@ fun YearReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_light_sleep))
-                        Comparison_text(blue_text = "4시간 43분", white_text = "이에요")
+                        Comparison_text(blue_text = "${StatisticsTime(statistics?.lightSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.lightSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
@@ -147,7 +148,7 @@ fun YearReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_deep_sleep))
-                        Comparison_text(blue_text = "1시간 13분", white_text = "이에요")
+                        Comparison_text(blue_text = "${StatisticsTime(statistics?.deepSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.deepSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
