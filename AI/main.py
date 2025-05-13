@@ -1,10 +1,10 @@
 # main.py
 from fastapi import FastAPI
 from schema import RawSequence
-from model_loader import sleepony, LABELS   # 모델 변수 sleepony 임포트
+from model_loader import sleephony, LABELS   # 모델 변수 sleepony 임포트
 import numpy as np
 
-app = FastAPI(title="Sleepony Prediction API")  # 앱 이름도 바꿔봄
+app = FastAPI(title="Sleephony Prediction API")  # 앱 이름도 바꿔봄
 
 @app.post("/api/ai/sleep-stage")
 def predict_raw(seq: RawSequence):
@@ -38,7 +38,7 @@ def predict_raw(seq: RawSequence):
     X = np.expand_dims(np.array(feats, dtype=np.float32), axis=0)  # (1,5,11)
 
     # sleepony 모델로 예측
-    preds = sleepony.predict(X)
+    preds = sleephony.predict(X)
     idx   = int(np.argmax(preds, axis=-1)[0])
 
     return {
