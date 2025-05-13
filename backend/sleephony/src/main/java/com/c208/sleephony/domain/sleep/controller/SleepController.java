@@ -8,6 +8,7 @@ import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
 import com.c208.sleephony.domain.sleep.dto.response.CombinedStatResponse;
 import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
 import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
+import com.c208.sleephony.domain.sleep.dto.response.SleepReportWithPrevious;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
@@ -37,7 +38,7 @@ public class SleepController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "생체 데이터 요청 DTO")
             @RequestBody BioDataRequest requestDto
     ) {
-        return ApiResponse.success(HttpStatus.CREATED, sleepService.measureSleepStage(requestDto));
+        return ApiResponse.success(HttpStatus.CREATED, sleepService.analyzeSleepStageDirectly(requestDto));
     }
 
     @Operation(summary = "수면 측정 시작 시간 저장", description = "Redis에 수면 측정 시작 시간을 저장합니다.")
@@ -60,7 +61,7 @@ public class SleepController {
 
     @Operation(summary = "수면 리포트 상세 조회", description = "특정 날짜의 수면 리포트를 조회합니다.")
     @GetMapping("report/detail/{date}")
-    public ApiResponse<SleepReport> getReportDetail(
+    public ApiResponse<SleepReportWithPrevious> getReportDetail(
             @Parameter(description = "조회할 날짜 (yyyy-MM-dd)", required = true)
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
