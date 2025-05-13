@@ -31,7 +31,8 @@ import com.example.sleephony.ui.screen.settings.components.UserProfileBox
 
 @Composable
 fun SettingsHomeScreen(
-    viewModel: SettingViewModel = hiltViewModel()
+    viewModel: SettingViewModel = hiltViewModel(),
+    logout: () -> Unit
 ){
     Box(
         modifier = Modifier
