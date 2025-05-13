@@ -6,6 +6,7 @@ import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SleepServiceTest {
 
+    @Autowired
     private final SleepService sleepService;
 
     @Test
