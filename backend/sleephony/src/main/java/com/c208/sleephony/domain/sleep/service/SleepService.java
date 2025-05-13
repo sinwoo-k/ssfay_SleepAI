@@ -8,10 +8,10 @@ import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
 import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
 import com.c208.sleephony.domain.sleep.dto.response.SummaryResponse;
 import com.c208.sleephony.domain.sleep.entity.*;
-import com.c208.sleephony.domain.sleep.repositroy.BioRepository;
-import com.c208.sleephony.domain.sleep.repositroy.SleepLevelRepository;
-import com.c208.sleephony.domain.sleep.repositroy.SleepReportRepository;
-import com.c208.sleephony.domain.sleep.repositroy.SleepStatisticRepository;
+import com.c208.sleephony.domain.sleep.repository.BioRepository;
+import com.c208.sleephony.domain.sleep.repository.SleepLevelRepository;
+import com.c208.sleephony.domain.sleep.repository.SleepReportRepository;
+import com.c208.sleephony.domain.sleep.repository.SleepStatisticRepository;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
 import com.c208.sleephony.global.exception.RedisOperationException;
@@ -24,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +47,16 @@ public class SleepService {
     private final GptClient gptClient;
     private final UserRepository userRepository;
     private final SleepStatisticRepository sleepStatisticRepository;
+    private final WebClient fastApiWebClient;
+
+    public SleepPredictionResult analyzeSleepStageDirectly(BioDataRequest requestDto) {
+        return fastApiWebClient.post()
+                .uri("/api/ai/sleep-stage")
+                .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(SleepPredictionResult.class)
+                .block(Duration.ofSeconds(5));  // 타임아웃 설정
+    }
 
     public SleepPredictionResult measureSleepStage(BioDataRequest requestDto) {
         try {
@@ -506,7 +518,7 @@ public class SleepService {
                             .orElse(0.0);
                     return new GraphResponse.TimePoint(label, avg);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
 
@@ -582,6 +594,6 @@ public class SleepService {
                 .map(report -> report.getSleepTime().toLocalDate())
                 .distinct()
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
     }
 }
