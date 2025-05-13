@@ -479,6 +479,18 @@ public class SleepService {
         int avgDeep      = (int)(sumDeep    / daysWithReport);
         int avgAwake     = (int)(sumAwake   / daysWithReport);
         int avgCycles    = (int)(sumCycles  / daysWithReport);
+        // 날짜별 총 수면시간(분) 계산
+        Map<LocalDate, Long> sleepByDate = currentReports.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getSleepTime().toLocalDate(),
+                        Collectors.summingLong(r ->
+                                Duration.between(r.getSleepTime(), r.getSleepWakeTime()).toMinutes()
+                        )
+                ));
+
+        // 최장/최단 수면 시간(분) 추출
+        long maxMinutes = sleepByDate.values().stream().mapToLong(Long::longValue).max().orElse(0L);
+        long minMinutes = sleepByDate.values().stream().mapToLong(Long::longValue).min().orElse(0L);
 
         return SummaryResponse.builder()
                 .period(formatPeriod(req.getStartDate(), req.getEndDate()))
@@ -495,6 +507,8 @@ public class SleepService {
                 .averageAwakeMinutes(avgAwake)
                 .averageAwakePercentage((int)percentage(avgAwake, avgTime))
                 .averageSleepCycleCount(avgCycles)
+                .mostSleepTimeMinutes((int) maxMinutes)
+                .leastSleepTimeMinutes((int) minMinutes)
                 .build();
     }
     /**
