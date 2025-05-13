@@ -28,6 +28,7 @@ public class Sound {
     @Column(name = "sound_url", length = 512, nullable = false)
     private String url;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "sleep_stage", length = 5)
     private SleepStage sleepStage;
 
