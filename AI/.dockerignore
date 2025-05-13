@@ -1,6 +1,4 @@
 venv/
 __pycache__/
-*.py[cod]
-.git
-.gitignore
-Dockerfile
+*.pyc
+.env
