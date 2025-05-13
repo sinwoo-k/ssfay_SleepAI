@@ -56,16 +56,16 @@ fun SleepREMDetailScreen(
                     sleepHours = statistics?.remSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.REM_sleep),
                     my_name = "내 평균",
-                    my_value = StatisticsSleepHour(mySleepREMAverage),
+                    my_value = mySleepREMAverage.toFloat(),
                     other_name = "${other} 평균",
-                    other_value = StatisticsSleepHour(otherSleepREMAverage)
+                    other_value = otherSleepREMAverage.toFloat()
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= StatisticsSleepHour(otherSleepREMAverage),
+                    before_value= otherSleepREMAverage.toFloat(),
                     after_name = "내평균",
-                    after_value = StatisticsSleepHour(mySleepREMAverage),
+                    after_value = mySleepREMAverage.toFloat(),
                     title = {
                         White_text("${other} 평균 렘 수면 시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepREMAverage)}", white_text = "보다")
@@ -81,7 +81,7 @@ fun SleepREMDetailScreen(
                     title = {
                         White_text("${other} 평균 렘 수면 비율")
                         Comparison_text(blue_text = "${otherREMRatio}%" , white_text = "보다")
-                        Comparison_text(blue_text = "${Math.abs(myREMRatio - otherREMRatio)}", white_text = if (myREMRatio < otherREMRatio) "더 적게 주무셨어요" else "더 많이 주무셨어요" )
+                        Comparison_text(blue_text = "${Math.abs(myREMRatio - otherREMRatio)}%", white_text = if (myREMRatio < otherREMRatio) "더 적게 주무셨어요" else "더 많이 주무셨어요" )
                     }
                 )
                 Help_comment(

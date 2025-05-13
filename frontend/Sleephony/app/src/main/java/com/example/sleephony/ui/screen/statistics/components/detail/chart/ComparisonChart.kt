@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 
 @Composable
 fun ComparisonChart(
@@ -103,7 +105,7 @@ fun ComparisonChart(
                         horizontalArrangement = Arrangement.spacedBy(15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "$before_value", color = Color.White.copy(alpha = .3f))
+                        Text(text = "${SummarTime(before_value.toInt())}", color = Color.White.copy(alpha = .3f))
                         Box(
                             modifier = Modifier
                                 .width(change(before_value).dp)
@@ -122,7 +124,7 @@ fun ComparisonChart(
                         horizontalArrangement = Arrangement.spacedBy(15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "$after_value", color = Color.White)
+                        Text(text = "${SummarTime(after_value.toInt())}", color = Color.White)
                         Box(
                             modifier = Modifier
                                 .width(change(after_value).dp)

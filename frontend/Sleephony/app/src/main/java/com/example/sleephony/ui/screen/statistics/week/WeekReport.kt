@@ -41,8 +41,8 @@ fun WeekReport(
 ) {
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
     val today = LocalDate.now()
-    val weekStartState = remember { mutableStateOf(today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))) }
-    val weekEnd = weekStartState.value.plusDays(6)
+    val weekStartState = statisticsViewModel.selectedWeek
+    val weekEnd = weekStartState.plusDays(6)
 
     val statistics = statisticsViewModel.statistics.collectAsState().value
     val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
@@ -50,14 +50,14 @@ fun WeekReport(
     val period = "WEEK"
 
 
-    LaunchedEffect(Unit, weekStartState.value) {
+    LaunchedEffect(Unit, weekStartState) {
         statisticsViewModel.loadStatistics(
-            startDate = weekStartState.value.toString(),
+            startDate = weekStartState.toString(),
             endDate = weekEnd.toString(),
             periodType = period
         )
         statisticsViewModel.loadStatisticSummary(
-            startDate = weekStartState.value.toString(),
+            startDate = weekStartState.toString(),
             endDate = weekEnd.toString(),
             periodType = period
         )
@@ -75,8 +75,8 @@ fun WeekReport(
             WeeklyCalendar(
                 modifier = modifier.
                 padding(0.dp,5.dp),
-                weekStartState = weekStartState.value,
-                onChange = { newDate -> weekStartState.value = newDate }
+                weekStartState = weekStartState,
+                onChange = { newDate -> statisticsViewModel.selectedWeek = newDate }
             )
             Column(verticalArrangement = Arrangement.spacedBy(25.dp)) {
                 Box() {

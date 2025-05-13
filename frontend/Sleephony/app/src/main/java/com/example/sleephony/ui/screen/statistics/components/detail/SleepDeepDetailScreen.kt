@@ -44,16 +44,16 @@ fun SleepDeepDetailScreen(
                     sleepHours = statistics?.deepSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.deep_sleep),
                     my_name = "내 평균",
-                    my_value = StatisticsSleepHour(mySleepDeepAverage),
+                    my_value = mySleepDeepAverage.toFloat(),
                     other_name = "${other} 평균",
-                    other_value = StatisticsSleepHour(otherSleepDeepAverage),
+                    other_value = otherSleepDeepAverage.toFloat(),
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= StatisticsSleepHour(otherSleepDeepAverage),
+                    before_value= otherSleepDeepAverage.toFloat(),
                     after_name = "내평균",
-                    after_value = StatisticsSleepHour(mySleepDeepAverage),
+                    after_value = mySleepDeepAverage.toFloat(),
                     title = {
                         White_text("${other} 평균 깊은 수면 시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepDeepAverage)}", white_text = "보다")
@@ -63,9 +63,9 @@ fun SleepDeepDetailScreen(
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= StatisticsSleepHour(otherSleepDeepRatio),
+                    before_value= otherSleepDeepRatio.toFloat(),
                     after_name = "내 평균",
-                    after_value = StatisticsSleepHour(mySleepDeepRatio),
+                    after_value = mySleepDeepRatio.toFloat(),
                     title = {
                         White_text("${other} 평균 렘 수면 비율")
                         Comparison_text(blue_text = "${otherSleepDeepRatio}%" , white_text = "보다")

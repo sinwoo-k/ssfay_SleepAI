@@ -1,6 +1,10 @@
 package com.example.sleephony.ui.screen.statistics.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sleephony.data.model.StatisticMySummary
@@ -15,6 +19,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,6 +37,11 @@ class StatisticsViewModel @Inject constructor(
 
     private val _statisticMySummary = MutableStateFlow<List<StatisticMySummary?>>(emptyList())
     val statisticMySummary: StateFlow<List<StatisticMySummary?>> = _statisticMySummary
+
+    var step by mutableStateOf(1)
+    var selectedMonth by mutableStateOf(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()))
+    var selectedWeek by mutableStateOf(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY)))
+    var selectedYear by mutableStateOf(LocalDate.now().with(TemporalAdjusters.firstDayOfYear()))
 
     fun loadStatistics(startDate: String, endDate: String, periodType: String) {
         val request = StatisticRequest(startDate,endDate,periodType)

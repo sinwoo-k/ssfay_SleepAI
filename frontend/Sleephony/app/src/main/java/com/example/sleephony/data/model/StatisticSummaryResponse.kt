@@ -44,3 +44,4 @@ data class StatisticMySummary(
     val deepSleepMinutes : Int,
     val deepSleepRatio : Int
 )
+

@@ -40,9 +40,9 @@ fun MonthReport(
     statisticsViewModel: StatisticsViewModel
 ) {
     val today = LocalDate.now()
-    val monthState = remember { mutableStateOf(today.with(TemporalAdjusters.firstDayOfMonth())) }
-    val monthEnd = monthState.value.with(TemporalAdjusters.lastDayOfMonth())
-    val month = monthState.value.format(DateTimeFormatter.ofPattern("M월").withLocale(Locale.KOREAN))
+    val monthState = statisticsViewModel.selectedMonth
+    val monthEnd = monthState.with(TemporalAdjusters.lastDayOfMonth())
+    val month = monthState.format(DateTimeFormatter.ofPattern("M월").withLocale(Locale.KOREAN))
 
     val statistics = statisticsViewModel.statistics.collectAsState().value
     val statisticSummary = statisticsViewModel.statisticSummary.collectAsState().value
@@ -50,14 +50,14 @@ fun MonthReport(
     val period = "MONTH"
 
 
-    LaunchedEffect(Unit,monthState.value) {
+    LaunchedEffect(Unit,monthState) {
         statisticsViewModel.loadStatistics(
-            startDate = monthState.value.toString(),
+            startDate = monthState.toString(),
             endDate = monthEnd.toString(),
             periodType = period
         )
         statisticsViewModel.loadStatisticSummary(
-            startDate = monthState.value.toString(),
+            startDate = monthState.toString(),
             endDate = monthEnd.toString(),
             periodType = period
         )
@@ -73,8 +73,8 @@ fun MonthReport(
             MonthlyCalendar(
                 modifier = modifier.
                 padding(0.dp,5.dp),
-                monthState = monthState.value,
-                onChange = { newDate -> monthState.value = newDate }
+                monthState = monthState,
+                onChange = { newDate -> statisticsViewModel.selectedMonth = newDate }
             )
             Column(verticalArrangement = Arrangement.spacedBy(25.dp)) {
                 Box() {
@@ -129,7 +129,7 @@ fun MonthReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_REM_sleep))
-                        Comparison_text(blue_text = "${ StatisticsTime(statistics?.sleepTime ?: emptyList())}", white_text = "이에요")
+                        Comparison_text(blue_text = "${ StatisticsTime(statistics?.remSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.remSleep?.map {StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
@@ -141,7 +141,7 @@ fun MonthReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_light_sleep))
-                        Comparison_text(blue_text = "${StatisticsTime(statistics?.sleepTime ?: emptyList())}", white_text = "이에요")
+                        Comparison_text(blue_text = "${StatisticsTime(statistics?.lightSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.lightSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
@@ -153,7 +153,7 @@ fun MonthReport(
                     navController = navController,
                     title={
                         White_text(stringResource(R.string.average_deep_sleep))
-                        Comparison_text(blue_text = "${StatisticsTime(statistics?.sleepTime ?: emptyList())}", white_text = "이에요")
+                        Comparison_text(blue_text = "${StatisticsTime(statistics?.deepSleep ?: emptyList())}", white_text = "이에요")
                     },
                     days = days,
                     sleepHours = statistics?.deepSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),

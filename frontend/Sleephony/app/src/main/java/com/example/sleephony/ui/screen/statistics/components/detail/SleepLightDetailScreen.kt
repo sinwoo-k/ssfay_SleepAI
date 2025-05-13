@@ -44,16 +44,16 @@ fun SleepLightDetailScreen(
                     sleepHours = statistics?.lightSleep?.map { StatisticsSleepHour(it.value.toInt()) } ?: emptyList(),
                     title = stringResource(R.string.light_sleep),
                     my_name = "내 평균",
-                    my_value = StatisticsSleepHour(mySleepLightAverage),
+                    my_value = mySleepLightAverage.toFloat(),
                     other_name = "${other} 평균",
-                    other_value = StatisticsSleepHour(otherSleepLightAverage),
+                    other_value = otherSleepLightAverage.toFloat(),
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= StatisticsSleepHour(otherSleepLightAverage),
+                    before_value= otherSleepLightAverage.toFloat(),
                     after_name = "내평균",
-                    after_value = StatisticsSleepHour(mySleepLightAverage),
+                    after_value = mySleepLightAverage.toFloat(),
                     title = {
                         White_text("${other} 평균 얕은 수면 시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepLightAverage)}", white_text = "보다")
