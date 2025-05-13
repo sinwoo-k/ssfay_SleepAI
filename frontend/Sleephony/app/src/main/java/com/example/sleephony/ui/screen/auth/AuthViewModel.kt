@@ -9,9 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.sleephony.data.model.auth.SocialLoginResult
 import com.example.sleephony.domain.repository.AuthRepository
 import com.example.sleephony.domain.repository.UserRepository
-import com.google.gson.Gson
-import com.kakao.sdk.auth.model.OAuthToken
-import com.example.sleephony.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
