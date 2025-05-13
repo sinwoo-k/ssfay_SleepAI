@@ -16,8 +16,8 @@ def focal_loss(alpha, gamma=1.0):
 alpha = tf.constant([0.20, 0.30, 0.15, 0.25, 0.10], tf.float32)
 
 # 파일명 sleepony.h5로 로드, 변수명도 sleepony 로 바꿈
-sleepony = load_model(
-    "sleepony.keras",
+sleephony = load_model(
+    "sleephony.h5",
     custom_objects={"loss_fn": focal_loss(alpha)}
 )
 
