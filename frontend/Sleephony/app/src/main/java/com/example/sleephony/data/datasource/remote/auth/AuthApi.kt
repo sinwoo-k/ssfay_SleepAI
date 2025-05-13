@@ -1,6 +1,11 @@
 package com.example.sleephony.data.datasource.remote.auth
 
 import com.example.sleephony.data.model.*
+import com.example.sleephony.data.model.auth.GoogleLoginRequest
+import com.example.sleephony.data.model.auth.KakaoLoginRequest
+import com.example.sleephony.data.model.auth.SocialLoginResult
+import com.example.sleephony.data.model.auth.ValidateTokenResult
+import com.example.sleephony.data.model.user.UserProfileRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header

@@ -68,6 +68,14 @@ android {
 }
 
 dependencies {
+
+    // 달력
+    implementation("com.kizitonwose.calendar:compose:2.6.0")
+    implementation("com.kizitonwose.calendar:view:2.6.0")
+
+    //chart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
         // wear 통신
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
@@ -75,6 +83,7 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.56.1")
+    implementation(libs.places)
     ksp("com.google.dagger:hilt-android-compiler:2.56.1")
     implementation(libs.hilt.navigation.compose)
 
@@ -88,9 +97,11 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation("androidx.core:core-ktx:1.16.0")
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+    implementation("androidx.datastore:datastore-preferences-core:1.1.6")
 
     // Retrofit & Gson & OkHttp
     implementation(libs.retrofit)
@@ -124,6 +135,10 @@ dependencies {
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+    // utils
+    implementation("dev.chrisbanes.snapper:snapper:0.3.0")
+    implementation("io.coil-kt:coil-compose:2.2.2")
 
     // Test
     testImplementation            (libs.junit)

@@ -26,8 +26,14 @@ class MainApplication : Application(){
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private lateinit var initialRoute: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        initialRoute = intent.getStringExtra("start_destination") ?: "splash"
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
@@ -36,12 +42,12 @@ class MainActivity : ComponentActivity() {
                 SideEffect {
                     // StatusBar 투명 + 아이콘 흰색(=darkIcons=false)
                     sysUi.setStatusBarColor(
-                        color = Color.Transparent,
+                        color = Color(0xFF182741),
                         darkIcons = false
                     )
                     // NavigationBar 투명 + 아이콘 흰색
                     sysUi.setNavigationBarColor(
-                        color = Color.Transparent,
+                        color = Color(0xFF182741),
                         darkIcons = false
                     )
                 }

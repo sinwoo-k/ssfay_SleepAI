@@ -2,6 +2,8 @@ package com.example.sleephony.di
 
 import com.example.sleephony.BuildConfig
 import com.example.sleephony.data.datasource.remote.auth.AuthApi
+import com.example.sleephony.data.datasource.remote.theme.ThemeApi
+import com.example.sleephony.data.datasource.remote.user.UserApi
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -23,8 +25,19 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .client(OkHttpClient.Builder().build())
             .build()
+
     // AuthApi 제공
     @Provides @Singleton
     fun provideAuthApi(retrofit: Retrofit): AuthApi =
         retrofit.create(AuthApi::class.java)
-}
+
+    // UserApi 제공
+    @Provides @Singleton
+    fun providerUserApi(retrofit: Retrofit): UserApi =
+        retrofit.create(UserApi::class.java)
+
+    // ThemeApi 제공
+    @Provides @Singleton
+    fun providerThemeApi(retrofit: Retrofit) :ThemeApi =
+        retrofit.create(ThemeApi::class.java)
+ }

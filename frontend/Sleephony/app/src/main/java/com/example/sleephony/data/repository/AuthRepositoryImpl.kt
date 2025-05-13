@@ -1,18 +1,16 @@
 package com.example.sleephony.data.repository
 
 import android.app.Activity
-import android.os.Bundle
 import android.util.Log
 import com.example.sleephony.data.datasource.GoogleAuthDataSource
 import com.example.sleephony.data.datasource.remote.auth.AuthApi
 import com.example.sleephony.data.datasource.remote.auth.KakaoAuthDataSource
-import com.example.sleephony.data.model.GoogleLoginRequest
-import com.example.sleephony.data.model.KakaoLoginRequest
-import com.example.sleephony.data.model.SocialLoginResult
-import com.example.sleephony.data.model.UserProfileRequest
+import com.example.sleephony.data.model.auth.GoogleLoginRequest
+import com.example.sleephony.data.model.auth.KakaoLoginRequest
+import com.example.sleephony.data.model.auth.SocialLoginResult
+import com.example.sleephony.data.model.user.UserProfileRequest
 import com.example.sleephony.domain.repository.AuthRepository
 import com.example.sleephony.utils.TokenProvider
-import com.kakao.sdk.auth.model.OAuthToken
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -56,8 +54,9 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun loginWithGoogle(activity: Activity): Result<SocialLoginResult> =
         runCatching {
-            val email = google.signIn(activity)
-            val resp = authApi.loginGoogle(GoogleLoginRequest(email = email.toString()))
+            val signInResult: Result<String> = google.signIn(activity)
+            val email: String = signInResult.getOrThrow()
+            val resp = authApi.loginGoogle(GoogleLoginRequest(email = email))
             if (resp.code != "SU") {
                 throw RuntimeException(resp.message)
             }

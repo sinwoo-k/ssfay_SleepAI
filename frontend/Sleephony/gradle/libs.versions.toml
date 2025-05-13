@@ -17,7 +17,7 @@ hiltNavigationCompose        = "1.2.0"
 retrofit                     = "2.9.0"
 okhttp                       = "4.11.0"
 room                         = "2.7.1"
-dataStorePreferences         = "1.1.5"
+dataStorePreferences         = "1.1.6"
 navigationCompose            = "2.8.9"
 accompanist                  = "0.30.1"
 lifecycleViewModelCompose    = "2.8.7"
@@ -34,6 +34,7 @@ horologistComposeTools = "0.6.17"
 horologistTiles = "0.6.17"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 composeNavigation = "1.4.1"
+places = "4.2.0"
 
 
 [libraries]
@@ -93,6 +94,7 @@ horologist-compose-tools = { group = "com.google.android.horologist", name = "ho
 horologist-tiles = { group = "com.google.android.horologist", name = "horologist-tiles", version.ref = "horologistTiles" }
 androidx-watchface-complications-data-source-ktx = { group = "androidx.wear.watchface", name = "watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-compose-navigation = { group = "androidx.wear.compose", name = "compose-navigation", version.ref = "composeNavigation" }
+places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 
 [plugins]
 android-application           = { id = "com.android.application", version.ref = "agp" }

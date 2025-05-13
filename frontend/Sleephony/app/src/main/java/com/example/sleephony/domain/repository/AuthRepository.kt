@@ -1,8 +1,8 @@
 package com.example.sleephony.domain.repository
 
 import android.app.Activity
-import com.example.sleephony.data.model.SocialLoginResult
-import com.example.sleephony.data.model.UserProfileRequest
+import com.example.sleephony.data.model.auth.SocialLoginResult
+import com.example.sleephony.data.model.user.UserProfileRequest
 
 interface AuthRepository {
     suspend fun isLoggedIn(): Boolean
