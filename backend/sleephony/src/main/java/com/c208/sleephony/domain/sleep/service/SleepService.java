@@ -645,10 +645,12 @@ public class SleepService {
                 .filter(buckets::containsKey)  // 결측 레이블(리포트 없는 주/월/년)은 건너뜀
                 .map(label -> {
                     List<Integer> vals = buckets.get(label);
-                    float avg = (float) vals.stream()
-                            .mapToInt(Integer::intValue)
-                            .average()
-                            .orElse(0.0);
+                    int avg = (int) Math.round(
+                            vals.stream()
+                                    .mapToInt(Integer::intValue)
+                                    .average()
+                                    .orElse(0.0)
+                    );
                     return new GraphResponse.TimePoint(label, avg);
                 })
                 .toList();
