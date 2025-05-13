@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.common.component
+package com.example.sleephony.ui.common.components
 
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior

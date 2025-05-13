@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.sleep.component
+package com.example.sleephony.ui.screen.sleep.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
