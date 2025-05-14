@@ -19,7 +19,7 @@ KAFKA_BOOTSTRAP = "k12c208.p.ssafy.io:29092"
 REQUEST_TOPIC  = "sleep-stage-raw-request"
 RESPONSE_TOPIC = "sleep-stage-raw-response"
 GROUP_ID       = "sleepony-fastapi-group"
-app = FastAPI(title="Sleephony API", version="0.1.0")
+app = FastAPI(title="Sleephony API", version="0.1.0", root_path="/ai")
 
 class RawPayload(BaseModel):
     acc_x: List[float]
