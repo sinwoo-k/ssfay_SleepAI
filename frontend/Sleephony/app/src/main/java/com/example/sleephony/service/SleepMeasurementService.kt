@@ -3,8 +3,10 @@ package com.example.sleephony.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Environment
@@ -12,6 +14,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.sleephony.R
 import com.example.sleephony.data.datasource.local.ThemeLocalDataSource
 import com.example.sleephony.data.model.measurement.SleepBioDataRequest
@@ -39,7 +42,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class SleepMeasurementService : Service() {
 
-    private lateinit var mode: AlarmMode
+    private var mode: AlarmMode = AlarmMode.EXACT
     private val targetStage = "NREM1"
     private var startTimestamp: Long = Long.MIN_VALUE
     private var endTimestamp: Long = Long.MAX_VALUE
@@ -86,9 +89,25 @@ class SleepMeasurementService : Service() {
             soundMap[sound.sleepStage] = localPath
         }
     }
+    // 센서 데이터 받아오기
+    private val sensorDataReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val data = intent?.getStringExtra("sensorData")
+            Log.d("DBG", "Wear OS 센서 데이터: $data")
+
+            // 👉 여기서 원하는 처리 (예: 서버로 전송, DB 저장 등)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
+        // 센서 데이터 응답
+        ContextCompat.registerReceiver(
+            this,
+            sensorDataReceiver,
+            IntentFilter("com.example.sleephony.SENSOR_DATA"),
+            ContextCompat.RECEIVER_EXPORTED
+        )
 
         // 채널 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -206,6 +225,7 @@ class SleepMeasurementService : Service() {
         return START_STICKY
     }
 
+
     override fun onDestroy() {
         super.onDestroy()
         Log.d("DBG", "수면 측정 중단")
@@ -215,6 +235,7 @@ class SleepMeasurementService : Service() {
             mediaPlayer.stop()
             mediaPlayer.release()
         }
+        unregisterReceiver(sensorDataReceiver)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

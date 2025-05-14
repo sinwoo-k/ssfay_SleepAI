@@ -1,5 +1,6 @@
 package com.example.sleephony.service
 
+import android.content.Intent
 import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
@@ -24,6 +25,13 @@ class WearMessageListener :WearableListenerService() {
                 Log.d("ssafy","wakeuptime $wakeUpTime")
             } else if (mode == "senser") {
                 Log.d("ssafy","$jsonData")
+
+                val sensorData =jsonData.toString()
+
+                val broadcastIntent = Intent("com.example.sleephony.SENSOR_DATA").apply {
+                    putExtra("sensorData", sensorData)
+                }
+                sendBroadcast(broadcastIntent)
             }
         }
     }
