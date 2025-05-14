@@ -69,7 +69,7 @@ fun SleepREMDetailScreen(
                     title = {
                         White_text("${other} 평균 렘 수면 시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepREMAverage)}", white_text = "보다")
-                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepREMAverage - otherSleepREMAverage)}분", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
+                        Comparison_text(blue_text = "평균 ${SummarTime(Math.abs(mySleepREMAverage - otherSleepREMAverage))}", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(
