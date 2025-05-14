@@ -3,9 +3,9 @@ package com.example.sleephony.di
 import com.example.sleephony.BuildConfig
 import com.example.sleephony.data.datasource.remote.auth.AuthApi
 import com.example.sleephony.data.datasource.remote.measurement.MeasurementApi
+import com.example.sleephony.data.datasource.remote.report.ReportApi
 import com.example.sleephony.data.datasource.remote.theme.ThemeApi
 import com.example.sleephony.data.datasource.remote.user.UserApi
-import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,4 +46,10 @@ object NetworkModule {
     @Provides @Singleton
     fun providerMeasurementApi(retrofit: Retrofit): MeasurementApi =
         retrofit.create(MeasurementApi::class.java)
- }
+        
+    // ReportApi 제공
+    @Provides @Singleton
+    fun provideReportApi(retrofit: Retrofit): ReportApi =
+        retrofit.create(ReportApi::class.java)
+
+}

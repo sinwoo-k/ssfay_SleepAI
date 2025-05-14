@@ -11,9 +11,11 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
+import com.example.sleephony.screens.sensorDataFlow
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -21,6 +23,7 @@ import org.json.JSONObject
 
 class SleepSensorService : Service(), SensorEventListener {
 
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
     private val sensorDataFlow = MutableStateFlow<Map<String,String>>(emptyMap())
     private lateinit var sensorManager: SensorManager
 
@@ -72,41 +75,42 @@ class SleepSensorService : Service(), SensorEventListener {
             Sensor.TYPE_ACCELEROMETER -> {
                 val values = event.values.joinToString(", ") { "%.2f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["가속"] = values
+                currentData["accelerometer"] = values
                 sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("가속", values)
-                }
             }
             Sensor.TYPE_GRAVITY -> {
                 val values = event.values.joinToString(", ") { "%.2f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["중력"] = values
+                currentData["gravity"] = values
                 sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("중력", values)
-                }
             }
             Sensor.TYPE_HEART_RATE -> {
                 val values = event.values.joinToString(", ") { "%.2f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["심박수"] = values
+                currentData["heartRate"] = values
                 sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("심박수", values)
+                serviceScope.launch {
+                    sendMessage()
                 }
             }
         }
     }
 
-    private suspend fun sendMessage(senserType: String, value: String){
+    private suspend fun sendMessage(){
         try {
             val nodeClient = Wearable.getNodeClient(this)
             val messageClient = Wearable.getMessageClient(this)
+
+            val accelerometer = sensorDataFlow.value.getValue("accelerometer")
+            val gravity = sensorDataFlow.value.getValue("gravity")
+            val hearRate = sensorDataFlow.value.getValue("heartRate")
+            Log.d("ssafy","accelerometer ${accelerometer} gravity ${gravity}  hearRate ${hearRate}")
+
             val jsonData = JSONObject().apply {
                 put("mode","senser")
-                put("senserType",senserType)
-                put("value",value)
+                put("accelerometer","${accelerometer}")
+                put("gravity","${gravity}")
+                put("hearRate","${hearRate}")
             }
             val jsonString = jsonData.toString()
 
@@ -115,7 +119,7 @@ class SleepSensorService : Service(), SensorEventListener {
                 messageClient.sendMessage(
                     node.id,
                     "/alarm",
-                    "$jsonString".toByteArray()
+                    jsonString.toByteArray()
                 ).await()
             }
         } catch (e:Exception) {
@@ -133,6 +137,7 @@ class SleepSensorService : Service(), SensorEventListener {
         super.onDestroy()
         sensorManager.unregisterListener(this)
         sensorDataFlow.value = emptyMap()
+        serviceScope.cancel()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

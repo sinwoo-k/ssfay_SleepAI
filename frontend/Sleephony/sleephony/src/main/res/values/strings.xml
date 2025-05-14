@@ -12,17 +12,12 @@
     <string name="alarm_mode">정시 기상</string>
     <string name="sleep_mode">알람 없음</string>
 
-    <string name="username">김지원</string>
+    <string name="name">이름</string>
     <string name="birthday">생년월일</string>
-    <string name="birthday_year">1994</string>
-    <string name="birthday_month">08</string>
-    <string name="birthday_day">09</string>
     <string name="gender">성별</string>
-    <string name="gender_value">남성</string>
+    <string name="man">남성</string><string name="woman">여성</string>
     <string name="height">키</string>
-    <string name="height_value">170cm</string>
     <string name="weight">몸무게</string>
-    <string name="weight_value">78kg</string>
     <string name="connect_device">연결기기</string>
     <string name="connect_device_value">galaxy s10</string>
     <string name="device_change">기기변경</string>

@@ -51,7 +51,6 @@ class StatisticsViewModel @Inject constructor(
                 val response = repositoryImpl.getStatistics(request)
                 if (response.status == 200) {
                     _statistics.value = response.results
-
                 }
                 Log.d("ssafy","$response")
             } catch (e :Exception) {
