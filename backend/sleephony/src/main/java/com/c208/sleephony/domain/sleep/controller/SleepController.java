@@ -1,11 +1,7 @@
 package com.c208.sleephony.domain.sleep.controller;
 
-import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
 import com.c208.sleephony.domain.sleep.dto.request.*;
-import com.c208.sleephony.domain.sleep.dto.response.CombinedStatResponse;
-import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
-import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
-import com.c208.sleephony.domain.sleep.dto.response.SleepReportWithPrevious;
+import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
@@ -21,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -76,34 +71,25 @@ public class SleepController {
     ) {
         return ApiResponse.success(HttpStatus.OK,sleepService.getSleepGraphPoints(date));
     }
-
     @Operation(
-            summary = "생체 데이터 기반 수면 단계 재예측",
-            description = "저장된 생체 데이터를 바탕으로 주어진 기간의 수면 단계 및 점수를 다시 예측하고 저장합니다."
+            summary     = "상세 수면 리포트 (평균값 비교)",
+            description = """
+            - 수면 점수, 타이틀·설명
+            - 수면 시작·종료 시각
+            - 총 수면·깊은 잠·REM·수면 latency
+            - 동일 연령·성별 평균 대비 차이(±분)
+            """
     )
-    @GetMapping("/measure/from-bio")
-    public ApiResponse<List<SleepPredictionResult>> measureSleepLevelsFromBioData(
-            @Parameter(
-                    description = "예측 시작 일시 (ISO-8601, yyyy-MM-dd'T'HH:mm:ss)",
-                    required = true
-            )
-            @RequestParam("start")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime startDateTime,
-
-            @Parameter(
-                    description = "예측 종료 일시 (ISO-8601, yyyy-MM-dd'T'HH:mm:ss)",
-                    required = true
-            )
-            @RequestParam("end")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime endDateTime
+    @GetMapping("report/detailed/{date}")
+    public ApiResponse<DetailedSleepReportResponse> getDetailedReport(
+            @Parameter(description = "조회 날짜 (yyyy‑MM‑dd)", required = true)
+            @PathVariable
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date
     ) {
-        List<SleepPredictionResult> results =
-                sleepService.predictFromBioDataByRange(startDateTime, endDateTime);
-        return ApiResponse.success(HttpStatus.OK, results);
+        DetailedSleepReportResponse res = sleepService.getDetailedReport(date);
+        return ApiResponse.success(HttpStatus.OK, res);
     }
-
     @Operation(summary = "GPT API를 통한 AI 리포트", description = "기록된 리포트를 바탕으로 GPT에게 프롬프트를 이용한 AI 분석 리포트 제공")
     @GetMapping("ai-report/{date}")
     public ApiResponse<String> measureSleepLevelsFromAIData(

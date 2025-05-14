@@ -25,9 +25,6 @@ public class SleepLevel {
     @Column(name = "level", length = 5)
     private SleepStage level; // AWAKE, REM, NREM1, NREM2, NREM3
 
-    @Column(name = "score")
-    private Integer score;
-
     @Column(name = "measured_at")
     private LocalDateTime measuredAt;
 
