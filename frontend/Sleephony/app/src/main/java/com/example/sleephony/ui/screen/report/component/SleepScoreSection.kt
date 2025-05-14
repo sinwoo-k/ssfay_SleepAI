@@ -12,13 +12,15 @@ import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
 
 @Composable
-fun SleepScoreSection() {
+fun SleepScoreSection(
+    sleepDurationText: String,
+    diffText: String,
+    comment: String
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp) // Optional padding
     ) {
-        // 수면 설명 문구
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = "어제 밤",
@@ -27,19 +29,19 @@ fun SleepScoreSection() {
                 color = Color.White
             )
             Text(
-                text = "총 7시간 15분",
+                text = "총 $sleepDurationText",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorResource(R.color.SkyBlue)
             )
             Text(
-                text = "꿀잠을 유지하셨어요",
+                text = comment,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
             Text(
-                text = "전날보다 29분 충전하셨네요!!",
+                text = diffText,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.3f)
@@ -49,3 +51,4 @@ fun SleepScoreSection() {
         Spacer(modifier = Modifier.height(12.dp))
     }
 }
+

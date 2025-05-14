@@ -24,87 +24,122 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
-import com.example.sleephony.data.model.StatisticData
-import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
-import com.example.sleephony.ui.screen.statistics.week.StatisticsTime
 
 @Composable
 fun AverageSleepScore(
-    modifier: Modifier,
-    averageSleepScore:Int,
-    averageSleepTimeMinutes:Int,
-    averageSleepLatencyMinutes:Int
+    modifier: Modifier = Modifier,
+    averageSleepScore: Int,
+    averageSleepTimeMinutes: Int,
+    averageSleepLatencyMinutes: Int
 ) {
     val alphaWhite = Color.White.copy(alpha = .7f)
 
-
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(text = stringResource(R.string.sleep_score), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 30.sp)
-        Box(modifier = modifier
-            .padding(3.dp)
-            .background(color = Color.Black.copy(alpha = .3f), shape = RoundedCornerShape(20.dp))
-            .fillMaxWidth()
+        Text(
+            text = stringResource(R.string.sleep_score),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp
+        )
+
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .background(color = Color.Black.copy(alpha = .3f), shape = RoundedCornerShape(20.dp))
+                .fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = stringResource(R.string.average_sleep_score),fontSize = 20.sp, color = alphaWhite)
-                    Box {
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text(text = "${averageSleepScore}점", fontSize = 20.sp, color = alphaWhite)
-                            Image(
-                                modifier = modifier.size(15.dp),
-                                painter = painterResource(R.drawable.question),
-                                contentDescription = "물음표 아이콘"
-                            )
-                        }
+                    Text(
+                        text = stringResource(R.string.average_sleep_score),
+                        fontSize = 20.sp,
+                        color = alphaWhite
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
+                            text = "${averageSleepScore}점",
+                            fontSize = 20.sp,
+                            color = alphaWhite
+                        )
+                        Image(
+                            modifier = Modifier.size(15.dp),
+                            painter = painterResource(R.drawable.question),
+                            contentDescription = "물음표 아이콘"
+                        )
                     }
                 }
+
                 Box(
-                    modifier = modifier.padding(5.dp)
-                        .height(25.dp)
-                        .fillMaxWidth()) {
-                    Box( modifier = modifier
-                        .height(25.dp)
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = colorResource(R.color.steel_blue), shape = RoundedCornerShape(20.dp)))
+                        .height(25.dp)
+                        .background(
+                            color = colorResource(R.color.steel_blue),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                ) {
                     Box(
-                        modifier = modifier
+                        modifier = Modifier
+                            .fillMaxWidth(fraction = averageSleepScore / 100f)
                             .height(25.dp)
-                            .fillMaxWidth( averageSleepScore/100f)
-                            .background(color = colorResource(R.color.SkyBlue), shape = RoundedCornerShape(20.dp))
+                            .background(
+                                color = colorResource(R.color.SkyBlue),
+                                shape = RoundedCornerShape(20.dp)
+                            )
                     )
                 }
-                Row(modifier = modifier
-                    .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = stringResource(R.string.average_sleep_time),fontSize = 20.sp, color = alphaWhite)
-                    Text(text = "${parsingTime(averageSleepTimeMinutes)}",fontSize = 20.sp, color = alphaWhite)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.average_sleep_time),
+                        fontSize = 20.sp,
+                        color = alphaWhite
+                    )
+                    Text(
+                        text = parsingTime(averageSleepTimeMinutes),
+                        fontSize = 20.sp,
+                        color = alphaWhite
+                    )
                 }
-                Divider(
-                    thickness = 1.dp,
-                    color = alphaWhite
-                )
-                Row(modifier = modifier
-                    .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = stringResource(R.string.average_sleep_latency),fontSize = 20.sp, color = alphaWhite)
-                    Text(text = "${parsingTime(averageSleepLatencyMinutes)}",fontSize = 20.sp, color = alphaWhite)
+
+                Divider(color = alphaWhite, thickness = 1.dp)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.average_sleep_latency),
+                        fontSize = 20.sp,
+                        color = alphaWhite
+                    )
+                    Text(
+                        text = parsingTime(averageSleepLatencyMinutes),
+                        fontSize = 20.sp,
+                        color = alphaWhite
+                    )
                 }
             }
         }
     }
 }
+
 
 fun parsingTime(value: Int): String {
     if (value == 0) return "0분"
