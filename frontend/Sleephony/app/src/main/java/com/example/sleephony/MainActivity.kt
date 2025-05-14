@@ -6,11 +6,16 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.sleephony.navigation.AppNavGraph
+import com.example.sleephony.service.WearMessageViewModel
+import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.theme.SleephonyTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.kakao.sdk.common.KakaoSdk
@@ -33,11 +38,27 @@ class MainApplication : Application(){
 class MainActivity : ComponentActivity() {
 
     private lateinit var initialRoute: String
+    private val wearViewModel : WearMessageViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         initialRoute = intent.getStringExtra("start_destination") ?: "splash"
+
+        val alarmType = intent.getStringExtra("alarmType")
+        val wakeUpTime = intent.getStringExtra("wakeUpTime")
+        val bedtime = intent.getStringExtra("bedtime")
+        if (
+            alarmType != null &&
+            wakeUpTime != null &&
+            bedtime != null
+            ) {
+            wearViewModel.update(
+                alarmType = alarmType,
+                wakeUpTime = wakeUpTime,
+                bedTime = bedtime
+            )
+        }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()

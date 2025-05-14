@@ -10,14 +10,11 @@ import android.hardware.*
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.provider.ContactsContract.Data
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
-import com.example.sleephony.screens.sensorDataFlow
 import com.google.android.gms.wearable.Wearable
 import com.samsung.android.service.health.tracking.ConnectionListener
-import com.samsung.android.service.health.tracking.HealthTracker
 import com.samsung.android.service.health.tracking.HealthTrackerException
 import com.samsung.android.service.health.tracking.HealthTrackingService
 import com.samsung.android.service.health.tracking.data.DataPoint

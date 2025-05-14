@@ -65,6 +65,7 @@ fun AlarmCheckScreen(
     val wakeUpMeridiem = context.getString(R.string.wakeup_meridiem, wakeUpMeridiemState.value)
     val wakeUpHour = wakeUpHourState.value
     val wakeUpMinute = wakeUpMinuteState.value
+    val alarmType = viewModel.alarmType.value
 
 
     Column(
@@ -113,7 +114,12 @@ fun AlarmCheckScreen(
                         .padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(darkNavyBlue),
                     onClick = {
-                        SendMessage(context,"$bedMeridiem $bedHour $bedMinute", "$wakeUpMeridiem $wakeUpHour $wakeUpMinute")
+                        SendMessage(
+                            context,
+                            bedTime = "$bedMeridiem $bedHour $bedMinute",
+                            wakUpTime = "$wakeUpMeridiem $wakeUpHour $wakeUpMinute",
+                            alarmType = alarmType
+                        )
                         navController.navigate("sleepingscreen")
                     }
                 ) {
@@ -124,7 +130,12 @@ fun AlarmCheckScreen(
     }
 }
 
-fun SendMessage(context:Context, bedTime:String, wakUpTime:String){
+fun SendMessage(
+    context:Context,
+    bedTime:String,
+    wakUpTime:String,
+    alarmType: String?
+){
     CoroutineScope(Dispatchers.IO).launch {
         try{
             val nodeClient = Wearable.getNodeClient(context)
@@ -134,6 +145,7 @@ fun SendMessage(context:Context, bedTime:String, wakUpTime:String){
                 put("mode","alarm")
                 put("bedTime",bedTime)
                 put("wakeUpTime",wakUpTime)
+                put("alarmType",alarmType)
             }
             val jsonString = jsonData.toString()
 
