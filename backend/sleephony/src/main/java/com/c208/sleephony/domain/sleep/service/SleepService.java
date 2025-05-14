@@ -1,7 +1,7 @@
 package com.c208.sleephony.domain.sleep.service;
 
 import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
-import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
+import com.c208.sleephony.domain.sleep.dto.request.RawSequenceRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
 import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.*;
@@ -12,23 +12,35 @@ import com.c208.sleephony.domain.sleep.repository.SleepStatisticRepository;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
 import com.c208.sleephony.global.exception.RedisOperationException;
-import com.c208.sleephony.global.exception.SleepPredictionException;
 import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import com.c208.sleephony.global.utils.GptClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -45,90 +57,70 @@ public class SleepService {
     private final GptClient gptClient;
     private final UserRepository userRepository;
     private final SleepStatisticRepository sleepStatisticRepository;
-    private final WebClient fastApiWebClient;
+    private final KafkaTemplate<String, RawSequenceRequest> kafkaTemplate;
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    /**
-     * Fast API 모델에 생체 데이터를 전송해 <b>즉시</b> 수면 단계를 예측합니다.
-     *
-     * @param requestDto 센서 1 윈도우(5초) × N 의 원시 데이터
-     * @return 예측 결과(수면 단계·신뢰도·측정시각)
-     * @throws RuntimeException Fast API Timeout / 4xx/5xx 응답 시
-     */
-    public SleepPredictionResult analyzeSleepStageDirectly(BioDataRequest requestDto) {
-        return fastApiWebClient.post()
-                .uri("/api/ai/sleep-stage")
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(SleepPredictionResult.class)
-                .block(Duration.ofSeconds(5));  // 타임아웃 설정
-    }
-    /**
-     * 단말에서 1 초 주기로 올라온 센서 데이터를 저장 + <br>
-     * {@link #predictAndSaveAll(List)} 로 자체 룰 기반 예측 후
-     * <b>첫 윈도우 결과만</b> 반환합니다.
-     */
-    public SleepPredictionResult measureSleepStage(BioDataRequest requestDto) {
-        try {
-            LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
-            Integer userId = AuthUtil.getLoginUserId();
+    @Value("${sleep.kafka.request-topic:sleep-stage-request}")
+    private String requestTopic;
 
-            List<BioData> entities = requestDto.getData().stream()
-                    .map(dataPoint -> BioData.builder()
-                            .userId(userId)
-                            .heartRate(dataPoint.getHeartRate().byteValue())
-                            .gyroX(dataPoint.getGyroX())
-                            .gyroY(dataPoint.getGyroY())
-                            .gyroZ(dataPoint.getGyroZ())
-                            .bodyTemperature(dataPoint.getTemperature())
-                            .createdAt(LocalDateTime.now())
-                            .measuredAt(baseTime)
-                            .build())
-                    .toList();
+    public SseEmitter streamRawSleepStage(RawSequenceRequest req) throws JsonProcessingException {
+        System.out.println("streamRawSleepStage");
+        String requestId = UUID.randomUUID().toString();
+        Integer userId = AuthUtil.getLoginUserId();
 
-            bioRepository.saveAll(entities);
+        SseEmitter emitter = new SseEmitter(TimeUnit.SECONDS.toMillis(60));
+        emitter.onCompletion(() -> emitters.remove(requestId));
+        emitter.onTimeout(()    -> emitters.remove(requestId));
+        emitters.put(requestId, emitter);
 
-            // 전체 예측 결과 리스트 중 첫 번째만 꺼내서 리턴
-            List<SleepPredictionResult> allResults = predictAndSaveAll(entities);
-            if (allResults.isEmpty()) {
-                throw new SleepPredictionException("예측 결과가 없습니다.");
-            }
-            return allResults.get(0);
-
-        } catch (Exception e) {
-            throw new SleepPredictionException("수면 단계 예측 중 오류가 발생했습니다.", e);
-        }
+        // 토픽에 userId 키, payload=req 로 ProducerRecord 생성
+        ProducerRecord<String, RawSequenceRequest> record =
+                new ProducerRecord<>(requestTopic,
+                        String.valueOf(userId),
+                        req);
+        System.out.println(
+                new ObjectMapper()
+                        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                        .writeValueAsString(req)
+        );
+        // 필수 헤더 추가
+        record.headers()
+                .add(new RecordHeader("requestId", requestId.getBytes(StandardCharsets.UTF_8)))
+                .add(new RecordHeader("userId",    String.valueOf(userId).getBytes(StandardCharsets.UTF_8)));
+        System.out.println("보내졌간?");
+        kafkaTemplate.send(record);
+        return emitter;
     }
 
     /**
-     *  30 개 Bio 데이터(≈ 30 초) 리스트 → 각 윈도우별 수면 단계 예측 &amp; 저장.
-     *
-     * @return 윈도우별 예측 결과 전체
+     * Kafka 응답 토픽 수신 → 해당 requestId의 Emitter로 전송 → complete()
      */
-    public List<SleepPredictionResult> predictAndSaveAll(List<BioData> dataList) {
-        try {
-            List<SleepLevel> entities = new ArrayList<>();
-            List<SleepPredictionResult> results = new ArrayList<>();
-
-            for (BioData data : dataList) {
-                SleepPredictionResult result = predict(data);
-                entities.add(
-                        SleepLevel.builder()
-                                .userId(data.getUserId())
-                                .level(SleepStage.valueOf(result.getLevel()))
-                                .score(result.getScore())
-                                .measuredAt(data.getMeasuredAt())
-                                .createdAt(LocalDateTime.now())
-                                .build()
+    @KafkaListener(
+            topics = "${sleep.kafka.response-topic}",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void onSleepStageResponse(
+            ConsumerRecord<String, SleepPredictionResult> record,
+            @Header("requestId") String requestId
+    ) {
+        SseEmitter emitter = emitters.remove(requestId);
+        if (emitter != null) {
+            try {
+                SleepPredictionResult result = record.value();
+                emitter.send(SseEmitter.event()
+                                .id(requestId)
+                                .name("sleepStage")
+//                                .data(result)           // SleepPredictionResult 전체를 보내거나,
+                         .data(result.getLevel())  // 필요에 따라 레벨만 보낼 수도 있습니다.
                 );
-                results.add(result);
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
             }
-
-            sleepLevelRepository.saveAll(entities);
-            return results;
-        } catch (Exception e) {
-            throw new SleepPredictionException("수면 단계 저장 또는 예측 중 오류가 발생했습니다.", e);
         }
     }
+
+
 
     /**
      * 지정 구간(start~end)의 Bio 데이터를 30 초 윈도우로 슬라이딩하며

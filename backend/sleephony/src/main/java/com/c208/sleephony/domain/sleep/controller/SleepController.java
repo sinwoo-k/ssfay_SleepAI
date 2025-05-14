@@ -1,10 +1,7 @@
 package com.c208.sleephony.domain.sleep.controller;
 
 import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
-import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
-import com.c208.sleephony.domain.sleep.dto.request.EndMeasurementRequest;
-import com.c208.sleephony.domain.sleep.dto.request.StartMeasurementRequest;
-import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
+import com.c208.sleephony.domain.sleep.dto.request.*;
 import com.c208.sleephony.domain.sleep.dto.response.CombinedStatResponse;
 import com.c208.sleephony.domain.sleep.dto.response.GraphResponse;
 import com.c208.sleephony.domain.sleep.dto.response.SleepGraphPoint;
@@ -12,13 +9,16 @@ import com.c208.sleephony.domain.sleep.dto.response.SleepReportWithPrevious;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,13 +32,13 @@ public class SleepController {
 
     private final SleepService sleepService;
 
-    @Operation(summary = "생체 데이터 저장 및 수면 단계 예측", description = "사용자가 전송한 생체 데이터를 저장하고 수면 단계 및 점수를 예측합니다.")
-    @PostMapping("bio-data")
-    public ApiResponse<SleepPredictionResult> saveBioData(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "생체 데이터 요청 DTO")
-            @RequestBody BioDataRequest requestDto
-    ) {
-        return ApiResponse.success(HttpStatus.CREATED, sleepService.analyzeSleepStageDirectly(requestDto));
+    @PostMapping(
+            path     = "/stage/raw",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
+    public SseEmitter streamRawSleepStage(@RequestBody RawSequenceRequest requestDto) throws JsonProcessingException {
+        return sleepService.streamRawSleepStage(requestDto);
     }
 
     @Operation(summary = "수면 측정 시작 시간 저장", description = "Redis에 수면 측정 시작 시간을 저장합니다.")

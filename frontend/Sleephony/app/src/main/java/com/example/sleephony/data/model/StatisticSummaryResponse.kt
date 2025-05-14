@@ -17,6 +17,7 @@ data class StatisticSummaryData(
     val period : String,
     val averageSleepScore: Float,
     val averageSleepTimeMinutes: Float,
+    val previousAverageSleepTimeMinutes : Float,
     val averageSleepLatencyMinutes: Float,
     val averageLightSleepMinutes: Float,
     val averageLightSleepPercentage : Int,
@@ -26,7 +27,9 @@ data class StatisticSummaryData(
     val averageDeepSleepPercentage : Int,
     val averageAwakeMinutes : Float,
     val averageAwakePercentage : Int,
-    val averageSleepCycleCount : Int
+    val averageSleepCycleCount : Int,
+    val mostSleepTimeMinutes: Float,
+    val leastSleepTimeMinutes : Float
 )
 
 data class StatisticMySummary(
