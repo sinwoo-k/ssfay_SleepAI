@@ -279,17 +279,59 @@ class SleepViewModel @Inject constructor(
 
             // 알람 예약
             val sd = _settingData.value
-            val hour24 = to24Hour(sd.hour, sd.isAm)
-            scheduleWakeUp(appContext, hour24, sd.minute)
+            val baseMin = to24Hour(sd.hour, sd.isAm) * 60 + sd.minute
 
+            val window = if (sd.mode == AlarmMode.COMFORT) 30 else 0
+            val startMin = baseMin - window    // 6:30 → 360분(6:00)
+            val endMin   = baseMin + window    // 6:30 → 420분(7:00)
+
+            val nowCal = Calendar.getInstance()
+            val startCal = nowCal.clone() as Calendar
+            startCal.apply {
+                set(Calendar.HOUR_OF_DAY, startMin / 60)
+                set(Calendar.MINUTE, startMin % 60)
+                set(Calendar.SECOND, 0)
+                if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DATE, 1)
+            }
+
+            val endCal = nowCal.clone() as Calendar
+            endCal.apply {
+                timeInMillis = System.currentTimeMillis()
+                set(Calendar.HOUR_OF_DAY, endMin / 60)
+                set(Calendar.MINUTE, endMin % 60)
+                set(Calendar.SECOND, 0)
+                if(timeInMillis <= System.currentTimeMillis()) add(Calendar.DATE, 1)
+            }
+
+
+            Intent(appContext, SleepMeasurementService::class.java).also { intent ->
+                intent.putExtra("mode", sd.mode.name)
+                if (sd.mode == AlarmMode.COMFORT) {
+                    intent.putExtra("startTimestamp", startCal.timeInMillis)
+                    intent.putExtra("endTimestamp", endCal.timeInMillis)
+                }
+                ContextCompat.startForegroundService(appContext, intent)
+            }
+
+            when(sd.mode) {
+                AlarmMode.COMFORT -> {
+                    // 편한 기상
+                    scheduleWakeUp(appContext, endCal.get(Calendar.HOUR_OF_DAY), endCal.get(Calendar.MINUTE))
+                }
+                AlarmMode.EXACT -> {
+                    // 정시 기상
+                    scheduleWakeUp(appContext, to24Hour(sd.hour, sd.isAm), sd.minute)
+                }
+
+                AlarmMode.NONE ->{
+                    // 알람 없음
+                }
+             }
 
             // 측정 시작
             measurementRepository.startMeasurement()
 
 
-            Intent(appContext, SleepMeasurementService::class.java).also {
-                ContextCompat.startForegroundService(appContext, it)
-            }
         }
     }
 
