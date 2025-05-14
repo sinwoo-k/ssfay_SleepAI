@@ -69,7 +69,7 @@ class MeasurementRepositoryImpl @Inject constructor(
           val token = tokenProvider.getToken()
           val bearer = "Bearer $token"
 
-
+          Log.d("DBG", "$req")
           val response = api.sleepBioData(bearer, req)
 
           response.results
