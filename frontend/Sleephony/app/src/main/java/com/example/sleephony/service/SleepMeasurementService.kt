@@ -16,8 +16,10 @@ import com.example.sleephony.R
 import com.example.sleephony.data.datasource.local.ThemeLocalDataSource
 import com.example.sleephony.data.model.measurement.SleepBioDataRequest
 import com.example.sleephony.data.model.theme.SoundDto
+import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.domain.repository.MeasurementRepository
 import com.example.sleephony.domain.repository.ThemeRepository
+import com.example.sleephony.receiver.AlarmReceiver
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +38,11 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class SleepMeasurementService : Service() {
+
+    private lateinit var mode: AlarmMode
+    private val targetStage = "NREM1"
+    private var startTimestamp: Long = Long.MIN_VALUE
+    private var endTimestamp: Long = Long.MAX_VALUE
 
     companion object {
             private const val CHANNEL_ID  = "Sleep_measurement"
@@ -170,6 +177,18 @@ class SleepMeasurementService : Service() {
             .onSuccess { bioResult ->
                 Log.d("DBG", "측정 레벨: ${bioResult.level}, 점수: ${bioResult.score}")
                 playSoundForSleepStage(bioResult.level)
+
+                if (mode == AlarmMode.COMFORT){
+                    val now = System.currentTimeMillis()
+                    val inWindow = now in startTimestamp..endTimestamp
+                    val reached = bioResult.level == targetStage
+                    val timeout = now >= endTimestamp
+
+                    if ((inWindow && reached) || timeout) {
+                        triggerAlarm()
+                        serviceScope.cancel()
+                    }
+                }
             }
             .onFailure { err ->
                 Log.e("ERR", "수면 데이터 전송 실패", err)
@@ -177,6 +196,13 @@ class SleepMeasurementService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.getStringExtra("mode")?.let {
+            mode = AlarmMode.valueOf(it)
+        }
+        if (mode == AlarmMode.COMFORT) {
+            startTimestamp = intent?.getLongExtra("startTimestamp", Long.MIN_VALUE) ?: Long.MIN_VALUE
+            endTimestamp = intent?.getLongExtra("endTimestamp", Long.MAX_VALUE) ?: Long.MAX_VALUE
+        }
         return START_STICKY
     }
 
@@ -192,4 +218,8 @@ class SleepMeasurementService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun triggerAlarm() {
+        sendBroadcast(Intent(this, AlarmReceiver::class.java))
+    }
 }
