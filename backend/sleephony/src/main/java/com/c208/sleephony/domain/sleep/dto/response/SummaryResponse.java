@@ -22,4 +22,5 @@ public class SummaryResponse {
     private Integer     averageSleepCycleCount;
     private Integer     mostSleepTimeMinutes;   // 최장 수면 시간
     private Integer     leastSleepTimeMinutes;  // 최단 수면 시간
+    private String      averageWakeUpTime;
 }

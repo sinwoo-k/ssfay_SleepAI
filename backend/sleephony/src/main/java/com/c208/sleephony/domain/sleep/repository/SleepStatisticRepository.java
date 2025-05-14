@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface SleepStatisticRepository extends JpaRepository<SleepStatistics,Integer> {
     List<SleepStatistics> findByAgeGroupAndGender(String ageGroup, SleepStatistics.Gender gender);
+
+    SleepStatistics findFirstByAgeGroupAndGender(String ageGroup, SleepStatistics.Gender gender);
 }

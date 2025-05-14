@@ -13,5 +13,4 @@ import java.time.LocalDateTime;
 public class SleepGraphPoint {
     private LocalDateTime measuredAt;
     private SleepStage level;
-    private Integer score;
 }

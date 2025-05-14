@@ -31,7 +31,6 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, RawSequenceRequest> rawProducerFactory() {
         JsonSerializer<RawSequenceRequest> serializer = new JsonSerializer<>();
-        serializer.setAddTypeInfo(false);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
