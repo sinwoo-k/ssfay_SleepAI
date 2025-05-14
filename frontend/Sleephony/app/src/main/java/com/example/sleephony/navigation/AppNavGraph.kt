@@ -4,28 +4,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.example.sleephony.ui.common.component.BottomNavBar
+import com.example.sleephony.ui.common.components.BottomNavBar
 import com.example.sleephony.ui.screen.auth.ProfileSetupScreen
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.auth.SocialLoginScreen
 import com.example.sleephony.ui.screen.report.AiReportScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
+import com.example.sleephony.ui.screen.settings.SettingViewModel
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
 import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
+import com.example.sleephony.ui.screen.settings.SettingsUserProfileScreen
+import com.example.sleephony.ui.screen.settings.SettingsUserProfileUpdateScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
+import com.example.sleephony.ui.screen.sleep.SleepUiState
 import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
@@ -140,6 +148,16 @@ fun AppNavGraph(
                     navController.getBackStackEntry("sleep_setting")
                 }
                 val vm: SleepViewModel = hiltViewModel(settingEntry)
+                val uiState by vm.uiState.collectAsState()
+
+                LaunchedEffect(uiState) {
+                    if(uiState is SleepUiState.Setting) {
+                        navController.navigate("sleep_setting") {
+                            popUpTo("sleep_measurement") { inclusive = true }
+                        }
+                    }
+                }
+
                 SleepMeasurementScreen(
                     onStop = {
                         vm.onStopClicked()
@@ -164,8 +182,61 @@ fun AppNavGraph(
             }
 
             composable("settings") {
-                SettingsHomeScreen()
+                SettingsHomeScreen(
+                    logout = {
+                        navController.navigate("login") {
+                            popUpTo("settings") { inclusive = true}
+                        }
+                    },
+                    goUserProfile = {
+                      navController.navigate("settings_profile")
+                    }
+                )
             }
+
+            composable("settings_profile") {
+                SettingsUserProfileScreen(
+                    backSettingHome = {
+                        navController.navigate("settings") {
+                            popUpTo("settings_profile") { inclusive = true }
+                        }
+                    },
+                    deleteUser = {
+                        navController.navigate("login") {
+                            popUpTo("settings_profile") { inclusive = true }
+                        }
+                    },
+                    goUpdateScreen = { key ->
+                        navController.navigate("settings_profile/$key") {
+                            popUpTo("settings_profile") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = "settings_profile/{key}",
+                arguments = listOf(
+                    navArgument("key") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val settingsEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("settings")
+                }
+                val viewModel: SettingViewModel = hiltViewModel(settingsEntry)
+                val key =  backStackEntry.arguments?.getString("key")!!
+                SettingsUserProfileUpdateScreen(
+                    viewModel = viewModel,
+                    key = key,
+                    updateProfile = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
 
             composable("detail/{page}/{period}") { it ->
                 val page = it.arguments?.getString("page") ?: ""

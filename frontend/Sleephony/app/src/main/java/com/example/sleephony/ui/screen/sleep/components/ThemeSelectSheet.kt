@@ -1,4 +1,4 @@
-package com.example.sleephony.ui.screen.sleep.component
+package com.example.sleephony.ui.screen.sleep.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +38,7 @@ fun ThemeSelectSheet(
     currentThemeId: Int,
     onThemeSelected: (ThemeListResult) -> Unit,
     onPlay: (ThemeListResult) -> Unit,
+    onStop: () -> Unit,
     playingThemeId: Int?,
     onClose: () -> Unit
 ) {
@@ -96,18 +97,22 @@ fun ThemeSelectSheet(
                                     style = MaterialTheme.typography.titleLarge
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                IconButton(
-                                    onClick = { onPlay(current) },
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                ) {
-                                    if (playingThemeId == current.id) {
-                                        Icon(painterResource(R.drawable.ic_pause_circle),
+                                if(playingThemeId == current.id) {
+                                    IconButton(
+                                        onClick = { onStop() },
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        Icon(painterResource(R.drawable.ic_pause_circle2),
                                             "멈춤",
                                             tint = Color.White.copy(alpha = 0.8f),
                                             modifier = Modifier.size(48.dp))
-                                    } else {
-                                        Icon( painterResource(R.drawable.ic_play_circle),
+                                    }
+                                } else {
+                                    IconButton(
+                                        onClick = { onPlay(current) },
+                                        modifier = Modifier.size(48.dp)
+                                    ) {
+                                        Icon( painterResource(R.drawable.ic_play_circle2),
                                             "플레이",
                                             tint = Color.White.copy(alpha = 0.8f),
                                             modifier = Modifier.size(48.dp))

@@ -3,31 +3,82 @@ package com.example.sleephony.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Build
+import android.os.Environment
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
+import com.example.sleephony.data.datasource.local.ThemeLocalDataSource
+import com.example.sleephony.data.model.measurement.SleepBioDataRequest
+import com.example.sleephony.data.model.theme.SoundDto
+import com.example.sleephony.domain.repository.MeasurementRepository
+import com.example.sleephony.domain.repository.ThemeRepository
+import com.google.gson.Gson
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import java.io.File
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class SleepMeasurementService : Service() {
 
     companion object {
             private const val CHANNEL_ID  = "Sleep_measurement"
             private const val FOREGROUND_ID = 2001
-            private const val INTERVAL_MS = 1 * 60 * 1000L
+            private const val INTERVAL_MS = 1 * 30 * 1000L  // 30초 요청
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var wakeLock: PowerManager.WakeLock
+
+    @Inject lateinit var measurementRepository: MeasurementRepository
+    @Inject lateinit var themeRepository: ThemeRepository
+    @Inject lateinit var themeLocalDataSource: ThemeLocalDataSource
+
+    private lateinit var mediaPlayer: MediaPlayer
+
+    private val soundMap = mutableMapOf<String, String>()
+
+    private suspend fun initializeSoundMap() {
+        val themeId = themeLocalDataSource.themeIdFlow.first()
+        themeRepository.getTheme(themeId)
+            .onSuccess { theme ->
+                initSoundMapFromTheme(themeId, theme.sounds)
+            }
+            .onFailure {
+                Log.e("ERR", "테마 정보 로딩 실패", it)
+            }
+    }
+
+    // 사운드 경로 얻는 함수
+    private fun getSoundFilePath(themeId: Int, soundId: Int): String {
+        val soundDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
+        return "${soundDir?.absolutePath}/theme_${themeId}/sound_${soundId}.mp3"
+    }
+
+    // 서버에서 받은 정보로 soundMap 초기화
+    private fun initSoundMapFromTheme(themeId: Int, sounds: List<SoundDto>) {
+        soundMap.clear()
+        sounds.forEach { sound ->
+            val localPath = getSoundFilePath(themeId, sound.soundId)
+            soundMap[sound.sleepStage] = localPath
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -59,6 +110,7 @@ class SleepMeasurementService : Service() {
         ).apply { acquire() }
 
         serviceScope.launch {
+            initializeSoundMap()
             while (isActive) {
                 fetchAndUpload()
                 delay(INTERVAL_MS)
@@ -66,11 +118,62 @@ class SleepMeasurementService : Service() {
         }
     }
 
+    private fun playSoundForSleepStage(stage: String) {
+        val soundPath = soundMap[stage] ?: run {
+        Log.e("ERR", "사운드가 존재하지 않음: $stage")
+        return
+        }
+
+        val soundFile = File(soundPath)
+        if(!soundFile.exists()) {
+            Log.e("ERR", "파일이 존재하지 않음: $soundPath")
+        }
+
+        if(::mediaPlayer.isInitialized) {
+            if(mediaPlayer.isPlaying) mediaPlayer.stop()
+            mediaPlayer.reset()
+        } else {
+            mediaPlayer = MediaPlayer()
+        }
+
+        try {
+            mediaPlayer.setDataSource(soundPath)
+            mediaPlayer.prepare()
+            mediaPlayer.isLooping = true
+            mediaPlayer.start()
+            Log.d("DBG", "사운드 재생 중:$stage - $soundPath")
+        } catch (e: Exception) {
+            Log.e("ERR", "재생 중 오류", e)
+        }
+    }
+
     private suspend fun fetchAndUpload() {
         Log.d("DBG", "측정 중입니다.")
         // 워치에서 데이터 가져오기
 
+        // 더미데이터 활용
+
+        val inputStream = resources.openRawResource(R.raw.biodatadummy)
+        val jsonString = inputStream.bufferedReader().use { it.readText() }
         // 서버에 데이터 보내기
+        val currentInstant = Clock.System.now()
+        val currentZone = TimeZone.currentSystemDefault()
+        val localDateTime = currentInstant.toLocalDateTime(currentZone)
+
+        val gson = Gson()
+        val req = gson.fromJson(jsonString, SleepBioDataRequest::class.java).copy(
+            measuredAt = "$localDateTime"
+        )
+
+        val result = measurementRepository.sleepMeasurement(req)
+        result
+            .onSuccess { bioResult ->
+                Log.d("DBG", "측정 레벨: ${bioResult.level}, 점수: ${bioResult.score}")
+                playSoundForSleepStage(bioResult.level)
+            }
+            .onFailure { err ->
+                Log.e("ERR", "수면 데이터 전송 실패", err)
+            }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -82,6 +185,10 @@ class SleepMeasurementService : Service() {
         Log.d("DBG", "수면 측정 중단")
         serviceScope.cancel()
         if(wakeLock.isHeld) wakeLock.release()
+        if(::mediaPlayer.isInitialized) {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

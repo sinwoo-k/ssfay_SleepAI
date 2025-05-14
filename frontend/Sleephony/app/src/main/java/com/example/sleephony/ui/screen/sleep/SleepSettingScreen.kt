@@ -48,10 +48,10 @@ import com.example.sleephony.R
 import com.example.sleephony.data.model.theme.ThemeListResult
 import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.receiver.DownloadCompleteReceiver
-import com.example.sleephony.ui.common.component.ThemeImageButton
-import com.example.sleephony.ui.common.component.TimeWheelPicker
-import com.example.sleephony.ui.screen.sleep.component.DownloadConfirmDialog
-import com.example.sleephony.ui.screen.sleep.component.ThemeSelectSheet
+import com.example.sleephony.ui.common.components.ThemeImageButton
+import com.example.sleephony.ui.common.components.TimeWheelPicker
+import com.example.sleephony.ui.screen.sleep.components.DownloadConfirmDialog
+import com.example.sleephony.ui.screen.sleep.components.ThemeSelectSheet
 
 @Composable
 fun SleepSettingScreen(
@@ -165,8 +165,14 @@ fun SleepSettingScreen(
                     onPlay = { theme ->
                         viewModel.previewTheme(theme.id)
                     },
+                    onStop = {
+                        viewModel.stopPlayback()
+                    },
                     playingThemeId = playingThemeId,
-                    onClose = { showThemeDialog = false }
+                    onClose = {
+                        showThemeDialog = false
+                        viewModel.stopPlayback()
+                    }
                 )
             }
         }
