@@ -1,13 +1,13 @@
 package com.example.sleephony.data.repository
 
 import com.example.sleephony.data.datasource.remote.report.ReportApi
+import com.example.sleephony.data.model.ApiResponse
 import com.example.sleephony.data.model.report.ReportResult
+import com.example.sleephony.data.model.report.SleepDataResponse
 import com.example.sleephony.domain.repository.ReportRepository
 import com.example.sleephony.utils.TokenProvider
-import javax.inject.Inject
-
 import retrofit2.Response
-import com.example.sleephony.data.model.ApiResponse
+import javax.inject.Inject
 
 class ReportRepositoryImpl @Inject constructor(
     private val api: ReportApi,
@@ -22,8 +22,21 @@ class ReportRepositoryImpl @Inject constructor(
             val response: Response<ApiResponse<ReportResult>> = api.getReportDetail(bearer, date)
 
             if (response.isSuccessful) {
-                val body = response.body()
-                body?.results ?: throw RuntimeException("수면 리포트 정보가 없습니다.")
+                response.body()?.results ?: throw RuntimeException("수면 리포트 정보가 없습니다.")
+            } else {
+                throw RuntimeException("HTTP 오류: ${response.code()} ${response.message()}")
+            }
+        }
+
+    override suspend fun getSleepGraph(date: String): Result<List<SleepDataResponse>> =
+        runCatching {
+            val token = tokenProvider.getToken()
+            val bearer = "Bearer $token"
+
+            val response: Response<ApiResponse<List<SleepDataResponse>>> = api.getSleepGraph(bearer, date)
+
+            if (response.isSuccessful) {
+                response.body()?.results ?: throw RuntimeException("수면 그래프 정보가 없습니다.")
             } else {
                 throw RuntimeException("HTTP 오류: ${response.code()} ${response.message()}")
             }
