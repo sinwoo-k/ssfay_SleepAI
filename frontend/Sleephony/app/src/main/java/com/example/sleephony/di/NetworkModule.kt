@@ -46,7 +46,7 @@ object NetworkModule {
     @Provides @Singleton
     fun providerMeasurementApi(retrofit: Retrofit): MeasurementApi =
         retrofit.create(MeasurementApi::class.java)
-
+        
     // ReportApi 제공
     @Provides @Singleton
     fun provideReportApi(retrofit: Retrofit): ReportApi =
