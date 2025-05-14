@@ -1,25 +1,13 @@
 # model_loader.py
+import os
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 
-def focal_loss(alpha, gamma=1.0):
-    def loss_fn(y_true, y_pred):
-        y_true_oh = tf.one_hot(tf.cast(y_true, tf.int32),
-                               depth=tf.shape(y_pred)[-1])
-        p_t = tf.reduce_sum(y_true_oh * y_pred, axis=-1)
-        a_t = tf.reduce_sum(y_true_oh * alpha,   axis=-1)
-        ce  = -tf.math.log(tf.clip_by_value(p_t, 1e-7, 1))
-        return tf.reduce_mean(a_t * tf.pow(1-p_t, gamma) * ce)
-    return loss_fn
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "sleephony.keras")
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"전체 모델(.keras)이 없습니다: {MODEL_PATH}")
 
-# 학습 때 사용한 alpha
-alpha = tf.constant([0.20, 0.30, 0.15, 0.25, 0.10], tf.float32)
+# compile=False 로 로드하면 custom_objects 없이도 바로 사용 가능합니다.
+sleephony = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
-# 파일명 sleepony.h5로 로드, 변수명도 sleepony 로 바꿈
-sleepony = load_model(
-    "sleepony.keras",
-    custom_objects={"loss_fn": focal_loss(alpha)}
-)
-
-# 레이블 맵
-LABELS = ['N1', 'N2', 'N3', 'R', 'W']
+# 예측 후 매핑할 라벨
+LABELS = ["N1", "N2", "N3", "R", "W"]
