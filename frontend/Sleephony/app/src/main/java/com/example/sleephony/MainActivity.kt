@@ -11,12 +11,11 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.navigation.AppNavGraph
-import com.example.sleephony.service.WearMessageViewModel
+import com.example.sleephony.service.AlarmForegroundService
+import com.example.sleephony.service.SleepMeasurementService
 import com.example.sleephony.ui.screen.sleep.SleepViewModel
 import com.example.sleephony.ui.theme.SleephonyTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -113,6 +112,11 @@ class MainActivity : ComponentActivity() {
             } else if ( it.action == "alarmCancel" ) {
                 initialRoute = "sleep_setting"
                 viewModel.onStopClicked()
+                stopService(Intent(this,AlarmForegroundService::class.java))
+                val close = Intent("alarmClose")
+                sendBroadcast(close)
+                stopService(Intent(this, AlarmForegroundService::class.java))
+                stopService(Intent(this, SleepMeasurementService::class.java))
             }
         }
     }

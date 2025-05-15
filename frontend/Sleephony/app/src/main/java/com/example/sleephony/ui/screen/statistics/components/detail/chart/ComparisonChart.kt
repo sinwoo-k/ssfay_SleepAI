@@ -1,10 +1,8 @@
 package com.example.sleephony.ui.screen.statistics.components.detail.chart
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +20,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
-import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 
 @Composable
 fun ComparisonChart(
