@@ -7,5 +7,5 @@ import com.example.sleephony.data.model.measurement.SleepEndMeasurementResult
 interface MeasurementRepository {
     suspend fun startMeasurement() : Result<String>
     suspend fun endMeasurement() : Result<SleepEndMeasurementResult>
-    suspend fun sleepMeasurement(req: SleepBioDataRequest) : Result<SleepBioDataResult>
+    suspend fun sleepMeasurement(req: SleepBioDataRequest) : Result<Unit>
 }

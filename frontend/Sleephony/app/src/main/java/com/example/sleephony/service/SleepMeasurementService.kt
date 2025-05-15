@@ -23,7 +23,9 @@ import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.domain.repository.MeasurementRepository
 import com.example.sleephony.domain.repository.ThemeRepository
 import com.example.sleephony.receiver.AlarmReceiver
+import com.example.sleephony.utils.TokenProvider
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,9 +35,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.json.JSONObject
 import java.io.File
 import javax.inject.Inject
 
@@ -59,6 +63,7 @@ class SleepMeasurementService : Service() {
     @Inject lateinit var measurementRepository: MeasurementRepository
     @Inject lateinit var themeRepository: ThemeRepository
     @Inject lateinit var themeLocalDataSource: ThemeLocalDataSource
+    @Inject lateinit var tokenProvider: TokenProvider
 
     private lateinit var mediaPlayer: MediaPlayer
 
@@ -89,13 +94,35 @@ class SleepMeasurementService : Service() {
             soundMap[sound.sleepStage] = localPath
         }
     }
+
+    private val accelBuffer = mutableListOf<List<Double>>()
+    private val hrBuffer = mutableListOf<Double>()
+    private val tempBuffer = mutableListOf<Double>()
+
     // 센서 데이터 받아오기
     private val sensorDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val data = intent?.getStringExtra("sensorData")
+            val data = intent?.getStringExtra("sensorData") ?: return
             Log.d("DBG", "Wear OS 센서 데이터: $data")
 
-            // 👉 여기서 원하는 처리 (예: 서버로 전송, DB 저장 등)
+           try {
+               val obj = JSONObject(data)
+
+               val accelStr = obj.getString("accelerometer")
+               val accType = object : TypeToken<List<List<Double>>>() {}.type
+               val accelList: List<List<Double>> = Gson().fromJson(accelStr, accType)
+
+               val hr = obj.getString("hearRate").toDouble()
+               val temp = obj.getString("temparature").toDouble()
+
+               accelBuffer.addAll(accelList)
+               hrBuffer.addAll(List(accelList.size) { hr })
+               tempBuffer.addAll(List(accelList.size) { temp })
+
+
+           } catch(e:Exception) {
+               Log.e("ERR", "센서 데이터 전송 실패", e)
+           }
         }
     }
 
@@ -135,11 +162,24 @@ class SleepMeasurementService : Service() {
             "Sleephony:MeasurementLock"
         ).apply { acquire() }
 
+        val token = tokenProvider.getToken().orEmpty()
+        Log.d("SSE", "토큰 확인 $token")
+
+
+
+
         serviceScope.launch {
             initializeSoundMap()
             while (isActive) {
+                val start = System.currentTimeMillis()
+
                 fetchAndUpload()
-                delay(INTERVAL_MS)
+
+                val elapsed = System.currentTimeMillis() - start
+
+                val delayMs = (INTERVAL_MS - elapsed).coerceAtLeast(0L)
+
+                delay(delayMs)
             }
         }
     }
@@ -175,43 +215,53 @@ class SleepMeasurementService : Service() {
 
     private suspend fun fetchAndUpload() {
         Log.d("DBG", "측정 중입니다.")
-        // 워치에서 데이터 가져오기
+        // 워치에서 데이터 정제
+        val accX = accelBuffer.map { it[0] }
+        val accY = accelBuffer.map { it[1] }
+        val accZ = accelBuffer.map { it[2] }
 
-        // 더미데이터 활용
+        val hrList = hrBuffer.toList()
+        val tempList = tempBuffer.toList()
 
-        val inputStream = resources.openRawResource(R.raw.biodatadummy)
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-        // 서버에 데이터 보내기
+        Log.d("SleepMeasurement", "accX size=${accX.size}, accY size=${accY.size}, accZ size=${accZ.size}")
+        Log.d("SleepMeasurement", "hrList size=${hrList.size}, tempList size=${tempList.size}")
+
+        accelBuffer.clear()
+        hrBuffer.clear()
+        tempBuffer.clear()
+
         val currentInstant = Clock.System.now()
         val currentZone = TimeZone.currentSystemDefault()
         val localDateTime = currentInstant.toLocalDateTime(currentZone)
 
-        val gson = Gson()
-        val req = gson.fromJson(jsonString, SleepBioDataRequest::class.java).copy(
-            measuredAt = "$localDateTime"
+        // 서버에 데이터 보내기
+        val req = SleepBioDataRequest(
+            accX = accX,
+            accY = accY,
+            accZ = accZ,
+            hr = hrList,
+            temp = tempList,
+            measuredAt = localDateTime.toString()
         )
+        Log.d("DBG", "정제된 데이터 : $req")
 
-        val result = measurementRepository.sleepMeasurement(req)
-        result
-            .onSuccess { bioResult ->
-                Log.d("DBG", "측정 레벨: ${bioResult.level}, 점수: ${bioResult.score}")
-                playSoundForSleepStage(bioResult.level)
+        withContext(Dispatchers.IO) {
+            var json = Gson().toJson(req)
 
-                if (mode == AlarmMode.COMFORT){
-                    val now = System.currentTimeMillis()
-                    val inWindow = now in startTimestamp..endTimestamp
-                    val reached = bioResult.level == targetStage
-                    val timeout = now >= endTimestamp
+            val fileName = "sleep_req+${System.currentTimeMillis()}.txt"
+            val file = File(applicationContext.filesDir, fileName)
 
-                    if ((inWindow && reached) || timeout) {
-                        triggerAlarm()
-                        serviceScope.cancel()
-                    }
-                }
+            file.writeText(json)
+        }
+
+        measurementRepository.sleepMeasurement(req)
+            .onSuccess {
+                Log.d("DBG", "측정 데이터 전송 성공")
             }
             .onFailure { err ->
-                Log.e("ERR", "수면 데이터 전송 실패", err)
+                Log.e("ERR", "측정 데이터 전송 실패", err)
             }
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -243,4 +293,5 @@ class SleepMeasurementService : Service() {
     private fun triggerAlarm() {
         sendBroadcast(Intent(this, AlarmReceiver::class.java))
     }
+
 }
