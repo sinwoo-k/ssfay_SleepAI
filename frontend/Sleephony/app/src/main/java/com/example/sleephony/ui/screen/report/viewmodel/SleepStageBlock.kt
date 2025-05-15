@@ -17,3 +17,9 @@ data class SleepStageBlock(
     val color: Color
 )
 
+enum class SleepCategory(val label: String) {
+    TOTAL("총 수면시간"),
+    DEEP("깊은잠"),
+    REM("램수면")
+}
+
