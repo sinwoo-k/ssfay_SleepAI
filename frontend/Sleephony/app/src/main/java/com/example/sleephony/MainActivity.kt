@@ -32,7 +32,6 @@ class MainApplication : Application(){
 
         var keyHash = Utility.getKeyHash(this)
         Log.d("DBG", "키해시 검사 : $keyHash")
-
     }
 }
 
