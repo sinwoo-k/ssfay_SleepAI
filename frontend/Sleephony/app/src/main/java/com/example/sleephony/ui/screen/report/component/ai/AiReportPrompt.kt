@@ -17,8 +17,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun AiReportPrompt(modifier: Modifier = Modifier) {
+fun AiReportPrompt(
+    fullText: String,
+    modifier: Modifier = Modifier
+) {
     val expanded = remember { mutableStateOf(false) }
+
+    val isEmpty = fullText.isBlank()
+    val displayText = if (isEmpty) {
+        "해당 날짜에는 수면 데이터가 없어요. \n다른 날짜를 선택해 주세요."
+    } else {
+        if (expanded.value) fullText else fullText.take(100) + "..."
+    }
 
     Column(
         modifier = modifier
@@ -40,27 +50,26 @@ fun AiReportPrompt(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val fullText = "3일간 수면이 평균 4시간 34분으로 매우 부족해요. 수면시간과 깊은 잠이 부족하면 혈당을 떨어뜨리는 인슐린을 효과적으로 사용하지 못하는 상태가 되어 인슐린 저항성이 증가하고 당뇨병 위험성이 5배 이상 높아져요. 깊은 잠을 증가시키기 위해서는 ...."
-        val shortText = fullText.take(70) + "..."
-
         Text(
-            text = if (expanded.value) fullText else shortText,
+            text = displayText,
             fontSize = 26.sp,
             color = Color.White,
             lineHeight = 36.sp
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (!isEmpty) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = if (expanded.value) "접기 ▲" else "자세히 읽기 >",
-            fontSize = 20.sp,
-            color = Color(0xFF8FB5FF),
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .align(Alignment.Start)
-                .clickable { expanded.value = !expanded.value },
-            textAlign = TextAlign.Start
-        )
+            Text(
+                text = if (expanded.value) "접기 ▲" else "자세히 읽기 >",
+                fontSize = 20.sp,
+                color = Color(0xFF8FB5FF),
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .clickable { expanded.value = !expanded.value },
+                textAlign = TextAlign.Start
+            )
+        }
     }
 }
