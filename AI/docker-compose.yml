@@ -1,10 +1,20 @@
 # docker-compose.yml
+
+networks:
+  backnet:     # backend 스택(ubuntu_default)과 같은 이름으로!
+    external: true       # 이미 만들어진 네트워크를 그대로 사용
+    name: ubuntu_default # ← docker network ls 로 확인했던 이름
+
 services:
   sleephony-api:
     build: .
     env_file:
       - .env
     container_name: sleephony-api
+    networks:
+      - backnet         # 같은 네트워크에 참여
+    depends_on:
+      - sleephony-kafka # DNS 이름 그대로 사용 가능
     ports:
       - "8000:8000"
     restart: unless-stopped
