@@ -2,6 +2,8 @@
 services:
   sleephony-api:
     build: .
+    env_file:
+      - .env
     container_name: sleephony-api
     ports:
       - "8000:8000"

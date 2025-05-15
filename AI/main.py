@@ -6,20 +6,24 @@ from typing    import List
 import numpy as np
 import pandas as pd
 import asyncio, logging
+import os
+
+from dotenv import load_dotenv   # pip install python-dotenv (선택)
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from sklearn.preprocessing import StandardScaler
 from model_loader import sleephony, LABELS               # ← 기존 모델·라벨 로더
 
+load_dotenv(".env")  
 # ── 로깅 ────────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s")
 logger = logging.getLogger("sleephony")
 
 # ── Kafka 설정 ─────────────────────────────────────────────────────
-KAFKA_BOOTSTRAP = "k12c208.p.ssafy.io:29092"
-REQUEST_TOPIC  = "sleep-stage-raw-request"
-RESPONSE_TOPIC = "sleep-stage-raw-response"
-GROUP_ID       = "sleepony-fastapi-group"
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "kafka:9092")
+REQUEST_TOPIC   = os.getenv("REQUEST_TOPIC",  "sleep-stage-raw-request")
+RESPONSE_TOPIC  = os.getenv("RESPONSE_TOPIC", "sleep-stage-raw-response")
+GROUP_ID        = os.getenv("GROUP_ID",       "sleepony-fastapi-group")
 
 # ── 신호 처리 파라미터 (20 Hz 기준) ──────────────────────────────────
 SAMPLING_RATE = 20          # 20 samples / sec
