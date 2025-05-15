@@ -1,8 +1,10 @@
 // com.c208.sleephony.global.config.KafkaConfig.java
 package com.c208.sleephony.global.config;
 
-import com.c208.sleephony.domain.sleep.dto.request.RawSequenceRequest;
+import com.c208.sleephony.domain.sleep.dto.request.RawSequenceKafkaPayload;
 import com.c208.sleephony.domain.sleep.dto.response.RawSequenceResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -21,16 +23,19 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
+@RequiredArgsConstructor
 public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    private final ObjectMapper objectMapper;
+
 
     // 1) Producer 설정
     @Bean
-    public ProducerFactory<String, RawSequenceRequest> rawProducerFactory() {
-        JsonSerializer<RawSequenceRequest> serializer = new JsonSerializer<>();
+    public ProducerFactory<String, RawSequenceKafkaPayload> rawProducerFactory() {
+        JsonSerializer<RawSequenceKafkaPayload> serializer = new JsonSerializer<>(objectMapper);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -40,7 +45,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, RawSequenceRequest> rawKafkaTemplate() {
+    public KafkaTemplate<String, RawSequenceKafkaPayload> rawKafkaTemplate() {
         return new KafkaTemplate<>(rawProducerFactory());
     }
 

@@ -10,14 +10,11 @@ import android.hardware.*
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.provider.ContactsContract.Data
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
-import com.example.sleephony.screens.sensorDataFlow
 import com.google.android.gms.wearable.Wearable
 import com.samsung.android.service.health.tracking.ConnectionListener
-import com.samsung.android.service.health.tracking.HealthTracker
 import com.samsung.android.service.health.tracking.HealthTrackerException
 import com.samsung.android.service.health.tracking.HealthTrackingService
 import com.samsung.android.service.health.tracking.data.DataPoint
@@ -137,8 +134,6 @@ class SleepSensorService : Service(), SensorEventListener {
                         if (status == 0) {
                             val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
 
-                            Log.d("ssafy","Sking ${skinTemp}")
-
                             val currentData = sensorDataFlow.value.toMutableMap()
                             currentData["temparature"] = String.format(Locale.getDefault(),"%.1f",skinTemp)
                             sensorDataFlow.value = currentData
@@ -188,13 +183,13 @@ class SleepSensorService : Service(), SensorEventListener {
                 currentData["heartRate"] = values
                 sensorDataFlow.value = currentData
                 serviceScope.launch {
-                    sendMessage()
+                    sendSenserMessage()
                 }
             }
         }
     }
 
-    private suspend fun sendMessage(){
+    private suspend fun sendSenserMessage(){
         try {
             val nodeClient = Wearable.getNodeClient(this)
             val messageClient = Wearable.getMessageClient(this)

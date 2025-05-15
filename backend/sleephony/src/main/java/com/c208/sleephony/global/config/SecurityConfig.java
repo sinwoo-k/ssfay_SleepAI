@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -35,13 +36,16 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                new AntPathRequestMatcher("/.env*"),
+                                new AntPathRequestMatcher("/**/*.yml"),
+                                new AntPathRequestMatcher("/**/*.properties")
+                        ).denyAll()                        .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/api/auth/login-google",
                                 "/api/auth/login-kakao",
-                                "/actuator/**",
-                                "/**"
+                                "/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -2,9 +2,9 @@ package com.example.sleephony.data.model.report
 
 import com.google.gson.annotations.SerializedName
 
-data class ReportResult(
+data class ReportResponse(
     @SerializedName("todayReport")
-    val today: SleepReport,
+    val today: SleepReportResponse,
 
     @SerializedName("previousTotalSleepMinutes")
     val previousTotalSleepMinutes: Int

@@ -23,12 +23,14 @@ import androidx.wear.compose.material.Text
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.bluePuple
 import com.example.sleephony.presentation.theme.darkNavyBlue
+import com.example.sleephony.viewmodel.AlarmViewModel
 
 
 @Composable
 fun AlarmScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: AlarmViewModel
 ) {
         Column(
             modifier = modifier.fillMaxSize(),
@@ -48,7 +50,10 @@ fun AlarmScreen(
                         .fillMaxWidth(0.75f)
                         .height(37.dp)
                         .shadow( elevation = 40.dp, shape = RoundedCornerShape(12.dp)),
-                    onClick = {navController.navigate("setalarm")},
+                    onClick = {
+                        viewModel.alarmTypeUpdate("comfortable")
+                        navController.navigate("setalarm")
+                              },
                     interactionSource = interactionSource,
                     colors = ButtonDefaults.buttonColors(backgroundColor = if (isPressed) bluePuple else darkNavyBlue)
                 ) {
@@ -64,7 +69,10 @@ fun AlarmScreen(
                         .height(37.dp)
                         .shadow( elevation = 20.dp, shape = RoundedCornerShape(12.dp)),
                     interactionSource = interactionSource2,
-                    onClick = {navController.navigate("setalarm")},
+                    onClick = {
+                        viewModel.alarmTypeUpdate("normal")
+                        navController.navigate("setalarm")
+                              },
                     colors = ButtonDefaults.buttonColors(backgroundColor = if (isPressed2) bluePuple else darkNavyBlue)
                 ) {
                     Text(text = stringResource(R.string.alarm_mode))
@@ -79,7 +87,10 @@ fun AlarmScreen(
                         .height(37.dp)
                         .shadow( elevation = 30.dp, shape = RoundedCornerShape(12.dp)),
                     interactionSource = interactionSource3,
-                    onClick = {navController.navigate("setalarm")},
+                    onClick = {
+                        viewModel.alarmTypeUpdate("none")
+                        navController.navigate("setalarm")
+                              },
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = if ( isPressed3) bluePuple else darkNavyBlue,
                         )

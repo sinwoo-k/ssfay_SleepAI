@@ -29,7 +29,8 @@ data class StatisticSummaryData(
     val averageAwakePercentage : Int,
     val averageSleepCycleCount : Int,
     val mostSleepTimeMinutes: Float,
-    val leastSleepTimeMinutes : Float
+    val leastSleepTimeMinutes : Float,
+    val averageWakeUpTime : String
 )
 
 data class StatisticMySummary(
@@ -45,6 +46,6 @@ data class StatisticMySummary(
     val lightSleepMinutes : Int,
     val lightSleepRatio :Int,
     val deepSleepMinutes : Int,
-    val deepSleepRatio : Int
+    val deepSleepRatio : Int,
 )
 

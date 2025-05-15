@@ -1,10 +1,8 @@
 package com.example.sleephony.ui.screen.statistics.components.detail.chart
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +20,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
-import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 
 @Composable
 fun ComparisonChart(
@@ -34,13 +31,13 @@ fun ComparisonChart(
     title: @Composable () -> Unit
 ) {
     fun change(value: Float): Float {
-        val length = value.toInt().toString().length
-        when (length) {
-            2 -> return ((value / 100) * 300)
-            3 -> return ((value / 1000) * 300)
-            4 -> return ((value / 10000) * 300)
-            else -> return .0f
-        }
+        val maxValue = 2400f
+        val maxWidth = 300f
+        val minWidth = 20f
+
+        if (value <= 0f) return minWidth
+
+        return minWidth + ((value / maxValue) * (maxWidth - minWidth))
     }
     Box(modifier = modifier.fillMaxWidth()) {
         Column {
@@ -98,14 +95,25 @@ fun ComparisonChart(
                             Text(text = "$after_name", color = Color.White)
                         }
                     }
+
                     Row(
                         modifier = modifier
                             .padding(10.dp)
                             .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "${SummarTime(before_value.toInt())}", color = Color.White.copy(alpha = .3f))
+
+                        Box(
+                            modifier = Modifier.width(100.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Text(
+                                text = "${SummarTime(before_value.toInt())}",
+                                color = Color.White.copy(alpha = .3f)
+                            )
+                        }
+
+                        // 그래프 영역
                         Box(
                             modifier = Modifier
                                 .width(change(before_value).dp)
@@ -121,10 +129,19 @@ fun ComparisonChart(
                         modifier = modifier
                             .padding(10.dp)
                             .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "${SummarTime(after_value.toInt())}", color = Color.White)
+                        Box(
+                            modifier = Modifier.width(100.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Text(
+                                text = "${SummarTime(after_value.toInt())}",
+                                color = Color.White
+                            )
+                        }
+
+                        // 그래프 영역
                         Box(
                             modifier = Modifier
                                 .width(change(after_value).dp)

@@ -1,6 +1,6 @@
 package com.c208.sleephony.domain.sleep.service;
 
-import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
+import com.c208.sleephony.domain.sleep.dto.request.RawSequenceKafkaPayload;
 import com.c208.sleephony.domain.sleep.dto.request.RawSequenceRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
 import com.c208.sleephony.domain.sleep.dto.response.*;
@@ -15,10 +15,8 @@ import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import com.c208.sleephony.global.utils.GptClient;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -30,7 +28,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import org.apache.kafka.common.header.Headers;
 
 
 import java.nio.charset.StandardCharsets;
@@ -48,6 +45,7 @@ import java.util.stream.IntStream;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class SleepService {
 
     private final SleepLevelRepository sleepLevelRepository;
@@ -56,14 +54,14 @@ public class SleepService {
     private final GptClient gptClient;
     private final UserRepository userRepository;
     private final SleepStatisticRepository sleepStatisticRepository;
-    private final KafkaTemplate<String, RawSequenceRequest> kafkaTemplate;
+    private final KafkaTemplate<String, RawSequenceKafkaPayload> kafkaTemplate;
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> startTimeMap = new ConcurrentHashMap<>();
 
-    @Value("${sleep.kafka.request-topic:sleep-stage-request}")
+    @Value("${sleep.kafka.request-topic:sleep-raw-stage-request}")
     private String requestTopic;
 
-    public SseEmitter streamRawSleepStage(RawSequenceRequest req) throws JsonProcessingException {
-        System.out.println("streamRawSleepStage");
+    public SseEmitter streamRawSleepStage(RawSequenceRequest req) {
         String requestId = UUID.randomUUID().toString();
         Integer userId = AuthUtil.getLoginUserId();
 
@@ -72,21 +70,20 @@ public class SleepService {
         emitter.onTimeout(()    -> emitters.remove(requestId));
         emitters.put(requestId, emitter);
 
-        // 토픽에 userId 키, payload=req 로 ProducerRecord 생성
-        ProducerRecord<String, RawSequenceRequest> record =
-                new ProducerRecord<>(requestTopic,
-                        String.valueOf(userId),
-                        req);
-        System.out.println(
-                new ObjectMapper()
-                        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                        .writeValueAsString(req)
-        );
+        startTimeMap.put(requestId, req.getMeasuredAt());
+        List<Float> hrFixed = forwardFillZerosHr(req.getHr());   // ← HR만 보정
+
+        RawSequenceKafkaPayload payload = new RawSequenceKafkaPayload(
+                req.getAccX(), req.getAccY(), req.getAccZ(),
+                req.getTemp(), hrFixed);
+
+        ProducerRecord<String, RawSequenceKafkaPayload> record =
+                new ProducerRecord<>(requestTopic, String.valueOf(userId), payload);
+
         // 필수 헤더 추가
         record.headers()
                 .add(new RecordHeader("requestId", requestId.getBytes(StandardCharsets.UTF_8)))
                 .add(new RecordHeader("userId",    String.valueOf(userId).getBytes(StandardCharsets.UTF_8)));
-        System.out.println("보내졌간?");
         kafkaTemplate.send(record);
         return emitter;
     }
@@ -96,32 +93,41 @@ public class SleepService {
      */
     @KafkaListener(
             topics = "${sleep.kafka.response-topic}",
-            containerFactory = "kafkaListenerContainerFactory"
+            containerFactory = "rawKafkaListenerContainerFactory"
     )
     public void onSleepStageResponse(
-            ConsumerRecord<String, SleepPredictionResult> record,
-            @Header("requestId") String requestId
+            ConsumerRecord<String, RawSequenceResponse> record,
+            @Header("requestId") String requestId,
+            @Header("userId")    String userIdStr
     ) {
+        Integer userId = Integer.parseInt(userIdStr);
+        LocalDateTime clientMeasuredAt = startTimeMap.remove(requestId);
+
+        RawSequenceResponse res = record.value();
+
+        String rawLabel = res.getLabels().isEmpty()
+                ? "W"                // 못 받으면 AWAKE 취급
+                : res.getLabels().get(res.getLabels().size() - 1);
+
+        SleepStage stage = STAGE_MAP.getOrDefault(rawLabel, SleepStage.AWAKE);
+
+        SleepLevel entity = SleepLevel.builder()
+                .userId(userId)
+                .level(stage)
+                .measuredAt(clientMeasuredAt)
+                .createdAt(LocalDateTime.now())
+                .build();
+        sleepLevelRepository.save(entity);
+        log.info("[Kafka] user {} – level {} @ {} saved",
+                userId, res.getLabels(), clientMeasuredAt);
+
         SseEmitter emitter = emitters.remove(requestId);
-        SleepPredictionResult result = record.value();
-
-        Integer userId = extractUserIdFromHeaders(record.headers()); // 추출 함수 필요
-        LocalDateTime now = LocalDateTime.now();
-
-        for (int i = 0; i < result.getLevel().size(); i++) {
-            SleepLevel level = SleepLevel.builder()
-                    .userId(userId)
-                    .level(SleepStage.valueOf(result.getLevel().get(i)))
-                    .measuredAt(now.plusMinutes(i)) // or 실제 시간 계산
-                    .build();
-            sleepLevelRepository.save(level);
-        }
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event()
                         .id(requestId)
                         .name("sleepStage")
-                        .data(result.getLevel()));
+                        .data(stage));
                 emitter.complete();
             } catch (Exception e) {
                 emitter.completeWithError(e);
@@ -512,9 +518,9 @@ public class SleepService {
                 .averageAwakeMinutes(avgAwake)
                 .averageAwakePercentage((int)percentage(avgAwake, avgTime))
                 .averageSleepCycleCount(avgCycles)
+                .averageWakeUpTime(avgWakeTime)
                 .mostSleepTimeMinutes((int) maxMinutes)
                 .leastSleepTimeMinutes((int) minMinutes)
-                .averageWakeUpTime(avgWakeTime)
                 .build();
     }
     /**
@@ -673,11 +679,25 @@ public class SleepService {
         return (int) Math.round(part / total * 100);
     }
 
-    private Integer extractUserIdFromHeaders(Headers headers) {
-        Header header = (Header) headers.lastHeader("userId");
-        if (header != null) {
-            return Integer.parseInt(new String(header.value().getBytes(), StandardCharsets.UTF_8));
+    private static final Map<String, SleepStage> STAGE_MAP = Map.of(
+            "W",  SleepStage.AWAKE,
+            "R",  SleepStage.REM,
+            "N1", SleepStage.NREM1,
+            "N2", SleepStage.NREM2,
+            "N3", SleepStage.NREM3
+    );
+    private static List<Float> forwardFillZerosHr(List<Float> hr) {
+        List<Float> result = new ArrayList<>(hr.size());
+        Float last = null;
+
+        for (Float v : hr) {
+            if (v != null && v != 0f) {   // 정상 HR
+                last = v;
+                result.add(v);
+            } else {                      // 0 또는 null → 직전 값 사용
+                result.add(last);
+            }
         }
-        return null;
+        return result;
     }
 }

@@ -7,15 +7,18 @@ package com.example.sleephony.presentation
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
@@ -34,12 +37,21 @@ import com.example.sleephony.viewmodel.AlarmViewModel
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var initialRoute: String
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setTheme(android.R.style.Theme_DeviceDefault)
+
+        val alarmViewModel: AlarmViewModel by viewModels()
+        initialRoute = intent.getStringExtra("start_destination") ?: "homeScreen"
+        intentHandler(
+            intent = intent,
+            viewModel = alarmViewModel
+        )
+
 
         // 런타임 권한 요청 등록
         requestPermissionLauncher = registerForActivityResult(
@@ -58,23 +70,20 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val alarmViewModel: AlarmViewModel = viewModel()
 
             Sleephony_wearTheme {
                 val navController = rememberSwipeDismissableNavController()
 
-                val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-                val sensorList = sensorManager.getSensorList(Sensor.TYPE_ALL)
-
                 SwipeDismissableNavHost(
                     navController = navController,
                     modifier = Modifier.background(Brush.verticalGradient(colors = backGroundGeadientColor)),
-                    startDestination = "homeScreen"
+                    startDestination = initialRoute
                 ) {
                     composable("homeScreen") {
                         HomeScreen(
                             navController = navController,
-                            modifier = Modifier
+                            modifier = Modifier,
+                            viewModel = alarmViewModel
                         )
                     }
                     composable("setalarm") {
@@ -95,4 +104,39 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+        private fun intentHandler(
+            intent : Intent,
+            viewModel: AlarmViewModel
+        ) {
+            Log.d("ssafy","${intent.action}")
+            intent?.let {
+                if (it.action == "alarmOpen") {
+
+                    val hour  = it.getIntExtra("hour",6)
+                    val minute  = it.getIntExtra("minute",30)
+                    val isAm  = it.getStringExtra("isAm") ?: ""
+                    val alarmType = it.getStringExtra("alarmType") ?: ""
+                    Log.d("ssafy","${isAm} ${hour} ${minute}")
+
+                    val mode = when (alarmType) {
+                        "COMFORT" -> {
+                            "comfortable"
+                        }
+                        "EXACT" -> {
+                            "normal"
+                        }
+                        "NONE" -> {
+                            "none"
+                        }
+                        else -> {"normal"}
+                    }
+
+                    viewModel.wakeUpUpdate(hour = hour.toString(), minute = minute.toString(), meridiem = isAm)
+                    viewModel.alarmTypeUpdate(mode)
+                    initialRoute = "sleepingscreen"
+                } else if ( it.action == "alarmCancel" ) {
+                    initialRoute = "homeScreen"
+                }
+            }
+        }
 }

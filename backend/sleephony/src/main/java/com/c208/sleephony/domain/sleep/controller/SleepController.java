@@ -5,10 +5,10 @@ import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -28,11 +28,11 @@ public class SleepController {
     private final SleepService sleepService;
 
     @PostMapping(
-            path     = "/stage/raw",
+            path     = "stage/raw",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_EVENT_STREAM_VALUE
     )
-    public SseEmitter streamRawSleepStage(@RequestBody RawSequenceRequest requestDto) throws JsonProcessingException {
+    public SseEmitter streamRawSleepStage(@Valid @RequestBody RawSequenceRequest requestDto) {
         return sleepService.streamRawSleepStage(requestDto);
     }
 
@@ -100,7 +100,7 @@ public class SleepController {
     }
 
     @Operation(summary = "통계 요약 API", description = "주, 월, 년 별로 데이터 통계 요약 API")
-    @PostMapping("/stat/summary")
+    @PostMapping("stat/summary")
     public ApiResponse<CombinedStatResponse> getSummary(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "통계 요청 DTO")
             @RequestBody StatisticsRequest req
@@ -112,7 +112,7 @@ public class SleepController {
             summary = "수면 통계 그래프 데이터",
             description = "지정된 기간 및 단위에 따라 그래프를 그릴 수 있는 수면 통계 데이터를 반환합니다."
     )
-    @PostMapping("/stat/graph")
+    @PostMapping("stat/graph")
     public ApiResponse<GraphResponse> getGraph(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "통계 요청 DTO")
             @RequestBody StatisticsRequest req
@@ -125,9 +125,9 @@ public class SleepController {
             summary = "월별 수면 리포트 날짜 조회",
             description = "로그인된 사용자의 지정된 연월(month)에 수면 리포트가 존재하는 날짜 목록을 반환합니다."
     )
-    @GetMapping("/reports/dates")
+    @GetMapping("reports/dates/{month}")
     public ApiResponse<List<LocalDate>> getReportDates(
-            @RequestParam String month
+            @PathVariable String month
     ){
         return ApiResponse.success(HttpStatus.OK,sleepService.getReportedDatesForMonth(month));
     }

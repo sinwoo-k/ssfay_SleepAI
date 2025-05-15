@@ -1,7 +1,8 @@
 package com.example.sleephony.data.datasource.remote.report
 
 import com.example.sleephony.data.model.ApiResponse
-import com.example.sleephony.data.model.report.ReportResult
+import com.example.sleephony.data.model.report.AiReportResponse
+import com.example.sleephony.data.model.report.ReportResponse
 import com.example.sleephony.data.model.report.SleepDataResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -14,11 +15,23 @@ interface ReportApi {
     suspend fun getReportDetail(
         @Header("Authorization") bearer: String,
         @Path("date") date: String
-    ): Response<ApiResponse<ReportResult>>
+    ): Response<ApiResponse<ReportResponse>>
 
     @GET("sleep/report/graph/{date}")
     suspend fun getSleepGraph(
         @Header("Authorization") bearer: String,
         @Path("date") date: String
     ): Response<ApiResponse<List<SleepDataResponse>>>
+
+    @GET("sleep/report/detailed/{date}")
+    suspend fun getReportDetailed(
+        @Header("Authorization") bearer: String,
+        @Path("date") date: String
+    ): Response<ApiResponse<AiReportResponse>>
+
+    @GET("sleep/ai-report/{date}")
+    suspend fun getAiReport(
+        @Header("Authorization") bearer: String,
+        @Path("date") date: String
+    ): Response<ApiResponse<String>>
 }

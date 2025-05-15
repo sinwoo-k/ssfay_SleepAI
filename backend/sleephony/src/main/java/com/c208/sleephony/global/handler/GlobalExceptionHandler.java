@@ -3,17 +3,25 @@ package com.c208.sleephony.global.handler;
 import com.c208.sleephony.global.exception.*;
 import com.c208.sleephony.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
@@ -43,10 +51,15 @@ public class GlobalExceptionHandler {
     }
 
     // 제네릭 와일드카드 적용
-    private ResponseEntity<ApiResponse<?>> buildErrorResponse(HttpStatus status, ErrorCode errorCode, String customMessage) {
-        String message = (customMessage != null ? customMessage : errorCode.getMessage());
-        return ResponseEntity.status(status)
-                .body(ApiResponse.fail(status, errorCode.getCode(), message));
+    private ResponseEntity<ApiResponse<?>> buildErrorResponse(HttpStatus status, ErrorCode errorCode, String customMessage) {    String msg = (customMessage != null ? customMessage : errorCode.getMessage());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);   // ★ JSON 고정
+
+        return ResponseEntity
+                .status(status)
+                .headers(headers)
+                .body(ApiResponse.fail(status, errorCode.getCode(), msg));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -126,4 +139,43 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
     }
 
+    @ExceptionHandler({ NoHandlerFoundException.class,   // URL 자체를 못 찾음
+            NoResourceFoundException.class })// 정적 리소스 fallback 도 못 찾음
+    public ResponseEntity<ApiResponse<String>> handleNotFound(Exception ex) {
+        log.warn("404 Not Found : {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(
+                        HttpStatus.NOT_FOUND,
+                        "요청하신 리소스를 찾을 수 없습니다."
+                ));
+    }
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public ResponseEntity<ApiResponse<?>> handleAsyncTimeout(AsyncRequestTimeoutException ex) {
+        log.warn("Async request timed out: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "요청 처리 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+        );
+    }
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(ConstraintViolationException ex) {
+        String msg = ex.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ApiResponse<?>> handleNotAcceptable(
+            HttpMediaTypeNotAcceptableException ex) {
+
+        log.warn("406 Not Acceptable : {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.NOT_ACCEPTABLE,
+                ErrorCode.BAD_REQUEST,
+                "지원하지 않는 응답 형식입니다."
+        );
+    }
 }
