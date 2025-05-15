@@ -36,6 +36,7 @@ import androidx.wear.compose.material.Text
 import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkGray
 import com.example.sleephony.presentation.theme.darkNavyBlue
+import com.example.sleephony.utils.WearMessageUtils
 import com.example.sleephony.viewmodel.AlarmViewModel
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
@@ -65,6 +66,7 @@ fun AlarmCheckScreen(
     val wakeUpMeridiem = context.getString(R.string.wakeup_meridiem, wakeUpMeridiemState.value)
     val wakeUpHour = wakeUpHourState.value
     val wakeUpMinute = wakeUpMinuteState.value
+    val alarmType = viewModel.alarmType.value
 
 
     Column(
@@ -113,7 +115,14 @@ fun AlarmCheckScreen(
                         .padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(darkNavyBlue),
                     onClick = {
-                        SendMessage(context,"$bedMeridiem $bedHour $bedMinute", "$wakeUpMeridiem $wakeUpHour $wakeUpMinute")
+                        WearMessageUtils.SendMessage(
+                            context = context,
+                            mode = "alarm",
+                            data = mapOf(
+                                "wakeUpTime" to "$wakeUpMeridiem $wakeUpHour $wakeUpMinute",
+                                "alarmType" to alarmType
+                            )
+                        )
                         navController.navigate("sleepingscreen")
                     }
                 ) {
@@ -124,29 +133,3 @@ fun AlarmCheckScreen(
     }
 }
 
-fun SendMessage(context:Context, bedTime:String, wakUpTime:String){
-    CoroutineScope(Dispatchers.IO).launch {
-        try{
-            val nodeClient = Wearable.getNodeClient(context)
-            val messageClient = Wearable.getMessageClient(context)
-
-            val jsonData = JSONObject().apply {
-                put("mode","alarm")
-                put("bedTime",bedTime)
-                put("wakeUpTime",wakUpTime)
-            }
-            val jsonString = jsonData.toString()
-
-            val nodes = nodeClient.connectedNodes.await()
-            for (node in nodes) {
-                messageClient.sendMessage(
-                    node.id,
-                    "/alarm",
-                    "$jsonString ".toByteArray()
-                ).await()
-            }
-        } catch (error: Exception){
-            Log.e("ssafy","$error")
-        }
-    }
-}

@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sleephony.R
 import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.ui.common.animation.ShootingStar
+import com.example.sleephony.utils.WearMessageUtils
 
 @Composable
 fun SleepMeasurementScreen(
@@ -41,6 +43,7 @@ fun SleepMeasurementScreen(
 ){
     val settingData by viewModel.settingData.collectAsState()
     val (hour, minute, isAm, mode) = settingData
+    val context = LocalContext.current
 
     Log.d("DBG", "설정 됐냐? $hour, $minute, $isAm, $mode")
 
@@ -149,7 +152,16 @@ fun SleepMeasurementScreen(
                     .offset(y = (-100).dp)
             ) {
                 Button(
-                    onClick = onStop,
+                    onClick = {
+                        onStop()
+                        WearMessageUtils.SendMessage(
+                            context = context,
+                            mode = "alarmCancel",
+                            data = mapOf(
+                                "action" to "stop"
+                            )
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
