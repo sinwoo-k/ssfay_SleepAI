@@ -1,5 +1,6 @@
 package com.c208.sleephony.domain.sleep.dto.request;
 
+import com.c208.sleephony.global.utils.EqualLengthLists;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@EqualLengthLists
 public class RawSequenceRequest {
     private List<Float> accX;
     private List<Float> accY;

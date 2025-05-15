@@ -71,10 +71,11 @@ public class SleepService {
         emitters.put(requestId, emitter);
 
         startTimeMap.put(requestId, req.getMeasuredAt());
+        List<Float> hrFixed = forwardFillZerosHr(req.getHr());   // ← HR만 보정
 
         RawSequenceKafkaPayload payload = new RawSequenceKafkaPayload(
                 req.getAccX(), req.getAccY(), req.getAccZ(),
-                req.getTemp(), req.getHr());
+                req.getTemp(), hrFixed);
 
         ProducerRecord<String, RawSequenceKafkaPayload> record =
                 new ProducerRecord<>(requestTopic, String.valueOf(userId), payload);
@@ -685,4 +686,18 @@ public class SleepService {
             "N2", SleepStage.NREM2,
             "N3", SleepStage.NREM3
     );
+    private static List<Float> forwardFillZerosHr(List<Float> hr) {
+        List<Float> result = new ArrayList<>(hr.size());
+        Float last = null;
+
+        for (Float v : hr) {
+            if (v != null && v != 0f) {   // 정상 HR
+                last = v;
+                result.add(v);
+            } else {                      // 0 또는 null → 직전 값 사용
+                result.add(last);
+            }
+        }
+        return result;
+    }
 }
