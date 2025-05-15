@@ -90,6 +90,53 @@ async def shutdown_event():
     await producer.stop()
     logger.info("🛑 Kafka connections closed")
 
+async def reconnect_kafka():
+    """Kafka 연결이 끊어졌을 때 재연결 시도"""
+    global producer, consumer, processing_task
+    
+    retry_count = 0
+    current_delay = RETRY_DELAY
+    
+    while retry_count < MAX_RETRIES:
+        try:
+            logger.info(f"🔄 Attempting to reconnect Kafka (attempt {retry_count + 1}/{MAX_RETRIES})")
+            
+            # 기존 연결 정리
+            if consumer:
+                try:
+                    await consumer.stop()
+                except:
+                    pass
+            if producer:
+                try:
+                    await producer.stop()
+                except:
+                    pass
+            
+            # 새 연결 생성
+            producer = await create_kafka_producer()
+            consumer = await create_kafka_consumer()
+            
+            # 처리 루프가 실행 중이 아니면 재시작
+            if processing_task is None or processing_task.done():
+                processing_task = asyncio.create_task(process_loop())
+                logger.info("✅ Processing loop restarted")
+            
+            logger.info("✅ Kafka reconnection successful")
+            return
+            
+        except Exception as e:
+            retry_count += 1
+            logger.error(f"❌ Reconnection attempt {retry_count} failed: {e}")
+            
+            if retry_count >= MAX_RETRIES:
+                logger.error(f"❌ Maximum reconnection attempts reached. Giving up.")
+                return
+            
+            # 지수 백오프 적용
+            await asyncio.sleep(current_delay)
+            current_delay = min(current_delay * 1.5, MAX_RETRY_DELAY)
+            
 # ── 메인 처리 루프 ──────────────────────────────────────────────────
 async def process_loop():
     """
