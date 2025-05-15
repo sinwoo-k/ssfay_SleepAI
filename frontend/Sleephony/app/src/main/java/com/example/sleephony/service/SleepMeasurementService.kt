@@ -15,8 +15,10 @@ import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.example.sleephony.BuildConfig
 import com.example.sleephony.R
 import com.example.sleephony.data.datasource.local.ThemeLocalDataSource
+import com.example.sleephony.data.datasource.remote.measurement.SleepStageSSEClient
 import com.example.sleephony.data.model.measurement.SleepBioDataRequest
 import com.example.sleephony.data.model.theme.SoundDto
 import com.example.sleephony.domain.model.AlarmMode
@@ -59,6 +61,8 @@ class SleepMeasurementService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var wakeLock: PowerManager.WakeLock
+
+    private lateinit var sseClient: SleepStageSSEClient
 
     @Inject lateinit var measurementRepository: MeasurementRepository
     @Inject lateinit var themeRepository: ThemeRepository
@@ -164,6 +168,27 @@ class SleepMeasurementService : Service() {
 
         val token = tokenProvider.getToken().orEmpty()
         Log.d("SSE", "토큰 확인 $token")
+        sseClient = SleepStageSSEClient(
+            baseUrl = BuildConfig.SLEEPHONY_BASE_URL,
+            token = token
+        ).apply {
+            setListener(object : SleepStageSSEClient.Listener{
+                override fun onSleepStageReceived(requestId: String?, sleepStage: String) {
+                    serviceScope.launch(Dispatchers.Main) {
+                        playSoundForSleepStage(sleepStage)
+                    }
+                }
+
+                override fun onError(message: String) {
+                    Log.e("SSE", message)
+                }
+
+                override fun onComplete() {
+                    Log.d("SSE", "SSE stream completed")
+                }
+            })
+        }
+
 
 
 
@@ -255,13 +280,10 @@ class SleepMeasurementService : Service() {
         }
 
         measurementRepository.sleepMeasurement(req)
-            .onSuccess {
-                Log.d("DBG", "측정 데이터 전송 성공")
-            }
-            .onFailure { err ->
-                Log.e("ERR", "측정 데이터 전송 실패", err)
-            }
+            .onSuccess { Log.d("DBG", "측정 데이터 전송 성공") }
+            .onFailure { err -> Log.e("ERR", "측정 데이터 전송 실패", err) }
 
+        sseClient.connect(req)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -278,6 +300,7 @@ class SleepMeasurementService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        sseClient.disconnect()
         Log.d("DBG", "수면 측정 중단")
         serviceScope.cancel()
         if(wakeLock.isHeld) wakeLock.release()
