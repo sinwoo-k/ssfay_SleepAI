@@ -101,6 +101,7 @@ class AlarmForegroundService : Service() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(fullScreenIntent, true)
+            .setContentIntent(fullScreenIntent)
             .build()
         startForeground(FOREGROUND_ID, notif)
 

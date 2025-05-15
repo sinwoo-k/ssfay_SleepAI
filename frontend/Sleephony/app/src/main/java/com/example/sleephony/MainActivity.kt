@@ -1,6 +1,7 @@
 package com.example.sleephony
 
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -13,6 +14,7 @@ import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.navigation.AppNavGraph
 import com.example.sleephony.service.WearMessageViewModel
 import com.example.sleephony.ui.screen.sleep.SleepViewModel
@@ -31,6 +33,7 @@ class MainApplication : Application(){
 
         var keyHash = Utility.getKeyHash(this)
         Log.d("DBG", "키해시 검사 : $keyHash")
+
     }
 }
 
@@ -38,27 +41,14 @@ class MainApplication : Application(){
 class MainActivity : ComponentActivity() {
 
     private lateinit var initialRoute: String
-    private val wearViewModel : WearMessageViewModel by viewModels()
+    private val sleepViewModel : SleepViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         initialRoute = intent.getStringExtra("start_destination") ?: "splash"
 
-        val alarmType = intent.getStringExtra("alarmType")
-        val wakeUpTime = intent.getStringExtra("wakeUpTime")
-        val bedtime = intent.getStringExtra("bedtime")
-        if (
-            alarmType != null &&
-            wakeUpTime != null &&
-            bedtime != null
-            ) {
-            wearViewModel.update(
-                alarmType = alarmType,
-                wakeUpTime = wakeUpTime,
-                bedTime = bedtime
-            )
-        }
+        handleIntent(intent, sleepViewModel)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
@@ -81,8 +71,50 @@ class MainActivity : ComponentActivity() {
                 // 내비게이션 관련
                 val navController = rememberNavController()
 
-                AppNavGraph(navController = navController)
+                AppNavGraph(
+                    navController = navController,
+                    startDestination = initialRoute,
+                    vm = sleepViewModel
+                )
+            }
+        }
+    }
+    private fun handleIntent(
+        intent : Intent,
+        viewModel: SleepViewModel
+    ) {
+        Log.d("ssafy","${intent.action}")
+        intent?.let {
+            if (it.action == "alarmOpen") {
+
+                val hour  = it.getIntExtra("hour",6)
+                val minute  = it.getIntExtra("minute",30)
+                val isAm  = it.getBooleanExtra("isAm",false)
+                val alarmType = it.getStringExtra("alarmType") ?: ""
+                Log.d("ssafy","${isAm} ${hour} ${minute}")
+
+                val mode = when (alarmType) {
+                    "comfortable" -> {
+                        AlarmMode.COMFORT
+                    }
+                    "normal" -> {
+                        AlarmMode.EXACT
+                    }
+                    "none" -> {
+                        AlarmMode.NONE
+                    }
+                    else -> {AlarmMode.EXACT}
+                }
+
+                viewModel.onTimeChanged(hour = hour, minute = minute, isAm = isAm)
+                viewModel.onModeSelected(mode)
+                initialRoute = "sleep_setting"
+                viewModel.onStartClicked()
+            } else if ( it.action == "alarmCancel" ) {
+                initialRoute = "sleep_setting"
+                viewModel.onStopClicked()
             }
         }
     }
 }
+

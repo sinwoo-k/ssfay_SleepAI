@@ -44,6 +44,7 @@ import com.example.sleephony.R
 import com.example.sleephony.presentation.theme.darkNavyBlue
 import com.example.sleephony.service.SleepAlarmService
 import com.example.sleephony.service.SleepSensorService
+import com.example.sleephony.utils.WearMessageUtils
 import com.example.sleephony.viewmodel.AlarmViewModel
 import kotlinx.coroutines.delay
 import java.time.LocalTime
@@ -110,6 +111,13 @@ fun SleepingScreen(
                     intent = Intent(context,SleepAlarmService::class.java)
                     context.stopService(intent)
                     context.stopService(senserIntent)
+                    WearMessageUtils.SendMessage(
+                        context = context,
+                        mode = "alarmCancel",
+                        data = mapOf(
+                            "action" to "stop"
+                        )
+                    )
                     navController.navigate("homeScreen")
                 },
                 vibrator = vibrator

@@ -134,8 +134,6 @@ class SleepSensorService : Service(), SensorEventListener {
                         if (status == 0) {
                             val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
 
-                            Log.d("ssafy","Sking ${skinTemp}")
-
                             val currentData = sensorDataFlow.value.toMutableMap()
                             currentData["temparature"] = String.format(Locale.getDefault(),"%.1f",skinTemp)
                             sensorDataFlow.value = currentData
@@ -185,13 +183,13 @@ class SleepSensorService : Service(), SensorEventListener {
                 currentData["heartRate"] = values
                 sensorDataFlow.value = currentData
                 serviceScope.launch {
-                    sendMessage()
+                    sendSenserMessage()
                 }
             }
         }
     }
 
-    private suspend fun sendMessage(){
+    private suspend fun sendSenserMessage(){
         try {
             val nodeClient = Wearable.getNodeClient(this)
             val messageClient = Wearable.getMessageClient(this)

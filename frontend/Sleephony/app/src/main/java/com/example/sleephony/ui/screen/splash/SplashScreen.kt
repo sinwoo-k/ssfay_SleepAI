@@ -43,6 +43,7 @@ import com.example.sleephony.ui.common.animation.ShootingStar
 import com.example.sleephony.ui.screen.auth.ProfileViewModel
 import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
 import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
+import com.example.sleephony.utils.WearMessageUtils
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,21 +95,27 @@ fun SplashScreen(
     }
     LaunchedEffect(profile,statistics) {
         profile?.let {
-            SendProfile(
+            WearMessageUtils.SendMessage(
                 context = context,
-                email = it.email,
-                height = it.height.toString(),
-                gender = it.gender,
-                weight = it.weight.toString(),
-                nickname = it.nickname,
-                birthDate = it.birthDate
+                mode = "profile",
+                data = mapOf(
+                    "email" to it.email,
+                    "height" to it.height.toString(),
+                    "gender" to it.gender,
+                    "weight" to it.weight.toString(),
+                    "nickname" to it.nickname,
+                    "birthDate" to it.birthDate
+                ),
             )
         }
         statistics?.sleepTime?.forEach {
-            SendHistory(
+            WearMessageUtils.SendMessage(
                 context = context,
-                label = it.label,
-                value = SummarTime(it.value.toInt())
+                mode = "history",
+                data = mapOf(
+                    "label" to it.label,
+                    "value" to SummarTime(it.value.toInt())
+                )
             )
         }
     }
@@ -209,65 +216,6 @@ fun SplashScreen(
                     modifier = Modifier.padding(horizontal = 32.dp).offset()
                 )
             }
-        }
-    }
-}
-
-fun SendProfile(context: Context, email:String, nickname:String, height:String, weight:String, birthDate: String,gender:String ){
-    CoroutineScope(Dispatchers.IO).launch {
-        try{
-            val nodeClient = Wearable.getNodeClient(context)
-            val messageClient = Wearable.getMessageClient(context)
-
-            val jsonData = JSONObject().apply {
-                put("mode","profile")
-                put("email",email)
-                put("nickname",nickname)
-                put("height",height)
-                put("weight",weight)
-                put("birthDate",birthDate)
-                put("gender",gender)
-            }
-            val jsonString = jsonData.toString()
-
-            val nodes = nodeClient.connectedNodes.await()
-            for (node in nodes) {
-                messageClient.sendMessage(
-                    node.id,
-                    "/alarm",
-                    "$jsonString ".toByteArray()
-                ).await()
-            }
-        } catch (error: Exception){
-            Log.e("ssafy","$error")
-        }
-    }
-}
-
-fun SendHistory(context: Context, label:String, value: String){
-    CoroutineScope(Dispatchers.IO).launch {
-        try{
-            val nodeClient = Wearable.getNodeClient(context)
-            val messageClient = Wearable.getMessageClient(context)
-
-            val jsonData = JSONObject().apply {
-                put("mode","history")
-                put("day",label)
-                put("value",value)
-            }
-            val jsonString = jsonData.toString()
-
-            val nodes = nodeClient.connectedNodes.await()
-            for (node in nodes) {
-                messageClient.sendMessage(
-                    node.id,
-                    "/alarm",
-                    "$jsonString ".toByteArray()
-                ).await()
-            }
-            Log.d("ssafy","send history success")
-        } catch (error: Exception){
-            Log.e("ssafy","$error")
         }
     }
 }
