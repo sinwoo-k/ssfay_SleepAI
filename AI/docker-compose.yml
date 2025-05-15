@@ -15,8 +15,6 @@ services:
       TZ: Asia/Seoul
     networks:
       - backnet         # 같은 네트워크에 참여
-    depends_on:
-      - kafka # DNS 이름 그대로 사용 가능
     ports:
       - "8000:8000"
     restart: unless-stopped
