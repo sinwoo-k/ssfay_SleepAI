@@ -14,6 +14,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
@@ -126,4 +128,15 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, msg);
     }
 
+    @ExceptionHandler({ NoHandlerFoundException.class,   // URL 자체를 못 찾음
+            NoResourceFoundException.class })// 정적 리소스 fallback 도 못 찾음
+    public ResponseEntity<ApiResponse<String>> handleNotFound(Exception ex) {
+        log.warn("404 Not Found : {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(
+                        HttpStatus.NOT_FOUND,
+                        "요청하신 리소스를 찾을 수 없습니다."
+                ));
+    }
 }

@@ -58,7 +58,7 @@ public class SleepService {
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Map<String, LocalDateTime> startTimeMap = new ConcurrentHashMap<>();
 
-    @Value("${sleep.kafka.request-topic:sleep-stage-request}")
+    @Value("${sleep.kafka.request-topic:sleep-raw-stage-request}")
     private String requestTopic;
 
     public SseEmitter streamRawSleepStage(RawSequenceRequest req) {
