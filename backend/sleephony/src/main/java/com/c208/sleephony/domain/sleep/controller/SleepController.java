@@ -5,10 +5,10 @@ import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -32,7 +32,7 @@ public class SleepController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_EVENT_STREAM_VALUE
     )
-    public SseEmitter streamRawSleepStage(@RequestBody RawSequenceRequest requestDto) throws JsonProcessingException {
+    public SseEmitter streamRawSleepStage(@Valid @RequestBody RawSequenceRequest requestDto) {
         return sleepService.streamRawSleepStage(requestDto);
     }
 
