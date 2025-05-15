@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.resource.NoResourceFoundException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -138,5 +139,14 @@ public class GlobalExceptionHandler {
                         HttpStatus.NOT_FOUND,
                         "요청하신 리소스를 찾을 수 없습니다."
                 ));
+    }
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public ResponseEntity<ApiResponse<?>> handleAsyncTimeout(AsyncRequestTimeoutException ex) {
+        log.warn("Async request timed out: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "요청 처리 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+        );
     }
 }
