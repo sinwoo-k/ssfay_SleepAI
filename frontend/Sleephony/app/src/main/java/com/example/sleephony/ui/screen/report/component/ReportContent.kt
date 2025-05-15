@@ -33,12 +33,47 @@ fun ReportContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (report != null) {
-            val totalSleep = report.remMinutes + report.lightMinutes + report.deepMinutes
-            val sleepDurationText = "${totalSleep / 60}시간 ${totalSleep % 60}분"
+        // 수면 시간 계산
+        val rem = report?.remMinutes ?: 0
+        val light = report?.lightMinutes ?: 0
+        val deep = report?.deepMinutes ?: 0
+        val awake = report?.awakeMinutes ?: 0
+        val cycles = report?.sleepCycles ?: 0
+        val score = report?.sleepScore ?: 0
+        val totalSleep = rem + light + deep
 
+        // 퍼센트 계산 (0 나눔 방지)
+        val remPercent = if (totalSleep > 0) (rem * 100f / totalSleep).toInt().coerceAtMost(100) else 0
+        val lightPercent = if (totalSleep > 0) (light * 100f / totalSleep).toInt().coerceAtMost(100) else 0
+        val deepPercent = if (totalSleep > 0) (deep * 100f / totalSleep).toInt().coerceAtMost(100) else 0
+
+        // 점수 영역 (항상 표시)
+        AverageSleepScore(
+            modifier = Modifier.fillMaxWidth(),
+            averageSleepScore = score,
+            averageSleepTimeMinutes = totalSleep + awake,
+            averageSleepLatencyMinutes = awake
+        )
+
+        // 그래프 영역 (항상 표시)
+        SleepSummationGraph(
+            modifier = Modifier.fillMaxWidth(),
+            averageSleepLatencyMinutes = awake.toFloat(),
+            averageRemSleepMinutes = rem.toFloat(),
+            averageRemSleepPercentage = remPercent,
+            averageLightSleepMinutes = light.toFloat(),
+            averageLightSleepPercentage = lightPercent,
+            averageDeepSleepMinutes = deep.toFloat(),
+            averageDeepSleepPercentage = deepPercent,
+            averageSleepCycleCount = cycles,
+            viewModel = reportViewModel
+        )
+
+        // 텍스트 정보는 report 있을 때만
+        if (report != null) {
             val prevSleep = reportResult?.previousTotalSleepMinutes ?: 0
             val diff = totalSleep - prevSleep
+
             val diffText = when {
                 kotlin.math.abs(diff) <= 30 -> "전날과 비슷한 수면 시간이네요!"
                 diff > 0 -> "전날보다 ${diff}분 충전하셨어요!!"
@@ -51,34 +86,12 @@ fun ReportContent(
                 else -> "피로가 남아있을 수 있어요"
             }
 
+            val sleepDurationText = "${totalSleep / 60}시간 ${totalSleep % 60}분"
+
             SleepScoreSection(
                 sleepDurationText = sleepDurationText,
                 diffText = diffText,
                 comment = comment
-            )
-
-            val remPercent = (report.remMinutes * 100f / totalSleep).toInt().coerceAtMost(100)
-            val lightPercent = (report.lightMinutes * 100f / totalSleep).toInt().coerceAtMost(100)
-            val deepPercent = (report.deepMinutes * 100f / totalSleep).toInt().coerceAtMost(100)
-
-            AverageSleepScore(
-                modifier = Modifier.fillMaxWidth(),
-                averageSleepScore = report.sleepScore,
-                averageSleepTimeMinutes = totalSleep + report.awakeMinutes,
-                averageSleepLatencyMinutes = report.awakeMinutes
-            )
-
-            SleepSummationGraph(
-                modifier = Modifier.fillMaxWidth(),
-                averageSleepLatencyMinutes = report.awakeMinutes.toFloat(),
-                averageRemSleepMinutes = report.remMinutes.toFloat(),
-                averageRemSleepPercentage = remPercent,
-                averageLightSleepMinutes = report.lightMinutes.toFloat(),
-                averageLightSleepPercentage = lightPercent,
-                averageDeepSleepMinutes = report.deepMinutes.toFloat(),
-                averageDeepSleepPercentage = deepPercent,
-                averageSleepCycleCount = report.sleepCycles,
-                viewModel = reportViewModel
             )
         }
     }
