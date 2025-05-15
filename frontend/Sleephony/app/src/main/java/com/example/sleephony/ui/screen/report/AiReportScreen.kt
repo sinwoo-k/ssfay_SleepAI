@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -17,15 +17,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.component.ai.AiReportInfo
 import com.example.sleephony.ui.screen.report.component.ai.AiReportPrompt
 import com.example.sleephony.ui.screen.report.component.ai.ScoreGauge
 import com.example.sleephony.ui.screen.report.component.ai.SleepComparisonCard
+import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun AiReportScreen(navController: NavController) {
+    val viewModel: ReportViewModel = hiltViewModel()
+    val aiDetail by viewModel.aiReport.collectAsState()
+    val aiText by viewModel.aiReportText.collectAsState()
+
+    val today = LocalDate.now().minusDays(1).toString()
+
+    LaunchedEffect(Unit) {
+        viewModel.getReportDetailed(today)
+        viewModel.getAiReport(today)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -72,9 +89,10 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 날짜
             Text(
-                text = "4.23 (화)",
+                text = LocalDate.parse(today).format(
+                    DateTimeFormatter.ofPattern("M.d (E)", Locale.KOREAN)
+                ),
                 fontSize = 35.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -82,9 +100,20 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 점수
+            if (aiDetail == null || aiText.isBlank()) {
+                Text(
+                    text = "아직 수면 기록이 없어요.\n다른 날짜를 선택해 주세요.",
+                    fontSize = 20.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 80.dp),
+                    lineHeight = 30.sp
+                )
+                return@Column
+            }
+
             Text(
-                text = "95점 / 100점",
+                text = "${aiDetail?.sleepScore ?: 0}점 / 100점",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -92,7 +121,7 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            ScoreGauge(score = 95, maxScore = 100, width = 260.dp, height = 100.dp)
+            ScoreGauge(score = aiDetail?.sleepScore ?: 0, maxScore = 100, width = 260.dp, height = 100.dp)
 
             Image(
                 painter = painterResource(id = R.drawable.ic_sleepy_cow),
@@ -102,16 +131,21 @@ fun AiReportScreen(navController: NavController) {
                     .offset(y = (-80).dp)
             )
 
-            // 수면 정보
-            AiReportInfo(
-                title = "스트레스 해소의 잠",
-                subtitle = "램수면 비율이 높았어요!\n창의력을 발휘하도록 돕는 잠이랍니다",
-                sleepPeriod = "오후 11:40 ~ 오전 09:03",
-                actualSleep = "5시간 50분",
-                fallAsleepTime = "5분",
-                deepSleep = "2시간 22분",
-                modifier = Modifier.offset(y = (-60).dp)
-            )
+            aiDetail?.let {
+                val formatter = DateTimeFormatter.ofPattern("a h:mm", Locale.KOREAN)
+                val sleepStartFormatted = LocalDateTime.parse(it.sleepStart).format(formatter)
+                val sleepEndFormatted = LocalDateTime.parse(it.sleepEnd).format(formatter)
+                val sleepPeriod = "$sleepStartFormatted ~ $sleepEndFormatted"
+                AiReportInfo(
+                    title = it.title,
+                    subtitle = it.description,
+                    sleepPeriod = sleepPeriod,
+                    actualSleep = "${it.totalSleepMinutes / 60}시간 ${it.totalSleepMinutes % 60}분",
+                    fallAsleepTime = "${it.sleepLatencyMinutes}분",
+                    deepSleep = "${it.deepSleepMinutes / 60}시간 ${it.deepSleepMinutes % 60}분",
+                    modifier = Modifier.offset(y = (-60).dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(0.dp))
 
@@ -127,7 +161,10 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            AiReportPrompt(modifier = Modifier.offset(y = (-40).dp))
+            AiReportPrompt(
+                fullText = aiText,
+                modifier = Modifier.offset(y = (-40).dp)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -143,7 +180,17 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            SleepComparisonCard(modifier = Modifier.offset(y = (-40).dp))
+            aiDetail?.let {
+                SleepComparisonCard(
+                    modifier = Modifier.offset(y = (-40).dp),
+                    totalSleep = it.totalSleepMinutes,
+                    avgTotalSleep = it.statistics.avgTotalSleepMinutes,
+                    deepSleep = it.deepSleepMinutes,
+                    avgDeepSleep = it.statistics.avgDeepSleepMinutes,
+                    remSleep = it.remSleepMinutes,
+                    avgRemSleep = it.statistics.avgRemSleepMinutes,
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
