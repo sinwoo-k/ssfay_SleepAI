@@ -105,10 +105,10 @@ fun White_text(
 ) {
     Text(
         text = text,
-        fontSize = 30.sp,
+        fontSize = 25.sp,
         fontWeight = FontWeight.Bold,
         color = Color.White,
-        lineHeight = 32.sp
+        lineHeight = 27.sp
     )
 }
 
@@ -118,7 +118,8 @@ fun Blue_text(
 ) {
     Text(
         text = "$text",
-        fontSize = 40.sp,
+        fontSize = 30.sp,
+        lineHeight = 32.sp,
         fontWeight = FontWeight.Bold,
         color = colorResource(R.color.SkyBlue)
     )
@@ -131,6 +132,7 @@ fun Gray_text(
     Text(
         text = "$text",
         color = Color.White.copy(alpha = .3f),
+        lineHeight = 27.sp,
         fontSize = 25.sp,
         fontWeight = FontWeight.Bold
     )
@@ -144,7 +146,7 @@ fun Comparison_text(
     Text(text = buildAnnotatedString {
         withStyle(
             style = SpanStyle(
-                fontSize = 40.sp, fontWeight = FontWeight.Bold, color = colorResource(
+                fontSize = 30.sp, fontWeight = FontWeight.Bold, color = colorResource(
                     R.color.SkyBlue
                 )
             )
@@ -154,7 +156,7 @@ fun Comparison_text(
         append(" ")
         withStyle(
             style = SpanStyle(
-                fontSize = 30.sp,
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -166,7 +168,11 @@ fun Comparison_text(
 
 fun SummarTime(value: Int): String {
     if (value == 0) return "0분"
-    val hour = value / 100
-    val min = value % 100
+    var hour = value / 60
+    var min = value % 60
+    if (min>=60) {
+        min -= 60
+        hour++
+    }
     return if (hour != 0) "${hour}시간 ${min}분" else "${min}분"
     }

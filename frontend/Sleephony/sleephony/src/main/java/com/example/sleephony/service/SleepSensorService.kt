@@ -238,6 +238,17 @@ class SleepSensorService : Service(), SensorEventListener {
         sensorManager.unregisterListener(this)
         sensorDataFlow.value = emptyMap()
         serviceScope.cancel()
+
+        skinTemperatureTacker?.setEventListener(null)
+        skinTemperatureTacker = null
+
+        // 핸들러 제거
+        skinTempHandler?.removeCallbacksAndMessages(null)
+        skinTempHandler = null
+
+        // 헬스 트래킹 서비스 연결 해제
+        heathTrackingService?.disconnectService()
+        heathTrackingService = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

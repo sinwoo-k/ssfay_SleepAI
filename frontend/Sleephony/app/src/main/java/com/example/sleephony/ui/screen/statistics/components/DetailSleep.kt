@@ -1,5 +1,6 @@
 package com.example.sleephony.ui.screen.statistics.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,6 +38,7 @@ fun DetailSleep(
     path:String,
     period:String
 ) {
+   val isValue = sleepHours.any {it != 0.0f}
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -46,7 +49,9 @@ fun DetailSleep(
             .fillMaxWidth()
             .height(200.dp)
             .clickable {
-                navController.navigate(route = "detail/$path/$period")
+                if (isValue) {
+                    navController.navigate(route = "detail/$path/$period")
+                }
             }
         ) {
             Row(
@@ -55,20 +60,34 @@ fun DetailSleep(
                         .dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                Image(
-                    painter = painterResource(R.drawable.more_icon),
-                    contentDescription = "더보기 아이콘",
-                    modifier = modifier.size(30.dp),
-                )
-            }
-            if (sleepHours.isEmpty()) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = modifier.fillMaxSize().padding(10.dp
+                if (isValue){
+                    Image(
+                        painter = painterResource(R.drawable.more_icon),
+                        contentDescription = "더보기 아이콘",
+                        modifier = modifier.size(30.dp),
                     )
+                }
+            }
+            if (!isValue) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = modifier.fillMaxSize().padding(10.dp)
                 ) {
-                    Gray_text(
-                        stringResource(R.string.statisticIsEmpty)
+                    Image(
+                        painter = painterResource(R.drawable.sleep_icon),
+                        contentDescription = "수면 아이콘",
+                        modifier = modifier.size(100.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.statisticIsEmpty),
+                        color = Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = stringResource(R.string.statisticIsEmpty2),
+                        color = Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             } else {

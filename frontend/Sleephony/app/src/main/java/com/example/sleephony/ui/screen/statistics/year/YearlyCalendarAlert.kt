@@ -24,7 +24,7 @@ import java.time.Year
 @Composable
 fun YearlyCalendarAlert(
     yearState: LocalDate,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     onRequest: () -> Unit,
     changRequest: (LocalDate) -> Unit
 ) {
