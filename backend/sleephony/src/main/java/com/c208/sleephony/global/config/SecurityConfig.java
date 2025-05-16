@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/api/auth/login-google",
                                 "/api/auth/login-kakao",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/grafana/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
