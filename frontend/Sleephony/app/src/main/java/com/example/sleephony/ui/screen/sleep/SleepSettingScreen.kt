@@ -64,7 +64,6 @@ fun SleepSettingScreen(
 
     val state = viewModel.uiState.collectAsState().value
     LaunchedEffect(state) {
-        Log.d("ssafy","state ${state}")
         if (state is SleepUiState.Running) {
             navController.navigate("sleep_measurement") {
                 popUpTo("sleep_setting") { inclusive = false }
@@ -213,7 +212,8 @@ fun SleepSettingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
 
             Spacer(Modifier.height(48.dp))
@@ -229,82 +229,89 @@ fun SleepSettingScreen(
             Spacer(Modifier.height(48.dp))
 
             // 3-2) 시간 휠
-            Column(modifier = Modifier.padding(16.dp)) {
-                TimeWheelPicker (
-                    initialHour   = hour,
-                    initialMinute = minute,
-                    initialIsAm   = isAm
-                ) { h, m, am ->
-                    viewModel.onTimeChanged(h, m, am)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
+            TimeWheelPicker (
+                initialHour   = hour,
+                initialMinute = minute,
+                initialIsAm   = isAm
+            ) { h, m, am ->
+                viewModel.onTimeChanged(h, m, am)
             }
 
-
+            
             Spacer(Modifier.height(24.dp))
 
             // 3-3) 알람 모드 버튼
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-                AlarmMode.entries.forEach { m ->
-                    val selected = m == mode
-                    OutlinedButton(
-                        onClick = { viewModel.onModeSelected(m) },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (selected) Color.White.copy(alpha = 0.2f) else Color.Transparent
-                        ),
-                        border = if (selected)
-                            BorderStroke(2.dp, Color.White)
-                        else
-                            BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(text = m.label, color = Color.White)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AlarmMode.entries.forEach { m ->
+                        val selected = m == mode
+                        OutlinedButton(
+                            onClick = { viewModel.onModeSelected(m) },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selected) Color.White.copy(alpha = 0.2f) else Color.Transparent
+                            ),
+                            border = if (selected)
+                                BorderStroke(2.dp, Color.White)
+                            else
+                                BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = m.label, color = Color.White)
+                        }
                     }
                 }
+
+                Spacer(Modifier.height(16.dp))
+
+                // 3-4) 모드 설명
+                Text(
+                    text = when (mode) {
+                        AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다.\n  예정 시간 : $comfortRangeText "
+                        AlarmMode.EXACT   -> "정해진 시간에 정확히 기상합니다.\n"
+                        AlarmMode.NONE    -> "알람 없이 수면만 측정합니다.\n"
+                    },
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            // 3-4) 모드 설명
-            Text(
-                text = when (mode) {
-                    AlarmMode.COMFORT -> "수면 패턴에 맞춰 편안하게 기상합니다.\n  예정 시간 : $comfortRangeText "
-                    AlarmMode.EXACT   -> "정해진 시간에 정확히 기상합니다.\n"
-                    AlarmMode.NONE    -> "알람 없이 수면만 측정합니다.\n"
-                },
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
 
             Spacer(Modifier.height(48.dp))
 
             // 3-5) 수면 시작 버튼
-            Button(
-                onClick = onStart,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape =  RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5063D4))
+                    .fillMaxWidth(),
             ) {
-                Text(text = "수면 시작하기", color = Color.White, fontSize = 18.sp)
+                Button(
+                    onClick = onStart,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape =  RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5063D4))
+                ) {
+                    Text(text = "수면 시작하기", color = Color.White, fontSize = 18.sp)
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // 3-6) 안내 문구
+                Text(
+                    text = "원활한 측정을 위해 네트워크 연결이 필요합니다.",
+                    color = Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
 
-            Spacer(Modifier.height(8.dp))
-
-            // 3-6) 안내 문구
-            Text(
-                text = "원활한 측정을 위해 네트워크 연결이 필요합니다.",
-                color = Color.White.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
         }
     }
 }

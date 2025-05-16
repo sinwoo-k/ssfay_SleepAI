@@ -7,12 +7,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,8 +33,8 @@ private fun AmPmToggle(
                 text    = AnnotatedString(label),
                 onClick = { onToggle(flag) },
                 style   = TextStyle(
-                    fontSize   = 24.sp,
-                    color      = if (isAm == flag) Color.White else Color.Gray
+                    fontSize = 24.sp,
+                    color    = if (isAm == flag) Color.White else Color.Gray
                 ),
                 modifier = Modifier.padding(vertical = 4.dp)
             )
@@ -57,34 +53,33 @@ fun TimeWheelPicker(
     itemHeight: Dp = 50.dp,
     onTimeChanged: (hour: Int, minute: Int, isAm: Boolean) -> Unit
 ) {
-    var hour by rememberSaveable { mutableStateOf(initialHour) }
-    var minute by rememberSaveable { mutableStateOf(initialMinute) }
-    var isAm by rememberSaveable { mutableStateOf(initialIsAm) }
+    // 1) 호출부에서 초기값을 받아 내부 State로 관리
+    var hour   by rememberSaveable { mutableIntStateOf(initialHour) }
+    var minute by rememberSaveable { mutableIntStateOf(initialMinute) }
+    var isAm   by rememberSaveable { mutableStateOf(initialIsAm) }
 
-    // 변화가 있을 때만 호출
+    // 2) 시간·분·AMPM이 변할 때 외부 콜백 호출
     LaunchedEffect(hour, minute, isAm) {
         onTimeChanged(hour, minute, isAm)
     }
 
-    // initialIndex 계산
-    val initHourIdx = (initialHour - hourRange.first)
-        .coerceIn(0, hourRange.last - hourRange.first)
-    val initMinIdx = (initialMinute - minuteRange.first)
-        .coerceIn(0, minuteRange.last - minuteRange.first)
+    // 3) 현재 선택된 hour/minute → 인덱스로 변환
+    val hourIdx = (hour - hourRange.first).coerceIn(0, hourRange.last - hourRange.first)
+    val minIdx  = (minute - minuteRange.first).coerceIn(0, minuteRange.last - minuteRange.first)
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         AmPmToggle(isAm) { isAm = it }
 
         LoopingWheelPicker(
-            items = hourRange.map { it.toString().padStart(2,'0') },
-            initialIndex = initHourIdx,
-            visibleItemCount = visibleItemCount,
-            itemHeight = itemHeight,
-            modifier = Modifier
+            items             = hourRange.map { it.toString().padStart(2,'0') },
+            initialIndex      = hourIdx,               // ← State 바인딩
+            visibleItemCount  = visibleItemCount,
+            itemHeight        = itemHeight,
+            modifier          = Modifier
                 .weight(1f)
-                .height(itemHeight * visibleItemCount),
+                .height(itemHeight * visibleItemCount)
         ) { selIdx ->
-            hour = hourRange.elementAt(selIdx)
+            hour = hourRange.elementAt(selIdx)         // State 업데이트
         }
 
         Box(
@@ -95,23 +90,20 @@ fun TimeWheelPicker(
                 text    = ":",
                 color   = Color.White,
                 style   = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 8.dp),
-
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
 
-
         LoopingWheelPicker(
-            items = minuteRange.map { it.toString().padStart(2,'0') },
-            initialIndex = initMinIdx,
-            visibleItemCount = visibleItemCount,
-            itemHeight = itemHeight,
-            modifier = Modifier
+            items             = minuteRange.map { it.toString().padStart(2,'0') },
+            initialIndex      = minIdx,                // ← State 바인딩
+            visibleItemCount  = visibleItemCount,
+            itemHeight        = itemHeight,
+            modifier          = Modifier
                 .weight(1f)
-                .height(itemHeight * visibleItemCount),
+                .height(itemHeight * visibleItemCount)
         ) { selIdx ->
-            minute = minuteRange.elementAt(selIdx)
+            minute = minuteRange.elementAt(selIdx)     // State 업데이트
         }
     }
 }
-

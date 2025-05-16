@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -22,38 +19,43 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun LoopingWheelPicker(
     items: List<String>,
     modifier: Modifier = Modifier,
     visibleItemCount: Int = 5,
-    itemHeight: Dp = 40.dp,
+    itemHeight: Dp = 50.dp,
     initialIndex: Int = 0,
     selectedTextStyle: TextStyle = TextStyle(fontSize = 32.sp, color = Color.White),
     unselectedTextStyle: TextStyle = TextStyle(fontSize = 30.sp, color = Color.White),
     onItemSelected: (index: Int) -> Unit
 ) {
-    val realCount = if (visibleItemCount % 2 == 0) visibleItemCount + 1 else visibleItemCount
-    val halfCount = realCount / 2
+    val listState = rememberLazyListState()
+    val realCount  = if (visibleItemCount % 2 == 0) visibleItemCount + 1 else visibleItemCount
+    val halfCount  = realCount / 2
 
-    val loopCount = Int.MAX_VALUE
-    val loopCenter = loopCount / 2
+    // initialIndex가 바뀔 때마다 중앙에 스크롤
+    LaunchedEffect(initialIndex) {
+        val loopCenter  = Int.MAX_VALUE / 2
+        val offsetBase  = loopCenter - (loopCenter % items.size)
+        val targetIndex = offsetBase + initialIndex - halfCount
 
-    // ★ 초기 스크롤 위치에 -halfCount 보정 추가
-    val startIndex = remember {
-        (loopCenter
-                - (loopCenter % items.size)
-                + initialIndex
-                - halfCount)                     // ← 여기를 빼 줍니다
-            .coerceAtLeast(0)
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+            .filter { it.isNotEmpty() }
+            .first()
+
+        listState.scrollToItem(targetIndex)
     }
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val flingBehavior = rememberSnapFlingBehavior(listState, SnapPosition.Center)
+    val centerIdx by remember {
+        derivedStateOf { listState.firstVisibleItemIndex + halfCount }
+    }
 
-    val centerIdx by remember { derivedStateOf { listState.firstVisibleItemIndex + halfCount } }
-
+    // 중심 위치가 바뀔 때마다 선택 변경 콜백
     LaunchedEffect(centerIdx) {
         val realIdx = (centerIdx % items.size + items.size) % items.size
         onItemSelected(realIdx)
@@ -65,15 +67,15 @@ fun LoopingWheelPicker(
             .fillMaxWidth()
     ) {
         LazyColumn(
-            state          = listState,
-            flingBehavior  = flingBehavior,
-            modifier       = Modifier.fillMaxWidth()
+            state         = listState,
+            flingBehavior = flingBehavior,
+            modifier      = Modifier.fillMaxWidth()
         ) {
-            items(loopCount) { idx ->
+            items(Int.MAX_VALUE) { idx ->
                 val realIdx = (idx % items.size + items.size) % items.size
                 val isSel   = idx == centerIdx
                 Box(
-                    modifier          = Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .height(itemHeight)
                         .alpha(if (isSel) 1f else 0.4f),
