@@ -1,5 +1,6 @@
 package com.example.sleephony.data.datasource.remote.measurement
 
+import android.util.Log
 import com.example.sleephony.data.model.measurement.SleepBioDataRequest
 import com.google.gson.Gson
 import okhttp3.Call
@@ -22,6 +23,7 @@ class SleepStageSSEClient(
 ) {
 
     interface Listener {
+        fun onOpen()
         fun onSleepStageReceived(requestId: String?, sleepStage: String)
         fun onError(message: String)
         fun onComplete()
@@ -36,54 +38,47 @@ class SleepStageSSEClient(
 
     private var call: Call? = null
     private var listener: Listener? = null
-    private val lineBuffer = Buffer()
 
     fun setListener(listener: Listener) {
         this.listener = listener
     }
 
+
     fun connect(requestDto: SleepBioDataRequest) {
-        // Cancel previous connection if any
         call?.cancel()
 
-        // Serialize request body
         val json = Gson().toJson(requestDto)
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val body: RequestBody = json.toRequestBody(mediaType)
+        val body = json.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        // Build URL safely
         val url = baseUrl.toHttpUrl()
             .newBuilder()
             .addPathSegments("sleep/stage/raw")
             .build()
 
-        val request = Request.Builder()
+        val req = Request.Builder()
             .url(url)
             .post(body)
             .header("Accept", "text/event-stream")
             .header("Authorization", "Bearer $token")
             .build()
 
-        call = client.newCall(request).also { call ->
+        call = client.newCall(req).also { call ->
             call.enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     listener?.onError("SSE connection failed: ${e.message}")
                 }
-
                 override fun onResponse(call: Call, response: Response) {
-                    response.use { resp ->
-                        if (!resp.isSuccessful) {
-                            listener?.onError("Unexpected response: HTTP ${resp.code}")
-                            return
-                        }
-
-                        val source: BufferedSource = resp.body?.source() ?: run {
-                            listener?.onError("Empty response body")
-                            return
-                        }
-
-                        parseSse(source, call)
+                    if (!response.isSuccessful) {
+                        val errorBody = response.body?.string()
+                        listener?.onError("Unexpected HTTP ${response.code} : $errorBody")
+                        return
                     }
+                    listener?.onOpen()
+                    val source = response.body?.source() ?: run {
+                        listener?.onError("Empty SSE body")
+                        return
+                    }
+                    parseSse(source, call)
                 }
             })
         }
@@ -96,30 +91,23 @@ class SleepStageSSEClient(
 
         try {
             while (!source.exhausted() && !call.isCanceled()) {
-                source.read(lineBuffer, 8192)
-                var line: String?
-                while (lineBuffer.readUtf8Line().also { line = it } != null) {
-                    when {
-                        line!!.startsWith("id:") -> id = line!!.substring(3).trim()
-                        line!!.startsWith("event:") -> event = line!!.substring(6).trim()
-                        line!!.startsWith("data:") -> data = line!!.substring(5).trim()
-                        line!!.isEmpty() && event != null && data != null -> {
-                            if (event == "sleepStage") {
-                                listener?.onSleepStageReceived(id, data)
-                            }
-                            id = null
-                            event = null
-                            data = null
+                val line = source.readUtf8LineStrict()
+                when {
+                    line.startsWith("id:")    -> id    = line.drop(3).trim()
+                    line.startsWith("event:") -> event = line.drop(6).trim()
+                    line.startsWith("data:")  -> data  = line.drop(5).trim()
+                    line.isEmpty() && event != null && data != null -> {
+                        if (event == "sleepStage") {
+                            var cleanStage = data.removeSurrounding("\"")
+                            listener?.onSleepStageReceived(id, cleanStage)
                         }
+                        id = null; event = null; data = null
                     }
                 }
-                lineBuffer.clear()
             }
             listener?.onComplete()
         } catch (e: Exception) {
-            if (!call.isCanceled()) {
-                listener?.onError("Error processing SSE: ${e.message}")
-            }
+            if (!call.isCanceled()) listener?.onError("SSE parse error: ${e.message}")
         }
     }
 

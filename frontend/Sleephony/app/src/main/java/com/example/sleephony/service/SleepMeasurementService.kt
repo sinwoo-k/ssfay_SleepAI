@@ -87,6 +87,7 @@ class SleepMeasurementService : Service() {
     // 사운드 경로 얻는 함수
     private fun getSoundFilePath(themeId: Int, soundId: Int): String {
         val soundDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
+        Log.d("DBG", "$soundDir")
         return "${soundDir?.absolutePath}/theme_${themeId}/sound_${soundId}.mp3"
     }
 
@@ -132,6 +133,37 @@ class SleepMeasurementService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // sse 초기화
+        val token = tokenProvider.getToken().orEmpty()
+        Log.d("SSE", "토큰 확인 $token")
+        sseClient = SleepStageSSEClient(
+            baseUrl = BuildConfig.SLEEPHONY_BASE_URL,
+            token = token
+        ).apply {
+            setListener(object : SleepStageSSEClient.Listener{
+                override fun onOpen() {
+                    Log.d("SSE", "SSE 연결 성공")
+                }
+
+                override fun onSleepStageReceived(requestId: String?, sleepStage: String) {
+                    serviceScope.launch(Dispatchers.Main) {
+                        Log.d("SSE", "응답 성공: $sleepStage")
+                        playSoundForSleepStage(sleepStage)
+                    }
+                }
+
+                override fun onError(message: String) {
+                    Log.e("SSE", message)
+                }
+
+                override fun onComplete() {
+                    Log.d("SSE", "SSE stream completed")
+                }
+            })
+        }
+
+
         // 센서 데이터 응답
         ContextCompat.registerReceiver(
             this,
@@ -166,35 +198,14 @@ class SleepMeasurementService : Service() {
             "Sleephony:MeasurementLock"
         ).apply { acquire() }
 
-        val token = tokenProvider.getToken().orEmpty()
-        Log.d("SSE", "토큰 확인 $token")
-        sseClient = SleepStageSSEClient(
-            baseUrl = BuildConfig.SLEEPHONY_BASE_URL,
-            token = token
-        ).apply {
-            setListener(object : SleepStageSSEClient.Listener{
-                override fun onSleepStageReceived(requestId: String?, sleepStage: String) {
-                    serviceScope.launch(Dispatchers.Main) {
-                        playSoundForSleepStage(sleepStage)
-                    }
-                }
-
-                override fun onError(message: String) {
-                    Log.e("SSE", message)
-                }
-
-                override fun onComplete() {
-                    Log.d("SSE", "SSE stream completed")
-                }
-            })
-        }
-
-
-
-
 
         serviceScope.launch {
             initializeSoundMap()
+
+
+            Log.d("DBG", "$soundMap")
+            // 처음엔 AWAKE로 재생
+            playSoundForSleepStage("AWAKE")
             while (isActive) {
                 val start = System.currentTimeMillis()
 
@@ -210,6 +221,7 @@ class SleepMeasurementService : Service() {
     }
 
     private fun playSoundForSleepStage(stage: String) {
+        Log.d("SOUND", "$stage : $soundMap")
         val soundPath = soundMap[stage] ?: run {
         Log.e("ERR", "사운드가 존재하지 않음: $stage")
         return
@@ -278,12 +290,12 @@ class SleepMeasurementService : Service() {
 
             file.writeText(json)
         }
+        if (accX.size == 600) {
+            Log.d("DBG", "데이터 전송")
+            sseClient.connect(req)
 
-        measurementRepository.sleepMeasurement(req)
-            .onSuccess { Log.d("DBG", "측정 데이터 전송 성공") }
-            .onFailure { err -> Log.e("ERR", "측정 데이터 전송 실패", err) }
+        }
 
-        sseClient.connect(req)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
