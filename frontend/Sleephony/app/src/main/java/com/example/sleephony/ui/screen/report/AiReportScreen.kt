@@ -31,16 +31,15 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun AiReportScreen(navController: NavController) {
+fun AiReportScreen(
+    navController: NavController,
+    selectedDate: LocalDate
+) {
     val viewModel: ReportViewModel = hiltViewModel()
     val aiDetail by viewModel.aiReport.collectAsState()
-    val aiText by viewModel.aiReportText.collectAsState()
-
-    val today = LocalDate.now().minusDays(1).toString()
 
     LaunchedEffect(Unit) {
-        viewModel.getReportDetailed(today)
-        viewModel.getAiReport(today)
+        viewModel.getReportDetailed(selectedDate.toString())
     }
 
     Box(
@@ -90,9 +89,7 @@ fun AiReportScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = LocalDate.parse(today).format(
-                    DateTimeFormatter.ofPattern("M.d (E)", Locale.KOREAN)
-                ),
+                text = selectedDate.format(DateTimeFormatter.ofPattern("M.d (E)", Locale.KOREAN)),
                 fontSize = 35.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -100,7 +97,7 @@ fun AiReportScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (aiDetail == null || aiText.isBlank()) {
+            if (aiDetail == null) {
                 Text(
                     text = "아직 수면 기록이 없어요.\n다른 날짜를 선택해 주세요.",
                     fontSize = 20.sp,
@@ -162,8 +159,8 @@ fun AiReportScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
 
             AiReportPrompt(
-                fullText = aiText,
-                modifier = Modifier.offset(y = (-40).dp)
+                modifier = Modifier.offset(y = (-40).dp),
+                selectedDate = selectedDate
             )
 
             Spacer(modifier = Modifier.height(24.dp))

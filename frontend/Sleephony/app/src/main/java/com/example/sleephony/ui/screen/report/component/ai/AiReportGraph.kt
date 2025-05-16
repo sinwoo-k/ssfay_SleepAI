@@ -96,13 +96,24 @@ fun SleepComparisonCard(
                 ) {
                     append(diffText.split(" ")[0])
                 }
-                append(" " + diffText.split(" ").drop(1).joinToString(" "))
+                append(" ")
+                withStyle(
+                    style = SpanStyle(
+                        color = colorResource(R.color.SkyBlue),
+                        fontSize = 40.sp
+                    )
+                ) {
+                    append(diffText.split(" ")[1])
+                }
+                append("\n더 많이 잤습니다")
             },
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
             lineHeight = 50.sp
         )
+
+
 
         Spacer(modifier = Modifier.height(24.dp))
 
