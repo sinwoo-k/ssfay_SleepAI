@@ -23,6 +23,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -33,6 +34,7 @@ import com.example.sleephony.components.alarm.SetAlarmScreen
 import com.example.sleephony.components.alarm.SleepingScreen
 import com.example.sleephony.presentation.theme.Sleephony_wearTheme
 import com.example.sleephony.presentation.theme.backGroundGeadientColor
+import com.example.sleephony.service.SleepSensorService
 import com.example.sleephony.viewmodel.AlarmViewModel
 
 class MainActivity : ComponentActivity() {
@@ -49,7 +51,7 @@ class MainActivity : ComponentActivity() {
         initialRoute = intent.getStringExtra("start_destination") ?: "homeScreen"
         intentHandler(
             intent = intent,
-            viewModel = alarmViewModel
+            viewModel = alarmViewModel,
         )
 
 
@@ -106,7 +108,7 @@ class MainActivity : ComponentActivity() {
     }
         private fun intentHandler(
             intent : Intent,
-            viewModel: AlarmViewModel
+            viewModel: AlarmViewModel,
         ) {
             Log.d("ssafy","${intent.action}")
             intent?.let {
@@ -135,6 +137,8 @@ class MainActivity : ComponentActivity() {
                     viewModel.alarmTypeUpdate(mode)
                     initialRoute = "sleepingscreen"
                 } else if ( it.action == "alarmCancel" ) {
+                    val intent = Intent(this, SleepSensorService::class.java)
+                    stopService(intent)
                     initialRoute = "homeScreen"
                 }
             }
