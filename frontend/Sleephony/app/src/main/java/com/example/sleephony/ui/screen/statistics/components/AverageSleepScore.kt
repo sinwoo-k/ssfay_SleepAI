@@ -2,6 +2,7 @@ package com.example.sleephony.ui.screen.statistics.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.statistics.components.detail.White_text
 
 @Composable
 fun AverageSleepScore(
@@ -33,7 +37,7 @@ fun AverageSleepScore(
     averageSleepLatencyMinutes: Int
 ) {
     val alphaWhite = Color.White.copy(alpha = .7f)
-
+    val isOpen = remember { mutableStateOf(false) }
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -75,7 +79,9 @@ fun AverageSleepScore(
                             color = alphaWhite
                         )
                         Image(
-                            modifier = Modifier.size(15.dp),
+                            modifier = Modifier.size(15.dp).clickable {
+                                isOpen.value = true
+                            },
                             painter = painterResource(R.drawable.question),
                             contentDescription = "물음표 아이콘"
                         )
@@ -138,6 +144,28 @@ fun AverageSleepScore(
             }
         }
     }
+    BottomSheetAlert(
+        showSheet = isOpen.value,
+        onDismiss = {isOpen.value = false},
+        content = {
+            Column(
+                modifier = modifier.fillMaxWidth().padding(bottom = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    White_text("수면 점수")
+                }
+                Text(
+                    text = stringResource(R.string.average_sleep_score_help),
+                    color = Color.White
+
+                )
+            }
+        }
+    )
 }
 
 
