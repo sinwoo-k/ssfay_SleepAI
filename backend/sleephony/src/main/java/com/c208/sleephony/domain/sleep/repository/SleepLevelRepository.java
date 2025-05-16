@@ -12,4 +12,5 @@ public interface SleepLevelRepository extends JpaRepository<SleepLevel, Integer>
 
     List<SleepLevel> findByUserIdAndMeasuredAtBetween(Integer userId, LocalDateTime start, LocalDateTime end);
 
+    long countByUserIdAndMeasuredAtBetween(Integer userId, LocalDateTime dayStart, LocalDateTime dayEnd);
 }
