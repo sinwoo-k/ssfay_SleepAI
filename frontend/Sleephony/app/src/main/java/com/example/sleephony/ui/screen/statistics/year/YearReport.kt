@@ -36,7 +36,6 @@ fun YearReport(
     navController: NavController,
     statisticsViewModel: StatisticsViewModel
 ) {
-    val today = LocalDate.now()
     val yearState = statisticsViewModel.selectedYear
     val year = yearState.year
     val yearEnd = yearState.with(TemporalAdjusters.lastDayOfYear())
@@ -89,12 +88,12 @@ fun YearReport(
                     modifier = modifier,
                     averageSleepLatencyMinutes = statisticSummary?.averageSleepLatencyMinutes ?: 0f,
                     averageRemSleepMinutes = statisticSummary?.averageRemSleepMinutes ?: 0f,
-                    averageRemSleepPercentage = statisticSummary?.averageRemSleepPercentage?.toInt() ?: 0,
+                    averageRemSleepPercentage = statisticSummary?.averageRemSleepPercentage ?: 0,
                     averageLightSleepMinutes = statisticSummary?.averageLightSleepMinutes ?: 0f,
-                    averageLightSleepPercentage =statisticSummary?.averageLightSleepPercentage?.toInt() ?: 0,
+                    averageLightSleepPercentage =statisticSummary?.averageLightSleepPercentage ?: 0,
                     averageDeepSleepMinutes = statisticSummary?.averageDeepSleepMinutes ?: 0f,
-                    averageDeepSleepPercentage = statisticSummary?.averageDeepSleepPercentage?.toInt() ?: 0,
-                    averageSleepCycleCount = statisticSummary?.averageSleepCycleCount?.toInt() ?: 0,
+                    averageDeepSleepPercentage = statisticSummary?.averageDeepSleepPercentage ?: 0,
+                    averageSleepCycleCount = statisticSummary?.averageSleepCycleCount ?: 0,
                 )
                 DetailSleep(
                     modifier = modifier,

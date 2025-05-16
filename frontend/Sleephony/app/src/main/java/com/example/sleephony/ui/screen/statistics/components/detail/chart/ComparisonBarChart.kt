@@ -1,10 +1,12 @@
 package com.example.sleephony.ui.screen.statistics.components.detail.chart
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.sleephony.R
+import com.example.sleephony.ui.screen.statistics.week.StatisticsSleepHour
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
@@ -21,6 +23,8 @@ fun ComparisonBarChart(
     before:Float,
     after:Float
 ) {
+    Log.d("ssafy","sleephour ${sleepHours}")
+    Log.d("ssafy","before ${StatisticsSleepHour(before.toInt())} after ${StatisticsSleepHour(after.toInt())}")
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -49,14 +53,14 @@ fun ComparisonBarChart(
                     textColor = android.graphics.Color.WHITE  // Y축 텍스트 색상
 
 
-                    val beforeAverageLine = LimitLine(before, "").apply {
+                    val beforeAverageLine = LimitLine(StatisticsSleepHour(before.toInt()), "").apply {
                         lineColor = ContextCompat.getColor(context,R.color.light_gray)
                         lineWidth = 2f
                         textColor = android.graphics.Color.WHITE
                         textSize = 12f
                     }
 
-                    val afterAverageLine = LimitLine(after, "").apply {
+                    val afterAverageLine = LimitLine(StatisticsSleepHour(after.toInt()), "").apply {
                         lineColor = ContextCompat.getColor(context,R.color.steel_blue)
                         lineWidth = 2f
                         textColor = android.graphics.Color.WHITE

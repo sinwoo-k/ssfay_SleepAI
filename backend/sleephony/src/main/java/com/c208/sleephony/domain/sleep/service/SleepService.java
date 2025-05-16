@@ -10,6 +10,7 @@ import com.c208.sleephony.domain.sleep.repository.SleepReportRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepStatisticRepository;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
+import com.c208.sleephony.global.exception.BusinessException;
 import com.c208.sleephony.global.exception.RedisOperationException;
 import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
@@ -199,7 +200,7 @@ public class SleepService {
                 .countByUserIdAndMeasuredAtBetween(userId, dayStart, dayEnd);
 
         if (levelCount < 240) {
-            throw new IllegalStateException("수면 레벨 데이터가 충분하지 않아 리포트를 생성할 수 없습니다.");
+            throw BusinessException.insufficientData();
         }
         // 30초 윈도우 단위로 저장된 SleepLevel 조회
         List<SleepLevel> levels = sleepLevelRepository
@@ -265,11 +266,13 @@ public class SleepService {
      */
     public SleepReportWithPrevious getReportByDate(LocalDate date) {
         Integer userId = AuthUtil.getLoginUserId();
-        LocalDateTime todayFrom = date.atStartOfDay();
-        LocalDateTime todayTo = date.plusDays(1).atStartOfDay();
 
-        LocalDateTime prevFrom = date.minusDays(1).atStartOfDay();
-        LocalDateTime prevTo   = date.atStartOfDay();
+        LocalDateTime todayFrom = date.minusDays(1).atTime(12, 0);
+        LocalDateTime todayTo   = date.atTime(12, 0);
+
+        // 전일(이전 리포트) 역시 전전날 12:00 ~ 전날 12:00
+        LocalDateTime prevFrom = date.minusDays(2).atTime(12, 0);
+        LocalDateTime prevTo   = date.minusDays(1).atTime(12, 0);
 
         SleepReport todayReport = sleepReportRepository
                 .findFirstByUserIdAndSleepTimeBetween(userId, todayFrom, todayTo)
@@ -290,30 +293,28 @@ public class SleepService {
      * 특정 일자의 30초 단위 SleepLevel 데이터를 그래프용 점 목록으로 반환합니다.
      *
      * @param date 조회할 날짜 (LocalDate)
-     * @return SleepGraphPoint 리스트 (총 2880개)
+     * @return SleepGraphPoint 리스트
      */
     public List<SleepGraphPoint> getSleepGraphPoints(LocalDate date) {
-
         Integer userId      = AuthUtil.getLoginUserId();
-        LocalDateTime begin = date.atStartOfDay();          // 00:00:00(포함)
-        LocalDateTime end   = date.plusDays(1).atStartOfDay(); // 다음 날 00:00:00(제외)
+        LocalDateTime begin = date.minusDays(1).atTime(12, 0);
+        LocalDateTime end   = date.atTime(12, 0);
 
+
+        // 1) DB에 저장된 SleepLevel 리스트만 가져옴
         List<SleepLevel> stored = sleepLevelRepository
-                .findByUserIdAndMeasuredAtBetween(userId, begin, end.minusSeconds(1));
+                .findByUserIdAndMeasuredAtBetween(userId, begin, end);
 
-        Map<LocalDateTime, SleepStage> map = stored.stream()
-                .collect(Collectors.toMap(SleepLevel::getMeasuredAt, SleepLevel::getLevel));
-
-        List<SleepGraphPoint> result = new ArrayList<>(2880);
-
-        for (LocalDateTime t = begin; t.isBefore(end); t = t.plusSeconds(30)) {
-            SleepStage stage = map.getOrDefault(t, SleepStage.AWAKE);
-            result.add(SleepGraphPoint.builder()
-                    .measuredAt(t)
-                    .level(stage)
-                    .build());
-        }
-        return result;
+        // 2) DB에 있는 시점만 SleepGraphPoint로 변환
+        return stored.stream()
+                .map(sl -> SleepGraphPoint.builder()
+                        .measuredAt(sl.getMeasuredAt())
+                        .level(sl.getLevel())
+                        .build()
+                )
+                // 필요하다면 시간순으로 정렬
+                .sorted(Comparator.comparing(SleepGraphPoint::getMeasuredAt))
+                .collect(Collectors.toList());
     }
     /**
      * 특정 일자의 상세 리포트와 나이/성별 평균 벤치마크를 묶어 반환합니다.
@@ -327,12 +328,13 @@ public class SleepService {
 
         Integer userId = AuthUtil.getLoginUserId();
 
+        LocalDateTime begin = date.minusDays(1).atTime(12, 0);
+        LocalDateTime end   = date.atTime(12, 0);
+
         /* ── 1) 오늘 리포트 ─────────────────────────────────── */
         SleepReport report = sleepReportRepository
                 .findFirstByUserIdAndSleepTimeBetween(
-                        userId,
-                        date.atStartOfDay(),
-                        date.plusDays(1).atStartOfDay())
+                        userId, begin, end)
                 .orElseThrow(() ->
                         new SleepReportNotFoundException("해당 날짜 리포트가 없습니다."));
 

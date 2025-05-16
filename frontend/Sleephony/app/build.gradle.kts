@@ -68,6 +68,8 @@ android {
 }
 
 dependencies {
+    //material
+    implementation("androidx.compose.material:material:1.6.1")
 
     // 달력
     implementation("com.kizitonwose.calendar:compose:2.6.0")
