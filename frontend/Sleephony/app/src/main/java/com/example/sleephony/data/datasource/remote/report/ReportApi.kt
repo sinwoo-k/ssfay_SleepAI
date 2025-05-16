@@ -11,6 +11,12 @@ import retrofit2.http.Path
 
 interface ReportApi {
 
+    @GET("sleep/reports/dates/{month}")
+    suspend fun getReportDates(
+        @Header("Authorization") bearer: String,
+        @Path("month") month: String
+    ): Response<ApiResponse<List<String>>>
+
     @GET("sleep/report/detail/{date}")
     suspend fun getReportDetail(
         @Header("Authorization") bearer: String,

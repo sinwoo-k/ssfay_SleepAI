@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.sleephony.R
 import com.example.sleephony.ui.screen.report.screen.SleepStageGraph
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
+import java.time.LocalDate
 
 @Composable
 fun SleepSummationGraph(
@@ -35,7 +36,8 @@ fun SleepSummationGraph(
     averageDeepSleepMinutes: Float,
     averageDeepSleepPercentage: Int,
     averageSleepCycleCount: Int,
-    viewModel: ReportViewModel
+    viewModel: ReportViewModel,
+    selectedDate: LocalDate
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -58,7 +60,10 @@ fun SleepSummationGraph(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
 
-                SleepStageGraph(viewModel = viewModel)
+                SleepStageGraph(
+                    viewModel = viewModel,
+                    selectedDate = selectedDate
+                )
 
                 SleepSummaryRow(
                     label = stringResource(R.string.non_sleep),

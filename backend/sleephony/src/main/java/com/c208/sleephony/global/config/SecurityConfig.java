@@ -26,6 +26,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         return http
                 .csrf(CsrfConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -47,7 +48,9 @@ public class SecurityConfig {
                                 "/api/auth/login-google",
                                 "/api/auth/login-kakao",
                                 "/actuator/**",
-                                "/api/sleep/stage/raw"
+                                "/api/sleep/stage/raw",
+                                "/actuator/**",
+                                "/grafana/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -30,59 +30,111 @@ class ReportViewModel @Inject constructor(
     private val _aiReportText = MutableStateFlow("")
     val aiReportText: StateFlow<String> = _aiReportText
 
+    private val _isLoadingAiReport = MutableStateFlow(false)
+    val isLoadingAiReport: StateFlow<Boolean> = _isLoadingAiReport
+
+    private val _reportDateList = MutableStateFlow<List<String>>(emptyList())
+    val reportDateList: StateFlow<List<String>> = _reportDateList
+
     fun getSleepReport(date: String) {
         Log.d("ReportViewModel", "📅 getSleepReport() called with date: $date")
         viewModelScope.launch {
-            reportRepository.getReportDetail(date)
-                .onSuccess {
+            try {
+                reportRepository.getReportDetail(date).onSuccess {
                     Log.d("ReportViewModel", "✅ 수면 리포트 조회 성공")
                     _sleepReport.value = it
-                }
-                .onFailure {
+                }.onFailure {
                     Log.e("ReportViewModel", "🔥 수면 리포트 조회 실패: ${it.message}", it)
+                    _sleepReport.value = null // 실패시 null 처리
                 }
+            } catch (e: Exception) {
+                Log.e("ReportViewModel", "🔥 수면 리포트 조회 예외: ${e.message}", e)
+                _sleepReport.value = null // 예외 발생 시 null 처리
+            }
         }
     }
 
     fun getSleepGraph(date: String) {
         Log.d("ReportViewModel", "📈 getSleepGraph() called with date: $date")
         viewModelScope.launch {
-            reportRepository.getSleepGraph(date)
-                .onSuccess {
-                    Log.d("ReportViewModel", "✅ 수면 그래프 조회 성공: ${it.size}개")
-                    _sleepGraphData.value = it
-                }
-                .onFailure {
-                    Log.e("ReportViewModel", "🔥 수면 그래프 조회 실패: ${it.message}", it)
-                }
+            try {
+                reportRepository.getSleepGraph(date)
+                    .onSuccess {
+                        Log.d("ReportViewModel", "✅ 수면 그래프 조회 성공: ${it.size}개")
+                        _sleepGraphData.value = it
+                    }
+                    .onFailure {
+                        Log.e("ReportViewModel", "🔥 수면 그래프 조회 실패: ${it.message}", it)
+                        _sleepGraphData.value = emptyList() // 실패시 빈 리스트 처리
+                    }
+            } catch (e: Exception) {
+                Log.e("ReportViewModel", "🔥 수면 그래프 조회 예외: ${e.message}", e)
+                _sleepGraphData.value = emptyList() // 예외 발생 시 빈 리스트 처리
+            }
         }
     }
 
     fun getReportDetailed(date: String) {
         Log.d("ReportViewModel", "🧠 getReportDetailed() called with date: $date")
         viewModelScope.launch {
-            reportRepository.getReportDetailed(date)
-                .onSuccess {
-                    Log.d("ReportViewModel", "✅ AI 분석 리포트 조회 성공")
-                    _aiReport.value = it
-                }
-                .onFailure {
-                    Log.e("ReportViewModel", "🔥 AI 분석 리포트 조회 실패: ${it.message}", it)
-                }
+            try {
+                reportRepository.getReportDetailed(date)
+                    .onSuccess {
+                        Log.d("ReportViewModel", "✅ AI 분석 리포트 조회 성공")
+                        _aiReport.value = it
+                    }
+                    .onFailure {
+                        Log.e("ReportViewModel", "🔥 AI 분석 리포트 조회 실패: ${it.message}", it)
+                        _aiReport.value = null // 실패시 null 처리
+                    }
+            } catch (e: Exception) {
+                Log.e("ReportViewModel", "🔥 AI 분석 리포트 조회 예외: ${e.message}", e)
+                _aiReport.value = null // 예외 발생 시 null 처리
+            }
         }
     }
 
     fun getAiReport(date: String) {
         Log.d("ReportViewModel", "📜 getAiReport() called with date: $date")
         viewModelScope.launch {
-            reportRepository.getAiReport(date)
-                .onSuccess {
-                    Log.d("ReportViewModel", "✅ AI 분석 텍스트 조회 성공")
-                    _aiReportText.value = it
-                }
-                .onFailure {
-                    Log.e("ReportViewModel", "🔥 AI 분석 텍스트 조회 실패: ${it.message}", it)
-                }
+            _isLoadingAiReport.value = true // 로딩 시작
+            try {
+                reportRepository.getAiReport(date)
+                    .onSuccess {
+                        Log.d("ReportViewModel", "✅ AI 분석 텍스트 조회 성공")
+                        _aiReportText.value = it
+                        _isLoadingAiReport.value = false // 성공 시 로딩 종료
+                    }
+                    .onFailure {
+                        Log.e("ReportViewModel", "🔥 AI 분석 텍스트 조회 실패: ${it.message}", it)
+                        _aiReportText.value = "" // 실패시 빈 문자열 처리
+                        _isLoadingAiReport.value = false // 실패 시 로딩 종료
+                    }
+            } catch (e: Exception) {
+                Log.e("ReportViewModel", "🔥 AI 분석 텍스트 조회 예외: ${e.message}", e)
+                _aiReportText.value = "" // 예외 발생 시 빈 문자열 처리
+                _isLoadingAiReport.value = false // 예외 시 로딩 종료
+            }
+        }
+    }
+
+    fun getReportDates(month: String) {
+        Log.d("ReportViewModel", "📆 getReportDates() called with month: $month")
+        viewModelScope.launch {
+            try {
+                reportRepository.getReportDates(month)
+                    .onSuccess {
+                        Log.d("ReportViewModel", "✅ 기록된 수면 날짜 조회 성공: ${it.size}개")
+                        _reportDateList.value = it
+                    }
+                    .onFailure {
+                        Log.e("ReportViewModel", "🔥 기록된 수면 날짜 조회 실패: ${it.message}", it)
+                        _reportDateList.value = emptyList() // 실패시 빈 리스트 처리
+                    }
+            } catch (e: Exception) {
+                Log.e("ReportViewModel", "🔥 기록된 수면 날짜 조회 예외: ${e.message}", e)
+                _reportDateList.value = emptyList() // 예외 발생 시 빈 리스트 처리
+            }
         }
     }
 }

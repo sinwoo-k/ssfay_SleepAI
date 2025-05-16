@@ -9,4 +9,5 @@ interface ReportRepository {
     suspend fun getSleepGraph(date: String): Result<List<SleepDataResponse>>
     suspend fun getReportDetailed(date: String): Result<AiReportResponse>
     suspend fun getAiReport(date: String): Result<String>
+    suspend fun getReportDates(month: String): Result<List<String>>
 }

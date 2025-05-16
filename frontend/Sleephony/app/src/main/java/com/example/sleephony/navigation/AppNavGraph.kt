@@ -40,6 +40,7 @@ import com.example.sleephony.ui.screen.splash.SplashScreen
 import com.example.sleephony.ui.screen.splash.SplashViewModel
 import com.example.sleephony.ui.screen.statistics.StatisticsScreen
 import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
+import java.time.LocalDate
 import com.example.sleephony.utils.WearMessageUtils
 import com.google.android.gms.wearable.WearableListenerService
 
@@ -184,8 +185,15 @@ fun AppNavGraph(
                 ReportScreen(navController = navController, reportViewModel = reportViewModel)
             }
 
-            composable("ai_report") {
-                AiReportScreen(navController = navController)
+            composable(
+                "ai_report/{selectedDate}",
+                arguments = listOf(navArgument("selectedDate") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate")?.let {
+                    LocalDate.parse(it)
+                } ?: LocalDate.now() // Fallback to current date if not found
+
+                AiReportScreen(navController = navController, selectedDate = selectedDate)
             }
 
             composable("statistics") {
