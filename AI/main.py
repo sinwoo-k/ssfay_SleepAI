@@ -158,8 +158,9 @@ async def process_loop():
             delta = psd[(freqs>=0.5) & (freqs<4)].sum()
             theta = psd[(freqs>=4 ) & (freqs<8)].sum()
             alpha = psd[(freqs>=8 ) & (freqs<12)].sum()
-
-            feats.append(basic + [rmssd, sdnn, delta, theta, alpha])
+            beta  = psd[(freqs>=12  ) & (freqs<30)].sum()
+            gamma = psd[freqs>=30].sum()
+            feats.append(basic + [rmssd, sdnn, delta, theta, alpha, beta, gamma])
 
         feats = np.asarray(feats, dtype=np.float32)
         logger.info(SEQ_LEN)
@@ -182,6 +183,8 @@ async def process_loop():
 
         preds  = sleephony.predict(seqs, verbose=0)
         labels = [LABELS[int(i)] for i in np.argmax(preds, axis=1)]
+        # New: 로깅을 통해 라벨 출력
+        logger.info(f"[{req_id}] Predicted labels: {labels}")
 
         # 5) publish ------------------------------------------------------------
         resp = RawResponse(requestId=req_id, labels=labels)
