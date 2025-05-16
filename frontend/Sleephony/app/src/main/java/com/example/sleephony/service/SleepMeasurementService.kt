@@ -56,7 +56,6 @@ class SleepMeasurementService : Service() {
     companion object {
             private const val CHANNEL_ID  = "Sleep_measurement"
             private const val FOREGROUND_ID = 2001
-            private const val INTERVAL_MS = 1 * 30 * 1000L  // 30초 요청
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -70,6 +69,8 @@ class SleepMeasurementService : Service() {
     @Inject lateinit var tokenProvider: TokenProvider
 
     private lateinit var mediaPlayer: MediaPlayer
+
+    private var lastSleepStage: String? = null
 
     private val soundMap = mutableMapOf<String, String>()
 
@@ -123,6 +124,12 @@ class SleepMeasurementService : Service() {
                hrBuffer.addAll(List(accelList.size) { hr })
                tempBuffer.addAll(List(accelList.size) { temp })
 
+               if (accelBuffer.size == 3000) {
+                   serviceScope.launch {
+                       fetchAndUpload()
+                   }
+               }
+
 
            } catch(e:Exception) {
                Log.e("ERR", "센서 데이터 전송 실패", e)
@@ -148,7 +155,12 @@ class SleepMeasurementService : Service() {
                 override fun onSleepStageReceived(requestId: String?, sleepStage: String) {
                     serviceScope.launch(Dispatchers.Main) {
                         Log.d("SSE", "응답 성공: $sleepStage")
-                        playSoundForSleepStage(sleepStage)
+                        if (sleepStage != lastSleepStage) {
+                            playSoundForSleepStage(sleepStage)
+                            lastSleepStage = sleepStage
+                        } else {
+                            Log.d("SSE", "동일 단계($sleepStage) 재생 생략")
+                        }
                     }
                 }
 
@@ -203,17 +215,6 @@ class SleepMeasurementService : Service() {
 
             // 처음엔 AWAKE로 재생
             playSoundForSleepStage("AWAKE")
-            while (isActive) {
-                val start = System.currentTimeMillis()
-
-                fetchAndUpload()
-
-                val elapsed = System.currentTimeMillis() - start
-
-                val delayMs = (INTERVAL_MS - elapsed).coerceAtLeast(0L)
-
-                delay(delayMs)
-            }
         }
     }
 
@@ -262,6 +263,7 @@ class SleepMeasurementService : Service() {
     }
 
     private suspend fun fetchAndUpload() {
+        Log.d("Measurement", "측정 준비 중")
         // 워치에서 데이터 정제
         val accX = accelBuffer.map { it[0] }
         val accY = accelBuffer.map { it[1] }
@@ -287,8 +289,8 @@ class SleepMeasurementService : Service() {
             temp = tempList,
             measuredAt = localDateTime.toString()
         )
-        if (accX.size == 600) {
-            Log.d("DBG", "데이터 전송")
+        if (accX.size == 3000) {
+            Log.d("Measurement", "데이터 전송")
 
             withContext(Dispatchers.IO) {
                 var json = Gson().toJson(req)
@@ -299,7 +301,8 @@ class SleepMeasurementService : Service() {
                 file.writeText(json)
             }
             sseClient.connect(req)
-
+        } else {
+            Log.d("Measurement", "데이터 수 부족 ${accX.size}")
         }
 
     }
