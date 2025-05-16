@@ -221,7 +221,6 @@ class SleepMeasurementService : Service() {
     }
 
     private fun playSoundForSleepStage(stage: String) {
-        Log.d("SOUND", "$stage : $soundMap")
         val soundPath = soundMap[stage] ?: run {
         Log.e("ERR", "사운드가 존재하지 않음: $stage")
         return
@@ -251,7 +250,6 @@ class SleepMeasurementService : Service() {
     }
 
     private suspend fun fetchAndUpload() {
-        Log.d("DBG", "측정 중입니다.")
         // 워치에서 데이터 정제
         val accX = accelBuffer.map { it[0] }
         val accY = accelBuffer.map { it[1] }
@@ -259,9 +257,6 @@ class SleepMeasurementService : Service() {
 
         val hrList = hrBuffer.toList()
         val tempList = tempBuffer.toList()
-
-        Log.d("SleepMeasurement", "accX size=${accX.size}, accY size=${accY.size}, accZ size=${accZ.size}")
-        Log.d("SleepMeasurement", "hrList size=${hrList.size}, tempList size=${tempList.size}")
 
         accelBuffer.clear()
         hrBuffer.clear()
@@ -280,16 +275,6 @@ class SleepMeasurementService : Service() {
             temp = tempList,
             measuredAt = localDateTime.toString()
         )
-        Log.d("DBG", "정제된 데이터 : $req")
-
-        withContext(Dispatchers.IO) {
-            var json = Gson().toJson(req)
-
-            val fileName = "sleep_req+${System.currentTimeMillis()}.txt"
-            val file = File(applicationContext.filesDir, fileName)
-
-            file.writeText(json)
-        }
         if (accX.size == 600) {
             Log.d("DBG", "데이터 전송")
             sseClient.connect(req)
