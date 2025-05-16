@@ -60,22 +60,40 @@ public class SleepService {
 
     @Value("${sleep.kafka.request-topic:sleep-raw-stage-request}")
     private String requestTopic;
-
+    /**
+     * RawSequenceRequest를 Kafka로 전송하여 수면 단계 추론을 시작하고,
+     * 결과를 SseEmitter로 클라이언트에 스트리밍합니다.
+     *
+     * @param req RawSequenceRequest 객체, 센서 원시 데이터 포함
+     * @return 클라이언트로 이벤트를 전송할 SseEmitter
+     * @throws IllegalArgumentException HR 데이터가 없거나 비어 있을 경우 발생
+     */
     public SseEmitter streamRawSleepStage(RawSequenceRequest req) {
         String requestId = UUID.randomUUID().toString();
         Integer userId = AuthUtil.getLoginUserId();
-
+        log.info("[Request Data Sizes] userId={}, requestId={}, accX_size={}, accY_size={}, accZ_size={}, temp_size={}, hr_size={}",
+                userId, requestId,
+                req.getAccX().size(),
+                req.getAccY().size(),
+                req.getAccZ().size(),
+                req.getTemp().size(),
+                req.getHr().size());
         SseEmitter emitter = new SseEmitter(TimeUnit.SECONDS.toMillis(60));
         emitter.onCompletion(() -> emitters.remove(requestId));
         emitter.onTimeout(()    -> emitters.remove(requestId));
         emitters.put(requestId, emitter);
 
         startTimeMap.put(requestId, req.getMeasuredAt());
+        List<Float> hrFixed = forwardFillZerosHr(req.getHr());   // ← HR만 보정
 
         RawSequenceKafkaPayload payload = new RawSequenceKafkaPayload(
                 req.getAccX(), req.getAccY(), req.getAccZ(),
-                req.getTemp(), req.getHr());
-
+                req.getTemp(), hrFixed);
+        // 보정된 HR 데이터도 로깅
+        log.info("[HR Fixed] userId={}, requestId={}, hr_fixed_size={}, zeros_replaced={}, hr_fixed_values={}",
+                userId, requestId, hrFixed.size(),
+                req.getHr().stream().filter(hr -> hr == 0.0f).count(),
+                hrFixed.subList(0, Math.min(10, hrFixed.size())) + "...");
         ProducerRecord<String, RawSequenceKafkaPayload> record =
                 new ProducerRecord<>(requestTopic, String.valueOf(userId), payload);
 
@@ -87,8 +105,14 @@ public class SleepService {
         return emitter;
     }
 
+
     /**
-     * Kafka 응답 토픽 수신 → 해당 requestId의 Emitter로 전송 → complete()
+     * Kafka로부터 수면 단계 응답(라벨)을 수신하여 DB에 저장한 뒤,
+     * 해당 요청 ID에 매핑된 SseEmitter로 결과를 전송합니다.
+     *
+     * @param record     Kafka ConsumerRecord, RawSequenceResponse 포함
+     * @param requestId  요청 식별용 헤더(requestId)
+     * @param userIdStr  사용자 ID 헤더 문자열
      */
     @KafkaListener(
             topics = "${sleep.kafka.response-topic}",
@@ -134,11 +158,12 @@ public class SleepService {
         }
     }
 
-
-
-
     /**
-     * 측정 시작 시각을 24h TTL 로 Redis(`sleep:start:{userId}`)에 기록합니다.
+     * 수면 측정 시작 시각을 Redis에 24시간 TTL로 저장합니다.
+     *
+     * @param startedAt 측정 시작 시각
+     * @return 저장 완료 메시지
+     * @throws RedisOperationException Redis 저장 실패 시 발생
      */
     public String startMeasurement(LocalDateTime startedAt) {
         Integer userId = AuthUtil.getLoginUserId();
@@ -151,16 +176,31 @@ public class SleepService {
         }
     }
     /**
-     * 측정 종료 → Redis 시작시각을 꺼내 서머리 계산 → SleepReport 저장.
+     * 측정 종료 시각을 받아 Redis에서 시작 시각을 조회 후 삭제하고,
+     * 저장된 SleepLevel 데이터를 기반으로 SleepReport를 생성·저장합니다.
+     *
+     * @param endedAt 측정 종료 시각
+     * @return 저장된 SleepReport 엔티티
+     * @throws RedisOperationException 시작 시각이 Redis에 없으면 발생
      */
     public SleepReport generateSleepReport(LocalDateTime endedAt) {
         Integer userId = AuthUtil.getLoginUserId();
         String key = "sleep:start:" + userId;
+        LocalDate reportDate = endedAt.toLocalTime().isBefore(LocalTime.NOON)
+                ? endedAt.toLocalDate()
+                : endedAt.toLocalDate().plusDays(1);
         // Redis에서 시작 시각 조회
-        LocalDateTime startedAt = LocalDateTime.parse(
-                Objects.requireNonNull(stringRedisTemplate.opsForValue().getAndDelete(key))
-        );
+        LocalDateTime startedAt = Optional.ofNullable(stringRedisTemplate.opsForValue().getAndDelete(key))
+                .map(LocalDateTime::parse)
+                .orElseThrow(() -> new RedisOperationException("시작 시각이 존재하지 않습니다."));
+        LocalDateTime dayStart = reportDate.atStartOfDay();
+        LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
+        long levelCount = sleepLevelRepository
+                .countByUserIdAndMeasuredAtBetween(userId, dayStart, dayEnd);
 
+        if (levelCount < 240) {
+            throw new IllegalStateException("수면 레벨 데이터가 충분하지 않아 리포트를 생성할 수 없습니다.");
+        }
         // 30초 윈도우 단위로 저장된 SleepLevel 조회
         List<SleepLevel> levels = sleepLevelRepository
                 .findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
@@ -185,50 +225,43 @@ public class SleepService {
         }
 
         int nremCount = n1Count + n2Count;
-        // 1 윈도우 = 30초 이므로, 초 단위로 환산
-        int awakeSeconds = awakeCount * 30;
-        int remSeconds   = remCount   * 30;
-        int nremSeconds  = nremCount  * 30;
-        int deepSeconds  = n3Count    * 30;
+        int awakeMin = Math.toIntExact(Math.round(awakeCount*30/60.0));
+        int remMin   = Math.toIntExact(Math.round(remCount*30/60.0));
+        int nremMin  = Math.toIntExact(Math.round(nremCount*30/60.0));
+        int deepMin  = Math.toIntExact(Math.round(n3Count*30/60.0));
+        int totalMin = (int) Duration.between(startedAt, endedAt).toMinutes();
+        int cycles   = Math.max(1, totalMin/90);
+        int score    = Math.max(1, Math.min(
+                100 - (int)(awakeMin*0.5) + (int)(remMin*0.2) + (int)(deepMin*0.3),
+                100));
+        LocalDateTime realSleep = (firstN1!=null? firstN1: startedAt);
 
-        // 분 단위로 변환 (반올림)
-        int awakeMinutes = Math.toIntExact(Math.round(awakeSeconds / 60.0));
-        int remMinutes   = Math.toIntExact(Math.round(remSeconds   / 60.0));
-        int nremMinutes  = Math.toIntExact(Math.round(nremSeconds  / 60.0));
-        int deepMinutes  = Math.toIntExact(Math.round(deepSeconds  / 60.0));
-
-        // 수면 주기 계산 (90분당 1주기 가정)
-        int totalSleepMinutes = (int) Duration.between(startedAt, endedAt).toMinutes();
-        int cycleCount = Math.max(1, totalSleepMinutes / 90);
-
-        // 최종 점수 계산 (예시 로직 그대로)
-        int score = 100
-                - (int)(awakeMinutes * 0.5)
-                + (int)(remMinutes   * 0.2)
-                + (int)(deepMinutes  * 0.3);
-        score = Math.max(1, Math.min(score, 100));
-
-        LocalDateTime realSleepTime = (firstN1 != null ? firstN1 : startedAt);
-
-        // SleepReport 빌드
-        SleepReport report = SleepReport.builder()
+        // 기존 리포트 조회 여부
+        Optional<SleepReport> opt = sleepReportRepository
+                .findFirstByUserIdAndSleepTimeBetween(userId, dayStart, dayEnd);
+        SleepReport report = opt.orElseGet(() -> SleepReport.builder()
                 .userId(userId)
-                .sleepScore(score)
-                .realSleepTime(realSleepTime)
-                .sleepTime(startedAt)
-                .sleepWakeTime(endedAt)
-                .awakeTime(awakeMinutes)
-                .remTime(remMinutes)
-                .nremTime(nremMinutes)
-                .deepTime(deepMinutes)
-                .sleepCycle(cycleCount)
-                .createdAt(LocalDateTime.now())
-                .build();
+                .sleepTime(dayStart)
+                .build());
+        // SleepReport 빌드
+        report.setRealSleepTime(realSleep);
+        report.setSleepWakeTime(endedAt);
+        report.setAwakeTime(awakeMin);
+        report.setRemTime(remMin);
+        report.setNremTime(nremMin);
+        report.setDeepTime(deepMin);
+        report.setSleepCycle(cycles);
+        report.setSleepScore(score);
+        report.setCreatedAt(LocalDateTime.now());
 
         return sleepReportRepository.save(report);
     }
     /**
-     * <b>특정 일자</b>의 리포트와 전일(있는 경우) 총 수면시간을 함께 반환합니다.
+     * 특정 일자의 리포트와 전일 리포트(있다면)의 총 수면 시간을 함께 반환합니다.
+     *
+     * @param date 조회할 날짜 (LocalDate)
+     * @return 오늘 리포트와 전일 수면 시간 포함 DTO
+     * @throws SleepReportNotFoundException 해당 날짜 리포트가 없으면 발생
      */
     public SleepReportWithPrevious getReportByDate(LocalDate date) {
         Integer userId = AuthUtil.getLoginUserId();
@@ -254,7 +287,10 @@ public class SleepService {
                 .build();
     }
     /**
-     * 일자별 수면 단계 그래프용 원본 점(TimePoint)을 반환합니다.
+     * 특정 일자의 30초 단위 SleepLevel 데이터를 그래프용 점 목록으로 반환합니다.
+     *
+     * @param date 조회할 날짜 (LocalDate)
+     * @return SleepGraphPoint 리스트 (총 2880개)
      */
     public List<SleepGraphPoint> getSleepGraphPoints(LocalDate date) {
 
@@ -279,7 +315,14 @@ public class SleepService {
         }
         return result;
     }
-
+    /**
+     * 특정 일자의 상세 리포트와 나이/성별 평균 벤치마크를 묶어 반환합니다.
+     *
+     * @param date 조회할 날짜 (LocalDate)
+     * @return DetailedSleepReportResponse DTO
+     * @throws SleepReportNotFoundException 해당 날짜 리포트가 없으면 발생
+     * @throws UserNotFoundException 사용자 정보 조회 실패 시 발생
+     */
     public DetailedSleepReportResponse getDetailedReport(LocalDate date) {
 
         Integer userId = AuthUtil.getLoginUserId();
@@ -358,8 +401,11 @@ public class SleepService {
                 .build();
     }
     /**
-     * GPT 모델에 오늘 리포트를 보내 500자 이상 코칭 문구를 받아옵니다.
-     *  – 하루 1 회 캐싱(Redis key : sleep:advice:{user}:{date})
+     * 오늘 리포트와 이전 기간 요약 통계를 AI 코치(GPT)에게 요청하여
+     * 500자 이상의 피드백을 받아오고, Redis에 캐싱 후 반환합니다.
+     *
+     * @param report 오늘 리포트 및 전일 정보 DTO
+     * @return AI 코칭 피드백 문자열
      */
     public String advise(SleepReportWithPrevious report) {
         Integer userId = AuthUtil.getLoginUserId();
@@ -409,13 +455,11 @@ public class SleepService {
     }
 
     /**
-     * <h3>Summary API</h3>
-     * <ul>
-     *   <li>요청 기간의 리포트만 집계, <b>리포트가 있는 날 수(분모)</b>로 나눔</li>
-     *   <li>동일 길이의 “이전 기간” 평균 수면시간도 함께 반환</li>
-     * </ul>
+     * 주기(일/주/월)별로 지정된 기간 통계를 집계하여 요약 정보 DTO를 반환합니다.
      *
-     * @return {@link SummaryResponse}
+     * @param req 시작일, 종료일, 기간 유형이 담긴 StatisticsRequest
+     * @return SummaryResponse DTO
+     * @throws SleepReportNotFoundException 기간 내 리포트가 없으면 발생
      */
     public SummaryResponse summarize(StatisticsRequest req) {
         Integer userId = AuthUtil.getLoginUserId();
@@ -523,7 +567,10 @@ public class SleepService {
                 .build();
     }
     /**
-     * 요일 / 주차 / 월 단위로 그룹화한 평균치를 그래프용 시계열로 제공합니다.
+     * 주기별(요일/주차/월)로 평균값을 그룹화하여 그래프용 시계열 데이터를 반환합니다.
+     *
+     * @param req 시작일, 종료일, 기간 유형이 담긴 StatisticsRequest
+     * @return GraphResponse DTO
      */
     public GraphResponse graph(StatisticsRequest req){
         Integer userId = AuthUtil.getLoginUserId();
@@ -557,7 +604,10 @@ public class SleepService {
 
 
     /**
-     * Summary + 연령·성별 평균치(사전 입력된 통계 테이블) 묶음 반환.
+     * 요약 통계와 사용자 연령/성별 벤치마크를 함께 묶어 반환합니다.
+     *
+     * @param req 시작일, 종료일, 기간 유형이 담긴 StatisticsRequest
+     * @return CombinedStatResponse DTO
      */
     public CombinedStatResponse getCombinedStats(StatisticsRequest req){
         SummaryResponse summary = summarize(req);
@@ -580,6 +630,13 @@ public class SleepService {
                 .build();
     }
 
+    /**
+     * 특정 월에 대한 리포트 존재 일자 목록을 반환합니다.
+     *
+     * @param month YYYY-MM 형식의 문자열
+     * @return 해당 월에 리포트가 있는 날짜 리스트
+     * @throws SleepReportNotFoundException 해당 월 리포트가 없으면 발생
+     */
     public List<LocalDate> getReportedDatesForMonth(String month){
         Integer userId = AuthUtil.getLoginUserId();
         YearMonth ym = YearMonth.parse(month);
@@ -685,4 +742,43 @@ public class SleepService {
             "N2", SleepStage.NREM2,
             "N3", SleepStage.NREM3
     );
+    public static List<Float> forwardFillZerosHr(List<Float> hr) {
+        int n = hr.size();
+        List<Float> filled = new ArrayList<>(n);
+        Float last = null;
+
+        /* 1차 : forward-fill (앞 값 복사) */
+        for (Float v : hr) {
+            if (v != null && v != 0f) {
+                last = v;
+                filled.add(v);
+            } else {
+                filled.add(last);           // last 가 null 일 수도!
+            }
+        }
+
+        /* 2차 : back-fill (맨 첫 구간이 null 이면 뒷 값으로) */
+        if (filled.get(0) == null) {
+            // 뒤에서 첫 정상값 찾기
+            Float next = null;
+            for (Float v : filled) {
+                if (v != null) { next = v; break; }
+            }
+            if (next == null) {
+                throw new IllegalArgumentException("HR list is all zeros/nulls");
+            }
+            for (int i = 0; i < n && filled.get(i) == null; i++) {
+                filled.set(i, next);
+            }
+        }
+
+        /* null 은 더 이상 없음 → 0 으로 남겨둘지 NaN 으로 바꿀지 선택 */
+        for (int i = 0; i < n; i++) {
+            if (filled.get(i) == null) {
+                // 실무에서는 0f 보다는 NaN 이 후단 처리에 안전
+                filled.set(i, Float.NaN);
+            }
+        }
+        return filled;
+    }
 }

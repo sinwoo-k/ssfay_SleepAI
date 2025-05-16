@@ -1,5 +1,6 @@
 package com.example.sleephony.ui.screen.statistics.components.detail
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -9,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.component1
+import androidx.core.graphics.component2
 import com.example.sleephony.R
 import com.example.sleephony.data.model.StatisticMySummary
 import com.example.sleephony.data.model.StatisticResults
@@ -29,6 +32,13 @@ fun SleepLatencyDetailScreen(
     val mySleepLatencyAverage = statisticSummary?.averageSleepLatencyMinutes?.toInt() ?: 0
     val otherSleepLantencyAverage = statisticComparisonSummary[0]?.sleepLatencyMinutes?.toInt() ?: 0
     val pre = statisticSummary?.previousAverageSleepTimeMinutes?.toInt() ?: 0
+    val myWakeUpTIme = statisticSummary?.averageWakeUpTime?.replace(":","")?.toIntOrNull() ?: 0
+    val otherWakeUpTime =WakeTimeValue(statisticComparisonSummary[0]?.wakeupTime)
+    Log.d("ssafy","myWakeUpTIme ${myWakeUpTIme}")
+    Log.d("ssafy","otherWakeUpTime ${otherWakeUpTime}")
+    Log.d("ssafy","mySleepLatencyAverage ${mySleepLatencyAverage}")
+    Log.d("ssafy","otherSleepLantencyAverage ${otherSleepLantencyAverage}")
+    Log.d("ssafy","pre ${pre}")
 
     LazyColumn(
         modifier = modifier.padding(top = 25.dp, start = 10.dp, end = 10.dp, bottom =50.dp),
@@ -72,13 +82,13 @@ fun SleepLatencyDetailScreen(
                 ComparisonChart(
                     modifier = modifier,
                     before_name="${other} 평균",
-                    before_value= 700f,
+                    before_value= otherWakeUpTime.toFloat(),
                     after_name = "내 평균",
-                    after_value = WakeTimeValue(statisticComparisonSummary[0]?.wakeupTime),
+                    after_value = myWakeUpTIme.toFloat(),
                     title = {
                         White_text("${other} 평균 기상 시간")
-                        Comparison_text(blue_text = "${otherWakeTime(statisticComparisonSummary[0]?.wakeupTime)}", white_text = "보다")
-                        Comparison_text(blue_text = "평균 3분", white_text = "더 주무셨어요" )
+                        Comparison_text(blue_text = "${SummarTime(otherWakeUpTime)}", white_text = "보다")
+                        Comparison_text(blue_text = "평균 ${SummarTime(Math.abs(myWakeUpTIme - otherWakeUpTime))}", white_text = if (myWakeUpTIme > otherWakeUpTime) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
             }
@@ -86,30 +96,15 @@ fun SleepLatencyDetailScreen(
     }
 }
 
-fun otherWakeTime(value: String?): String {
-    if (value == null) return "0분"
-    val parts = value.split(":")
-    if (parts.size < 2) return "0분"
-    val hour = parts[0]
-    val min = parts[1]
 
-    return if (hour == "00" && min != "00") {
-        "${min}분"
-    } else if (hour != "00") {
-        "${hour}시"
-    } else {
-        "0분"
-    }
-}
-
-fun WakeTimeValue(value: String?): Float {
-    if (value == null) return 0f
+fun WakeTimeValue(value: String?): Int {
+    if (value == null) return 0
     val parts = value.split(":")
-    if (parts.size < 2) return 0f
+    if (parts.size < 2) return 0
     val hour = parts[0]
     val min = parts[1]
     val time = hour+min
 
-    return time.toFloat()
+    return time.toInt()
 }
 

@@ -1,6 +1,8 @@
 package com.example.sleephony.service
 
+import android.content.Intent
 import android.util.Log
+import com.example.sleephony.presentation.MainActivity
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import org.json.JSONObject
@@ -35,6 +37,26 @@ class AppMessageListener: WearableListenerService() {
                     putString("${jsonData.getString("day")}-value",jsonData.getString("value"))
                     apply()
                 }
+            } else if (mode == "alarm") {
+                val hour = jsonData.getString("hour")
+                val minute = jsonData.getString("minute")
+                val isAm = jsonData.getString("isAm")
+                val alarmType = jsonData.getString("alarmType")
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    action = "alarmOpen"
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    putExtra("hour",hour)
+                    putExtra("minute",minute)
+                    putExtra("isAm",isAm)
+                    putExtra("alarmType",alarmType)
+                }
+                startActivity(intent)
+            } else if ( mode == "alarmCancel") {
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    action = "alarmCancel"
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                startActivity(intent)
             }
         }
     }

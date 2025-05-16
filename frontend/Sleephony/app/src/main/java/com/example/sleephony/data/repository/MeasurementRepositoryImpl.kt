@@ -12,6 +12,7 @@ import com.example.sleephony.utils.TokenProvider
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import retrofit2.Call
 import javax.inject.Inject
 
 class MeasurementRepositoryImpl @Inject constructor(
@@ -64,15 +65,13 @@ class MeasurementRepositoryImpl @Inject constructor(
                 ?: throw RuntimeException("측정 종료 시간 등록에 실패하였습니다.")
         }
 
-    override suspend fun sleepMeasurement(req: SleepBioDataRequest): Result<SleepBioDataResult> =
+    override suspend fun sleepMeasurement(req: SleepBioDataRequest): Result<Unit>  =
       runCatching {
           val token = tokenProvider.getToken()
           val bearer = "Bearer $token"
 
           Log.d("DBG", "$req")
-          val response = api.sleepBioData(bearer, req)
+          api.sleepBioData(bearer, req)
 
-          response.results
-              ?: throw RuntimeException("수면 단계 측정에 실패하였습니다.")
       }
 }

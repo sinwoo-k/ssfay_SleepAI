@@ -166,8 +166,7 @@ fun Comparison_text(
 
 fun SummarTime(value: Int): String {
     if (value == 0) return "0분"
-    val hour = value / 60
-    val min = value % 60
-
+    val hour = value / 100
+    val min = value % 100
     return if (hour != 0) "${hour}시간 ${min}분" else "${min}분"
-}
+    }

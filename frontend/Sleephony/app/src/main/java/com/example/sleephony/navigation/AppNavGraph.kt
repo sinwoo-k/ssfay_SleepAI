@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -40,14 +41,20 @@ import com.example.sleephony.ui.screen.splash.SplashViewModel
 import com.example.sleephony.ui.screen.statistics.StatisticsScreen
 import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
 import java.time.LocalDate
+import com.example.sleephony.utils.WearMessageUtils
+import com.google.android.gms.wearable.WearableListenerService
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "splash"
+    startDestination: String,
+    vm:SleepViewModel
 ) {
     val statisticsViewModel: StatisticsViewModel = hiltViewModel()
     val reportViewModel: ReportViewModel = hiltViewModel()
+    val splashVm: SplashViewModel = hiltViewModel()
+    val profileVm: ProfileViewModel = hiltViewModel()
+    val context = LocalContext.current
 
     // 현재 경로 가져오기
     val backStack by navController.currentBackStackEntryAsState()
@@ -76,7 +83,6 @@ fun AppNavGraph(
             modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) {
             composable("splash") {
-                val splashVm: SplashViewModel = hiltViewModel()
                 SplashScreen(
                     navController = navController,
                     viewModel = splashVm,
@@ -109,8 +115,6 @@ fun AppNavGraph(
                             navController.getBackStackEntry("profile_setup")
                         }
 
-                        val profileVm: ProfileViewModel = hiltViewModel(parentEntry)
-
                         ProfileSetupScreen(
                             step = step,
                             viewModel = profileVm,
@@ -131,24 +135,31 @@ fun AppNavGraph(
                 }
             }
             // 수면 측정 관련
-            composable("sleep_setting") { backStackEntry ->
-                val vm: SleepViewModel = hiltViewModel(backStackEntry)
+            composable("sleep_setting") {
+
                 SleepSettingScreen(
                     viewModel = vm,
                     onStart = {
                         vm.onStartClicked()
+                        WearMessageUtils.SendMessage(
+                            context = context,
+                            mode = "alarm",
+                            data = mapOf(
+                                "hour" to vm.settingData.value.hour,
+                                "minute" to vm.settingData.value.minute,
+                                "isAm" to if (vm.settingData.value.isAm) "오전" else "오후",
+                                "alarmType" to vm.settingData.value.mode,
+                            )
+                        )
                         navController.navigate("sleep_measurement") {
                             popUpTo("sleep_setting") { inclusive = false }
                         }
-                    }
+                    },
+                    navController = navController
                 )
             }
+
             composable("sleep_measurement") {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val settingEntry = remember(navBackStackEntry) {
-                    navController.getBackStackEntry("sleep_setting")
-                }
-                val vm: SleepViewModel = hiltViewModel(settingEntry)
                 val uiState by vm.uiState.collectAsState()
 
                 LaunchedEffect(uiState) {

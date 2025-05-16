@@ -13,11 +13,23 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)   // 커넥트 최대 30초
+            .writeTimeout(60, TimeUnit.SECONDS)     // 쓰기 최대 60초
+            .readTimeout(60, TimeUnit.SECONDS)      // 읽기 최대 60초
+            .retryOnConnectionFailure(true)
+            .build()
+
     // retrofit 인스턴스 제공
     @Provides @Singleton
     fun provideRetrofit(): Retrofit =
