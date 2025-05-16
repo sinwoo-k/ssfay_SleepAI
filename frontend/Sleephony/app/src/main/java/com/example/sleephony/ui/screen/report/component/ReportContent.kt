@@ -1,29 +1,37 @@
 package com.example.sleephony.ui.screen.report.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
 import com.example.sleephony.ui.screen.statistics.components.AverageSleepScore
 import java.time.LocalDate
 import kotlin.math.abs
+import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun ReportContent(
     modifier: Modifier = Modifier,
-    reportViewModel: ReportViewModel
+    reportViewModel: ReportViewModel,
+    selectedDate: LocalDate
 ) {
-    val todayStr = LocalDate.now().minusDays(1).toString()
+    val todayStr = selectedDate.toString()
     val reportResult = reportViewModel.sleepReport.collectAsState().value
     val report = reportResult?.today
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedDate) {
         reportViewModel.getSleepReport(todayStr)
     }
 
@@ -48,8 +56,23 @@ fun ReportContent(
         val lightPercent = if (totalSleep > 0) (light * 100f / totalSleep).toInt().coerceAtMost(100) else 0
         val deepPercent = if (totalSleep > 0) (deep * 100f / totalSleep).toInt().coerceAtMost(100) else 0
 
-        // SleepScoreSection
-        if (report != null) {
+        // 데이터가 없을 경우 처리
+        if (report == null) {
+            Text(
+                text = "선택된 날짜에는 수면 데이터가 없습니다.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp) // 주변에 여백 추가
+                    .background(Color(0xFF2E3F7C), shape = RoundedCornerShape(8.dp))
+                    .padding(16.dp), // 안쪽 여백
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center, // 가운데 정렬
+            )
+
+        } else {
+            // SleepScoreSection
             val prevSleep = reportResult?.previousTotalSleepMinutes ?: 0
             val diff = totalSleep - prevSleep
             val absDiffFormatted = formatMinutesToHourMinute(abs(diff))
@@ -83,23 +106,24 @@ fun ReportContent(
             averageSleepLatencyMinutes = awake
         )
 
-        // 그래프 영역
+        // 그래프 영역, selectedDate를 전달
         SleepSummationGraph(
             modifier = Modifier.fillMaxWidth(),
-            averageSleepLatencyMinutes = awake.toFloat(),
-            averageRemSleepMinutes = rem.toFloat(),
-            averageRemSleepPercentage = remPercent,
-            averageLightSleepMinutes = light.toFloat(),
-            averageLightSleepPercentage = lightPercent,
-            averageDeepSleepMinutes = deep.toFloat(),
-            averageDeepSleepPercentage = deepPercent,
-            averageSleepCycleCount = cycles,
-            viewModel = reportViewModel
+            averageSleepLatencyMinutes = if (report == null) 0f else awake.toFloat(),
+            averageRemSleepMinutes = if (report == null) 0f else rem.toFloat(),
+            averageRemSleepPercentage = if (report == null) 0 else remPercent,
+            averageLightSleepMinutes = if (report == null) 0f else light.toFloat(),
+            averageLightSleepPercentage = if (report == null) 0 else lightPercent,
+            averageDeepSleepMinutes = if (report == null) 0f else deep.toFloat(),
+            averageDeepSleepPercentage = if (report == null) 0 else deepPercent,
+            averageSleepCycleCount = if (report == null) 0 else cycles,
+            viewModel = reportViewModel,
+            selectedDate = selectedDate
         )
     }
 }
 
-//분 단위를 시간+분 형식으로 변환하는 함수
+// 분 단위를 시간+분 형식으로 변환하는 함수
 fun formatMinutesToHourMinute(minutes: Int): String {
     val hours = minutes / 60
     val mins = minutes % 60
