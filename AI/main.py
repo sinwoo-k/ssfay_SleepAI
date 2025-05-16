@@ -183,6 +183,8 @@ async def process_loop():
 
         preds  = sleephony.predict(seqs, verbose=0)
         labels = [LABELS[int(i)] for i in np.argmax(preds, axis=1)]
+        # New: 로깅을 통해 라벨 출력
+        logger.info(f"[{req_id}] Predicted labels: {labels}")
 
         # 5) publish ------------------------------------------------------------
         resp = RawResponse(requestId=req_id, labels=labels)
