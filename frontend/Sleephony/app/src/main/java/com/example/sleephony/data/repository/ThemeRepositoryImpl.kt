@@ -28,6 +28,6 @@ class ThemeRepositoryImpl @Inject constructor(
             val response = api.getTheme(themeId, bearer)
 
             response.results
-                ?: throw java.lang.RuntimeException("테마 정보가 없습니다.")
+                ?: throw RuntimeException("테마 정보가 없습니다.")
         }
 }

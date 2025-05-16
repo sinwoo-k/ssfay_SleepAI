@@ -7,22 +7,42 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.hardware.*
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
 import com.google.android.gms.wearable.Wearable
+import com.samsung.android.service.health.tracking.ConnectionListener
+import com.samsung.android.service.health.tracking.HealthTrackerException
+import com.samsung.android.service.health.tracking.HealthTrackingService
+import com.samsung.android.service.health.tracking.data.DataPoint
+import com.samsung.android.service.health.tracking.data.HealthTrackerType
+import com.samsung.android.service.health.tracking.data.ValueKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
+import java.util.Locale
 
 class SleepSensorService : Service(), SensorEventListener {
 
+    private val accelerometerList = ArrayList<List<String>>(20).apply {
+        repeat(20) { add(emptyList())}
+    }
+    private var cnt = 0
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
     private val sensorDataFlow = MutableStateFlow<Map<String,String>>(emptyMap())
     private lateinit var sensorManager: SensorManager
+
+    private var heathTrackingService: HealthTrackingService? = null
+    private var skinTemperatureTacker: com.samsung.android.service.health.tracking.HealthTracker? = null
+    private var skinTempHandler: Handler? = null
+    private var isSkinTempAvailable = false
 
     override fun onCreate() {
         super.onCreate()
@@ -40,9 +60,9 @@ class SleepSensorService : Service(), SensorEventListener {
 
         val heartRate = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         if (heartRate != null) {
-            sensorManager.registerListener(this, heartRate, SensorManager.SENSOR_DELAY_FASTEST)
+            sensorManager.registerListener(this, heartRate, SensorManager.SENSOR_DELAY_NORMAL)
         }
-
+        connectHeatlthService()
         startForegroundServiceWithNotification()
     }
 
@@ -66,47 +86,131 @@ class SleepSensorService : Service(), SensorEventListener {
         startForeground(1, notification)
     }
 
+    fun connectHeatlthService() {
+        try {
+            val connectionListener = object : ConnectionListener {
+                override fun onConnectionSuccess() {
+                    Log.d("ssafy","connected to Samsung Health Service")
+                    heathTrackingService?.let { service->
+                        val capability = service.trackingCapability
+                        val availableTrackers = capability?.supportHealthTrackerTypes
+
+                        isSkinTempAvailable = availableTrackers?.contains(HealthTrackerType.SKIN_TEMPERATURE_ON_DEMAND) ?: false
+
+                        if (isSkinTempAvailable) {
+                            initSkinTemperatureTracker()
+                            Log.d("ssafy","skin temperature sensor is available")
+                        } else {
+                            Log.d("ssafy","skin temperature is not available")
+                        }
+                    }
+                }
+
+                override fun onConnectionEnded() {
+                    Log.d("ssafy","Disconnected from Samsung Health Service")
+                }
+
+                override fun onConnectionFailed(p0: HealthTrackerException?) {
+                    Log.e("ssafy","disconnected from samsung health service")
+                }
+            }
+            heathTrackingService = HealthTrackingService(connectionListener, applicationContext)
+            heathTrackingService?.connectService()
+        } catch (e : Exception) {
+            Log.e("ssafy","health service error $e")
+        }
+    }
+
+    private fun initSkinTemperatureTracker() {
+        try {
+            skinTemperatureTacker = heathTrackingService?.getHealthTracker(HealthTrackerType.SKIN_TEMPERATURE_ON_DEMAND)
+            skinTempHandler = Handler(Looper.getMainLooper())
+
+            val skinTempListener = object : com.samsung.android.service.health.tracking.HealthTracker.TrackerEventListener {
+                override fun onDataReceived(dataPoints: List<DataPoint>) {
+                    for (data in dataPoints) {
+                        val status = data.getValue(ValueKey.SkinTemperatureSet.STATUS)
+
+                        if (status == 0) {
+                            val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
+
+                            val currentData = sensorDataFlow.value.toMutableMap()
+                            currentData["temparature"] = String.format(Locale.getDefault(),"%.1f",skinTemp)
+                            sensorDataFlow.value = currentData
+                        }
+                    }
+                }
+
+                override fun onFlushCompleted() {
+                    Log.d("ssafy","skin temperature flush completed")
+                }
+
+                override fun onError(e: com.samsung.android.service.health.tracking.HealthTracker.TrackerError) {
+                    Log.e("ssafy","skin temperature tracker error ${e}")
+                }
+            }
+            skinTempHandler?.post {
+                skinTemperatureTacker?.setEventListener(skinTempListener)
+            }
+        } catch (e : Exception) {
+            Log.e("ssafy","error ${e}")
+        }
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         event ?: return
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
-                val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["가속"] = values
-                sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("가속", values)
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
+                accelerometerList[cnt] = listOf(values)
+                cnt++
+                if (cnt >= 20)  {
+                    val currentData = sensorDataFlow.value.toMutableMap()
+                    currentData["accelerometer"] = accelerometerList.toString()
+                    sensorDataFlow.value = currentData
+                    cnt = 0
                 }
             }
             Sensor.TYPE_GRAVITY -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["중력"] = values
+                currentData["gravity"] = values
                 sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("중력", values)
-                }
             }
             Sensor.TYPE_HEART_RATE -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["심박수"] = values
+                currentData["heartRate"] = values
                 sensorDataFlow.value = currentData
-                CoroutineScope(Dispatchers.IO).launch {
-                    sendMessage("심박수", values)
+                serviceScope.launch {
+                    sendSenserMessage()
                 }
             }
         }
     }
 
-    private suspend fun sendMessage(senserType: String, value: String){
+    private suspend fun sendSenserMessage(){
         try {
             val nodeClient = Wearable.getNodeClient(this)
             val messageClient = Wearable.getMessageClient(this)
+
+            val accelerometer = sensorDataFlow.value.getValue("accelerometer")
+            val gravity = sensorDataFlow.value.getValue("gravity")
+            val hearRate = sensorDataFlow.value.getValue("heartRate")
+            val skinTemperature = sensorDataFlow?.value?.get("temparature") ?: "0"
+            Log.d("ssafy","" +
+                    "accelerometer ${accelerometer} " +
+                    "gravity ${gravity}  " +
+                    "hearRate ${hearRate} " +
+                    "skinTemperature $skinTemperature"
+            )
+
             val jsonData = JSONObject().apply {
                 put("mode","senser")
-                put("senserType",senserType)
-                put("value",value)
+                put("accelerometer","${accelerometer}")
+                put("gravity","${gravity}")
+                put("hearRate","${hearRate}")
+                put("temparature","$skinTemperature")
             }
             val jsonString = jsonData.toString()
 
@@ -115,7 +219,7 @@ class SleepSensorService : Service(), SensorEventListener {
                 messageClient.sendMessage(
                     node.id,
                     "/alarm",
-                    "$jsonString".toByteArray()
+                    jsonString.toByteArray()
                 ).await()
             }
         } catch (e:Exception) {
@@ -133,6 +237,7 @@ class SleepSensorService : Service(), SensorEventListener {
         super.onDestroy()
         sensorManager.unregisterListener(this)
         sensorDataFlow.value = emptyMap()
+        serviceScope.cancel()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

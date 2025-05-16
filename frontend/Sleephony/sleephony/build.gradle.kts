@@ -40,6 +40,11 @@ android {
 
 dependencies {
 
+    // 삼성 헬스 sdk
+    implementation(fileTree(mapOf(
+        "dir" to "libs",
+        "include" to listOf("*.jar", "*.aar")
+    )))
 
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
     // 앱 통싱

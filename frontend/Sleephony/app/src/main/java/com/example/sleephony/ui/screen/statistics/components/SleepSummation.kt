@@ -23,26 +23,30 @@ import com.example.sleephony.R
 
 @Composable
 fun SleepSummation(
-    modifier:Modifier,
-    averageSleepLatencyMinutes : Float,
-    averageRemSleepMinutes : Float,
-    averageRemSleepPercentage : Int,
-    averageLightSleepMinutes :Float,
-    averageLightSleepPercentage :Int,
-    averageDeepSleepMinutes :Float,
-    averageDeepSleepPercentage :Int,
-    averageSleepCycleCount :Int,
+    modifier: Modifier = Modifier,
+    averageSleepLatencyMinutes: Float,
+    averageRemSleepMinutes: Float,
+    averageRemSleepPercentage: Int,
+    averageLightSleepMinutes: Float,
+    averageLightSleepPercentage: Int,
+    averageDeepSleepMinutes: Float,
+    averageDeepSleepPercentage: Int,
+    averageSleepCycleCount: Int,
 ) {
-    val alphaWhite = Color.White.copy(alpha = .7f)
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Text(text = stringResource(R.string.sleep_summation), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 30.sp)
-        Box(modifier = modifier
-            .padding(3.dp)
-            .background(color = Color.Black.copy(alpha = .3f), shape = RoundedCornerShape(20.dp))
-            .fillMaxWidth()
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.sleep_summation),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp
+        )
+
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .background(Color.Black.copy(alpha = .3f), RoundedCornerShape(20.dp))
+                .fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
@@ -50,77 +54,54 @@ fun SleepSummation(
                     .padding(15.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box() {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = modifier.size(18.dp)
-                                .background(shape = RoundedCornerShape(100.dp), color = colorResource(R.color.sand)))
-                            Text(text = stringResource(R.string.non_sleep),fontSize = 20.sp, color = alphaWhite)
-                        }
-                    }
-                    Text(text = "${parsingTime(averageSleepLatencyMinutes.toInt())}",fontSize = 20.sp, color = alphaWhite)
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box() {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = modifier.size(18.dp)
-                                .background(shape = RoundedCornerShape(100.dp), color = colorResource(R.color.purple)))
-                            Text(text = stringResource(R.string.REM_sleep),fontSize = 20.sp, color = alphaWhite)
-                        }
-                    }
-                    Text(text = "${parsingTime(averageRemSleepMinutes.toInt())}(${averageRemSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box() {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = modifier.size(18.dp)
-                                .background(shape = RoundedCornerShape(100.dp), color = colorResource(R.color.indigo)))
-                            Text(text = stringResource(R.string.light_sleep),fontSize = 20.sp, color = alphaWhite)
-                        }
-                    }
-                    Text(text = "${parsingTime(averageLightSleepMinutes.toInt())}(${averageLightSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box() {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = modifier.size(18.dp)
-                                .background(shape = RoundedCornerShape(100.dp), color = colorResource(R.color.deep_sea_blue)))
-                            Text(text = stringResource(R.string.deep_sleep),fontSize = 20.sp, color = alphaWhite)
-                        }
-                    }
-                    Text(text = "${parsingTime(averageDeepSleepMinutes.toInt())}(${averageDeepSleepPercentage}%)",fontSize = 20.sp, color = alphaWhite)
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box() {
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = modifier.size(18.dp)
-                                .background(shape = RoundedCornerShape(100.dp), color = colorResource(R.color.light_gray)))
-                            Text(text = stringResource(R.string.sleep_cycle),fontSize = 20.sp, color = alphaWhite)
-                        }
-                    }
-                    Text(text = "${averageSleepCycleCount}회",fontSize = 20.sp, color = alphaWhite)
-                }
+                SleepSummaryRow(
+                    label = stringResource(R.string.non_sleep),
+                    time = parsingTime(averageSleepLatencyMinutes.toInt()),
+                    color = colorResource(R.color.sand)
+                )
+                SleepSummaryRow(
+                    label = stringResource(R.string.REM_sleep),
+                    time = "${parsingTime(averageRemSleepMinutes.toInt())} (${averageRemSleepPercentage}%)",
+                    color = colorResource(R.color.purple)
+                )
+                SleepSummaryRow(
+                    label = stringResource(R.string.light_sleep),
+                    time = "${parsingTime(averageLightSleepMinutes.toInt())} (${averageLightSleepPercentage}%)",
+                    color = colorResource(R.color.indigo)
+                )
+                SleepSummaryRow(
+                    label = stringResource(R.string.deep_sleep),
+                    time = "${parsingTime(averageDeepSleepMinutes.toInt())} (${averageDeepSleepPercentage}%)",
+                    color = colorResource(R.color.deep_sea_blue)
+                )
+                SleepSummaryRow(
+                    label = stringResource(R.string.sleep_cycle),
+                    time = "${averageSleepCycleCount}회",
+                    color = colorResource(R.color.light_gray)
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun SleepSummaryRow(label: String, time: String, color: Color) {
+    val alphaWhite = Color.White.copy(alpha = .7f)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .background(color = color, shape = RoundedCornerShape(100.dp))
+            )
+            Text(text = label, fontSize = 20.sp, color = alphaWhite)
+        }
+        Text(text = time, fontSize = 20.sp, color = alphaWhite)
     }
 }

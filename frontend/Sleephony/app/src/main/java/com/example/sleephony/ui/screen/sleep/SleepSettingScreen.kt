@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,20 +45,33 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.data.model.theme.ThemeListResult
 import com.example.sleephony.domain.model.AlarmMode
 import com.example.sleephony.receiver.DownloadCompleteReceiver
-import com.example.sleephony.ui.common.component.ThemeImageButton
-import com.example.sleephony.ui.common.component.TimeWheelPicker
-import com.example.sleephony.ui.screen.sleep.component.DownloadConfirmDialog
-import com.example.sleephony.ui.screen.sleep.component.ThemeSelectSheet
+import com.example.sleephony.ui.common.components.ThemeImageButton
+import com.example.sleephony.ui.common.components.TimeWheelPicker
+import com.example.sleephony.ui.screen.sleep.components.DownloadConfirmDialog
+import com.example.sleephony.ui.screen.sleep.components.ThemeSelectSheet
 
 @Composable
 fun SleepSettingScreen(
     onStart: () -> Unit,
-    viewModel: SleepViewModel = hiltViewModel()
+    viewModel: SleepViewModel,
+    navController: NavController
 ) {
+
+    val state = viewModel.uiState.collectAsState().value
+    LaunchedEffect(state) {
+        Log.d("ssafy","state ${state}")
+        if (state is SleepUiState.Running) {
+            navController.navigate("sleep_measurement") {
+                popUpTo("sleep_setting") { inclusive = false }
+            }
+        }
+    }
+
     val settingData by viewModel.settingData.collectAsState()
     val (hour, minute, isAm, mode) = settingData
 
@@ -165,8 +179,14 @@ fun SleepSettingScreen(
                     onPlay = { theme ->
                         viewModel.previewTheme(theme.id)
                     },
+                    onStop = {
+                        viewModel.stopPlayback()
+                    },
                     playingThemeId = playingThemeId,
-                    onClose = { showThemeDialog = false }
+                    onClose = {
+                        showThemeDialog = false
+                        viewModel.stopPlayback()
+                    }
                 )
             }
         }

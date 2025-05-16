@@ -5,6 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class AlarmViewModel:ViewModel() {
+    private var _alarmType = MutableLiveData("")
+    val alarmType : LiveData<String> get() = _alarmType
+
     private var _bedMeridiem = MutableLiveData("")
     val bedMeridiem: LiveData<String> get() = _bedMeridiem
 
@@ -20,6 +23,11 @@ class AlarmViewModel:ViewModel() {
         _bedMinute.value = minute
 
     }
+
+    fun alarmTypeUpdate(type: String) {
+        _alarmType.value = type
+    }
+
 
     private var _wakeUpMeridiem = MutableLiveData("")
     val wakeUpMeridiem: LiveData<String> get() = _wakeUpMeridiem

@@ -1,5 +1,6 @@
 package com.example.sleephony.components.mypage
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +39,17 @@ fun MyPageScreen(
     navController: NavController,
     modifier: Modifier
 ) {
+    val context = LocalContext.current
+    val profile = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
+
+    val email = profile.getString("email", null) ?: ""
+    val nickname = profile.getString("nickname", null) ?: ""
+    val height = profile.getString("height", null) ?: ""
+    val weight = profile.getString("weight", null) ?: ""
+    val birthDate = profile.getString("birthDate", null) ?: ""
+    val gender = profile.getString("gender", null) ?: ""
+
+
     ScalingLazyColumn(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,7 +65,14 @@ fun MyPageScreen(
                     painter = painterResource(id = R.drawable.user),
                     modifier = modifier.size(40.dp)
                 )
-                Text(text = stringResource(id = R.string.username), fontWeight = FontWeight.Bold)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = modifier.fillMaxWidth()
+                        .padding(12.dp,5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = email, fontWeight = FontWeight.Bold)
+                }
                 Box(
                     modifier = modifier.fillMaxWidth(0.9f)
                         .clip(RoundedCornerShape(12.dp))
@@ -66,13 +86,18 @@ fun MyPageScreen(
                             modifier = modifier.fillMaxWidth()
                                 .padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = stringResource(id = R.string.name), fontSize = 13.sp )
+                            Text(text = nickname, fontSize = 13.sp)
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = modifier.fillMaxWidth()
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                             ) {
-                            val birthDay = stringResource(id = R.string.birthday_year) +"."+
-                                    stringResource(id = R.string.birthday_month) +"."+
-                                    stringResource(id = R.string.birthday_day)
-
                             Text(text = stringResource(id = R.string.birthday), fontSize = 13.sp )
-                            Text(text = birthDay, fontSize = 13.sp)
+                            Text(text = birthDate, fontSize = 13.sp)
                         }
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -81,7 +106,7 @@ fun MyPageScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = stringResource(id = R.string.gender), fontSize = 13.sp )
-                            Text(text = stringResource(id = R.string.gender_value), fontSize = 13.sp)
+                            Text(text = stringResource(if (gender == "M")R.string.man else R.string.woman), fontSize = 13.sp)
                         }
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,7 +115,7 @@ fun MyPageScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = stringResource(id = R.string.height), fontSize = 13.sp )
-                            Text(text = stringResource(id = R.string.height_value), fontSize = 13.sp)
+                            Text(text = height, fontSize = 13.sp)
                         }
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -99,25 +124,7 @@ fun MyPageScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(text = stringResource(id = R.string.weight), fontSize = 13.sp )
-                            Text(text = stringResource(id = R.string.weight_value), fontSize = 13.sp)
-                        }
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = modifier.fillMaxWidth()
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = stringResource(id = R.string.connect_device), fontSize = 13.sp )
-                            Text(text = stringResource(id = R.string.connect_device_value), fontSize = 13.sp)
-                        }
-                        Button(
-                            onClick = {},
-                            modifier = modifier.fillMaxWidth(.5f)
-                                .height(30.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            colors = ButtonDefaults.buttonColors(darkNavyBlue)
-                        ) {
-                            Text(text = stringResource(R.string.device_change))
+                            Text(text = weight, fontSize = 13.sp)
                         }
                         Spacer(modifier = modifier.size(10.dp))
                     }

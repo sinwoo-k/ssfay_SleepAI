@@ -1,34 +1,43 @@
 package com.c208.sleephony.domain.sleep.service;
 
-import com.c208.sleephony.domain.sleep.dto.SleepPredictionResult;
-import com.c208.sleephony.domain.sleep.dto.request.BioDataRequest;
+import com.c208.sleephony.domain.sleep.dto.request.RawSequenceKafkaPayload;
+import com.c208.sleephony.domain.sleep.dto.request.RawSequenceRequest;
 import com.c208.sleephony.domain.sleep.dto.request.StatisticsRequest;
 import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.*;
-import com.c208.sleephony.domain.sleep.repository.BioRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepLevelRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepReportRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepStatisticRepository;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
 import com.c208.sleephony.global.exception.RedisOperationException;
-import com.c208.sleephony.global.exception.SleepPredictionException;
 import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
 import com.c208.sleephony.global.utils.AuthUtil;
 import com.c208.sleephony.global.utils.GptClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,198 +45,108 @@ import java.util.stream.IntStream;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class SleepService {
 
-    private final BioRepository bioRepository;
     private final SleepLevelRepository sleepLevelRepository;
     private final SleepReportRepository sleepReportRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final GptClient gptClient;
     private final UserRepository userRepository;
     private final SleepStatisticRepository sleepStatisticRepository;
-    private final WebClient fastApiWebClient;
+    private final KafkaTemplate<String, RawSequenceKafkaPayload> kafkaTemplate;
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> startTimeMap = new ConcurrentHashMap<>();
 
-    /**
-     * Fast API 모델에 생체 데이터를 전송해 <b>즉시</b> 수면 단계를 예측합니다.
-     *
-     * @param requestDto 센서 1 윈도우(5초) × N 의 원시 데이터
-     * @return 예측 결과(수면 단계·신뢰도·측정시각)
-     * @throws RuntimeException Fast API Timeout / 4xx/5xx 응답 시
-     */
-    public SleepPredictionResult analyzeSleepStageDirectly(BioDataRequest requestDto) {
-        return fastApiWebClient.post()
-                .uri("/api/ai/sleep-stage")
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(SleepPredictionResult.class)
-                .block(Duration.ofSeconds(5));  // 타임아웃 설정
-    }
-    /**
-     * 단말에서 1 초 주기로 올라온 센서 데이터를 저장 + <br>
-     * {@link #predictAndSaveAll(List)} 로 자체 룰 기반 예측 후
-     * <b>첫 윈도우 결과만</b> 반환합니다.
-     */
-    public SleepPredictionResult measureSleepStage(BioDataRequest requestDto) {
-        try {
-            LocalDateTime baseTime = LocalDateTime.parse(requestDto.getMeasuredAt());
-            Integer userId = AuthUtil.getLoginUserId();
+    @Value("${sleep.kafka.request-topic:sleep-raw-stage-request}")
+    private String requestTopic;
 
-            List<BioData> entities = requestDto.getData().stream()
-                    .map(dataPoint -> BioData.builder()
-                            .userId(userId)
-                            .heartRate(dataPoint.getHeartRate().byteValue())
-                            .gyroX(dataPoint.getGyroX())
-                            .gyroY(dataPoint.getGyroY())
-                            .gyroZ(dataPoint.getGyroZ())
-                            .bodyTemperature(dataPoint.getTemperature())
-                            .createdAt(LocalDateTime.now())
-                            .measuredAt(baseTime)
-                            .build())
-                    .toList();
-
-            bioRepository.saveAll(entities);
-
-            // 전체 예측 결과 리스트 중 첫 번째만 꺼내서 리턴
-            List<SleepPredictionResult> allResults = predictAndSaveAll(entities);
-            if (allResults.isEmpty()) {
-                throw new SleepPredictionException("예측 결과가 없습니다.");
-            }
-            return allResults.get(0);
-
-        } catch (Exception e) {
-            throw new SleepPredictionException("수면 단계 예측 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     *  30 개 Bio 데이터(≈ 30 초) 리스트 → 각 윈도우별 수면 단계 예측 &amp; 저장.
-     *
-     * @return 윈도우별 예측 결과 전체
-     */
-    public List<SleepPredictionResult> predictAndSaveAll(List<BioData> dataList) {
-        try {
-            List<SleepLevel> entities = new ArrayList<>();
-            List<SleepPredictionResult> results = new ArrayList<>();
-
-            for (BioData data : dataList) {
-                SleepPredictionResult result = predict(data);
-                entities.add(
-                        SleepLevel.builder()
-                                .userId(data.getUserId())
-                                .level(SleepStage.valueOf(result.getLevel()))
-                                .score(result.getScore())
-                                .measuredAt(data.getMeasuredAt())
-                                .createdAt(LocalDateTime.now())
-                                .build()
-                );
-                results.add(result);
-            }
-
-            sleepLevelRepository.saveAll(entities);
-            return results;
-        } catch (Exception e) {
-            throw new SleepPredictionException("수면 단계 저장 또는 예측 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     * 지정 구간(start~end)의 Bio 데이터를 30 초 윈도우로 슬라이딩하며
-     * <b>일괄 재예측</b> 합니다.
-     *
-     * @return 재예측된 Sleep Level 리스트
-     */
-    public List<SleepPredictionResult> predictFromBioDataByRange(
-            LocalDateTime startDateTime,
-            LocalDateTime endDateTime
-    ) {
+    public SseEmitter streamRawSleepStage(RawSequenceRequest req) {
+        String requestId = UUID.randomUUID().toString();
         Integer userId = AuthUtil.getLoginUserId();
-        // 1초 단위로 저장된 전체 리스트
-        List<BioData> dataList =
-                bioRepository.findByUserIdAndMeasuredAtBetween(userId, startDateTime, endDateTime);
+        log.info("[Request Data Sizes] userId={}, requestId={}, accX_size={}, accY_size={}, accZ_size={}, temp_size={}, hr_size={}",
+                userId, requestId,
+                req.getAccX().size(),
+                req.getAccY().size(),
+                req.getAccZ().size(),
+                req.getTemp().size(),
+                req.getHr().size());
+        SseEmitter emitter = new SseEmitter(TimeUnit.SECONDS.toMillis(60));
+        emitter.onCompletion(() -> emitters.remove(requestId));
+        emitter.onTimeout(()    -> emitters.remove(requestId));
+        emitters.put(requestId, emitter);
 
-        if (dataList.isEmpty()) {
-            return Collections.emptyList();
-        }
+        startTimeMap.put(requestId, req.getMeasuredAt());
+        List<Float> hrFixed = forwardFillZerosHr(req.getHr());   // ← HR만 보정
 
-        // epoch 초로 변환 (UTC 기준)
-        long startEpoch = startDateTime.toEpochSecond(ZoneOffset.UTC);
-        long endEpoch   = endDateTime.toEpochSecond(ZoneOffset.UTC);
-        final int WINDOW = 30; // 초 단위
+        RawSequenceKafkaPayload payload = new RawSequenceKafkaPayload(
+                req.getAccX(), req.getAccY(), req.getAccZ(),
+                req.getTemp(), hrFixed);
+        // 보정된 HR 데이터도 로깅
+        log.info("[HR Fixed] userId={}, requestId={}, hr_fixed_size={}, zeros_replaced={}, hr_fixed_values={}",
+                userId, requestId, hrFixed.size(),
+                req.getHr().stream().filter(hr -> hr == 0.0f).count(),
+                hrFixed.subList(0, Math.min(10, hrFixed.size())) + "...");
+        ProducerRecord<String, RawSequenceKafkaPayload> record =
+                new ProducerRecord<>(requestTopic, String.valueOf(userId), payload);
 
-        List<SleepLevel> entities = new ArrayList<>();
-        List<SleepPredictionResult> results = new ArrayList<>();
-
-        // startEpoch 부터 endEpoch 까지 WINDOW 간격으로 순회
-        for (long windowStart = startEpoch;
-             windowStart + WINDOW <= endEpoch;
-             windowStart += WINDOW) {
-
-            long windowEnd = windowStart + WINDOW;
-
-            // 각 윈도우에 속하는 30개의 데이터만 필터링
-            long finalWindowStart = windowStart;
-            List<BioData> windowData = dataList.stream()
-                    .filter(d -> {
-                        long epoch = d.getMeasuredAt().toEpochSecond(ZoneOffset.UTC);
-                        return epoch >= finalWindowStart && epoch < windowEnd;
-                    })
-                    .toList();
-
-            if (windowData.isEmpty()) {
-                continue;
-            }
-
-            // 윈도우 내 평균값 계산
-            double avgHeartRate = windowData.stream()
-                    .mapToInt(BioData::getHeartRate)
-                    .average().orElse(0);
-
-            double avgGyroX = windowData.stream()
-                    .mapToDouble(BioData::getGyroX)
-                    .average().orElse(0);
-            double avgGyroY = windowData.stream()
-                    .mapToDouble(BioData::getGyroY)
-                    .average().orElse(0);
-            double avgGyroZ = windowData.stream()
-                    .mapToDouble(BioData::getGyroZ)
-                    .average().orElse(0);
-
-            double avgTemp = windowData.stream()
-                    .mapToDouble(BioData::getBodyTemperature)
-                    .average().orElse(0);
-
-            // 평균값을 가지는 임시 BioData 객체 생성
-            BioData aggregated = new BioData();
-            aggregated.setUserId(userId);
-            aggregated.setMeasuredAt(
-                    LocalDateTime.ofEpochSecond(windowStart, 0, ZoneOffset.UTC)
-            );
-            aggregated.setHeartRate((byte) Math.round(avgHeartRate));
-            aggregated.setGyroX((float)avgGyroX);
-            aggregated.setGyroY((float)avgGyroY);
-            aggregated.setGyroZ((float)avgGyroZ);
-            aggregated.setBodyTemperature((float)avgTemp);
-
-            // 예측 수행
-            SleepPredictionResult result = predict(aggregated);
-
-            // 엔티티로 변환
-            entities.add(
-                    SleepLevel.builder()
-                            .userId(userId)
-                            .level(SleepStage.valueOf(result.getLevel()))
-                            .score(result.getScore())
-                            .measuredAt(aggregated.getMeasuredAt())
-                            .createdAt(LocalDateTime.now())
-                            .build()
-            );
-            results.add(result);
-        }
-
-        // 한 번에 저장
-        sleepLevelRepository.saveAll(entities);
-        return results;
+        // 필수 헤더 추가
+        record.headers()
+                .add(new RecordHeader("requestId", requestId.getBytes(StandardCharsets.UTF_8)))
+                .add(new RecordHeader("userId",    String.valueOf(userId).getBytes(StandardCharsets.UTF_8)));
+        kafkaTemplate.send(record);
+        return emitter;
     }
+
+    /**
+     * Kafka 응답 토픽 수신 → 해당 requestId의 Emitter로 전송 → complete()
+     */
+    @KafkaListener(
+            topics = "${sleep.kafka.response-topic}",
+            containerFactory = "rawKafkaListenerContainerFactory"
+    )
+    public void onSleepStageResponse(
+            ConsumerRecord<String, RawSequenceResponse> record,
+            @Header("requestId") String requestId,
+            @Header("userId")    String userIdStr
+    ) {
+        Integer userId = Integer.parseInt(userIdStr);
+        LocalDateTime clientMeasuredAt = startTimeMap.remove(requestId);
+
+        RawSequenceResponse res = record.value();
+
+        String rawLabel = res.getLabels().isEmpty()
+                ? "W"                // 못 받으면 AWAKE 취급
+                : res.getLabels().get(res.getLabels().size() - 1);
+
+        SleepStage stage = STAGE_MAP.getOrDefault(rawLabel, SleepStage.AWAKE);
+
+        SleepLevel entity = SleepLevel.builder()
+                .userId(userId)
+                .level(stage)
+                .measuredAt(clientMeasuredAt)
+                .createdAt(LocalDateTime.now())
+                .build();
+        sleepLevelRepository.save(entity);
+        log.info("[Kafka] user {} – level {} @ {} saved",
+                userId, res.getLabels(), clientMeasuredAt);
+
+        SseEmitter emitter = emitters.remove(requestId);
+        if (emitter != null) {
+            try {
+                emitter.send(SseEmitter.event()
+                        .id(requestId)
+                        .name("sleepStage")
+                        .data(stage));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        }
+    }
+
+
+
 
     /**
      * 측정 시작 시각을 24h TTL 로 Redis(`sleep:start:{userId}`)에 기록합니다.
@@ -349,21 +268,106 @@ public class SleepService {
      * 일자별 수면 단계 그래프용 원본 점(TimePoint)을 반환합니다.
      */
     public List<SleepGraphPoint> getSleepGraphPoints(LocalDate date) {
-        Integer userId = AuthUtil.getLoginUserId();
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.atTime(23, 59, 59);
 
-        List<SleepLevel> levels = sleepLevelRepository.findByUserIdAndMeasuredAtBetween(userId, start, end);
+        Integer userId      = AuthUtil.getLoginUserId();
+        LocalDateTime begin = date.atStartOfDay();          // 00:00:00(포함)
+        LocalDateTime end   = date.plusDays(1).atStartOfDay(); // 다음 날 00:00:00(제외)
 
-        return levels.stream()
-                .map(level -> SleepGraphPoint.builder()
-                        .measuredAt(level.getMeasuredAt())
-                        .level(level.getLevel())
-                        .score(level.getScore())
-                        .build())
-                .toList();
+        List<SleepLevel> stored = sleepLevelRepository
+                .findByUserIdAndMeasuredAtBetween(userId, begin, end.minusSeconds(1));
+
+        Map<LocalDateTime, SleepStage> map = stored.stream()
+                .collect(Collectors.toMap(SleepLevel::getMeasuredAt, SleepLevel::getLevel));
+
+        List<SleepGraphPoint> result = new ArrayList<>(2880);
+
+        for (LocalDateTime t = begin; t.isBefore(end); t = t.plusSeconds(30)) {
+            SleepStage stage = map.getOrDefault(t, SleepStage.AWAKE);
+            result.add(SleepGraphPoint.builder()
+                    .measuredAt(t)
+                    .level(stage)
+                    .build());
+        }
+        return result;
     }
 
+    public DetailedSleepReportResponse getDetailedReport(LocalDate date) {
+
+        Integer userId = AuthUtil.getLoginUserId();
+
+        /* ── 1) 오늘 리포트 ─────────────────────────────────── */
+        SleepReport report = sleepReportRepository
+                .findFirstByUserIdAndSleepTimeBetween(
+                        userId,
+                        date.atStartOfDay(),
+                        date.plusDays(1).atStartOfDay())
+                .orElseThrow(() ->
+                        new SleepReportNotFoundException("해당 날짜 리포트가 없습니다."));
+
+        /* ── 2) 내 연령·성별 평균치 ─────────────────────────── */
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        String ageGroup = AuthUtil.toAgeGroup(
+                AuthUtil.getLoginUserAge(user.getBirthDate()));
+        SleepStatistics.Gender gender =
+                SleepStatistics.Gender.valueOf(user.getGender());
+
+        SleepStatistics stat = sleepStatisticRepository
+                .findFirstByAgeGroupAndGender(ageGroup, gender);
+
+        SleepStatBenchmark bench = SleepStatBenchmark.builder()
+                .avgTotalSleepMinutes(stat != null ? stat.getSleepDurationMinutes() : 0)
+                .avgDeepSleepMinutes (stat != null ? stat.getDeepSleepMinutes()    : 0)
+                .avgRemSleepMinutes  (stat != null ? stat.getRemSleepMinutes()     : 0)
+                .build();
+
+        /* 3) 파생 지표 -------------------------------------------------- */
+        int totalMinutes = report.getDeepTime()
+                + report.getNremTime()
+                + report.getRemTime();
+
+        int latencyMin = (int) Duration.between(
+                report.getSleepTime(), report.getRealSleepTime()).toMinutes();
+
+        /* 4) 점수 → 타이틀/설명 매핑 ------------------------------------ */
+        int score = report.getSleepScore();
+        String title, desc;
+        if (score >= 85) {
+            title = "회복의 잠";
+            desc  = "깊은 수면과 렘수면이 이상적인 비율로 나타났어요. "
+                    + "몸과 마음이 완전히 재충전된 최고의 수면입니다!";
+        }
+        else if (score >= 70) {
+            title = "스트레스 해소의 잠";
+            desc  = "렘수면 비율이 높아 두뇌 회복과 창의력 향상에 도움이 된 수면이에요. "
+                    + "오늘 하루도 가벼운 마음으로 시작해 보세요!";
+        }
+        else if (score >= 55) {
+            title = "조금 아쉬운 잠";
+            desc  = "얕은 수면이 길어 깊은 회복이 부족했어요. "
+                    + "취침 시간·환경을 조정해 깊은 수면을 늘려보세요.";
+        }
+        else {
+            title = "뒤척인 잠";
+            desc  = "깨어 있는 시간이 많아 수면 효율이 크게 떨어졌습니다. "
+                    + "규칙적인 생활과 이완 루틴으로 숙면을 준비해 보세요.";
+        }
+
+        /* ── 5) DTO 빌드 & 반환 ─────────────────────────────── */
+        return DetailedSleepReportResponse.builder()
+                .sleepScore(score)
+                .title(title)
+                .description(desc)
+                .sleepStart(report.getSleepTime())
+                .sleepEnd(report.getSleepWakeTime())
+                .totalSleepMinutes(totalMinutes)
+                .sleepLatencyMinutes(latencyMin)
+                .deepSleepMinutes(report.getDeepTime())
+                .remSleepMinutes(report.getRemTime())
+                .statistics(bench)
+                .build();
+    }
     /**
      * GPT 모델에 오늘 리포트를 보내 500자 이상 코칭 문구를 받아옵니다.
      *  – 하루 1 회 캐싱(Redis key : sleep:advice:{user}:{date})
@@ -438,6 +442,23 @@ public class SleepService {
         StatisticsRequest prevReq = new StatisticsRequest(prevStartDate, prevEndDate, req.getPeriodType());
         List<SleepReport> previousReports = fetchReports(userId, prevReq);
 
+        // LocalTime만 추출하여 평균 (결측치: getSleepWakeTime() == null 제거)
+        List<LocalTime> wakeTimes = currentReports.stream()
+                .map(SleepReport::getSleepWakeTime)
+                .filter(Objects::nonNull)
+                .map(LocalDateTime::toLocalTime)
+                .toList();
+
+        // 평균 시간 계산
+        int wakeCount = wakeTimes.size();
+        int totalWakeMinutes = wakeTimes.stream()
+                .mapToInt(t -> t.getHour() * 60 + t.getMinute())
+                .sum();
+
+        String avgWakeTime = wakeCount == 0
+                ? null
+                : String.format("%02d:%02d", (totalWakeMinutes / wakeCount) / 60, (totalWakeMinutes / wakeCount) % 60);
+
         long prevDaysWithReport = previousReports.stream()
                 .map(r -> r.getSleepTime().toLocalDate())
                 .distinct()
@@ -479,6 +500,18 @@ public class SleepService {
         int avgDeep      = (int)(sumDeep    / daysWithReport);
         int avgAwake     = (int)(sumAwake   / daysWithReport);
         int avgCycles    = (int)(sumCycles  / daysWithReport);
+        // 날짜별 총 수면시간(분) 계산
+        Map<LocalDate, Long> sleepByDate = currentReports.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getSleepTime().toLocalDate(),
+                        Collectors.summingLong(r ->
+                                Duration.between(r.getSleepTime(), r.getSleepWakeTime()).toMinutes()
+                        )
+                ));
+
+        // 최장/최단 수면 시간(분) 추출
+        long maxMinutes = sleepByDate.values().stream().mapToLong(Long::longValue).max().orElse(0L);
+        long minMinutes = sleepByDate.values().stream().mapToLong(Long::longValue).min().orElse(0L);
 
         return SummaryResponse.builder()
                 .period(formatPeriod(req.getStartDate(), req.getEndDate()))
@@ -495,6 +528,9 @@ public class SleepService {
                 .averageAwakeMinutes(avgAwake)
                 .averageAwakePercentage((int)percentage(avgAwake, avgTime))
                 .averageSleepCycleCount(avgCycles)
+                .averageWakeUpTime(avgWakeTime)
+                .mostSleepTimeMinutes((int) maxMinutes)
+                .leastSleepTimeMinutes((int) minMinutes)
                 .build();
     }
     /**
@@ -583,36 +619,6 @@ public class SleepService {
         return sleepReportRepository.findByUserIdAndSleepTimeBetween(userId, startDate, endDate);
     }
 
-    private SleepPredictionResult predict(BioData data) {
-        double gyroMagnitude = Math.sqrt(
-                Math.pow(data.getGyroX(), 2) +
-                        Math.pow(data.getGyroY(), 2) +
-                        Math.pow(data.getGyroZ(), 2)
-        );
-
-        String level;
-        int score;
-
-        if (gyroMagnitude > 4.0) {
-            level = "AWAKE";
-            score = random(5, 20);
-        } else if (data.getHeartRate() < 60 && data.getBodyTemperature() < 36.0) {
-            level = "NREM3";
-            score = random(90, 100);
-        } else if (data.getHeartRate() < 70) {
-            level = "NREM2";
-            score = random(70, 90);
-        } else {
-            level = "REM";
-            score = random(60, 80);
-        }
-
-        return new SleepPredictionResult(level, score, data.getMeasuredAt());
-    }
-
-    private int random(int min, int max) {
-        return new Random().nextInt(max - min + 1) + min;
-    }
 
     private int toMinutes(LocalDateTime from, LocalDateTime to) {
         return (int) java.time.Duration.between(from, to).toMinutes();
@@ -642,15 +648,14 @@ public class SleepService {
 
         // 3) 평균으로 변환
         return allLabels.stream()
-                .filter(buckets::containsKey)  // 결측 레이블(리포트 없는 주/월/년)은 건너뜀
                 .map(label -> {
                     List<Integer> vals = buckets.get(label);
-                    int avg = (int) Math.round(
-                            vals.stream()
-                                    .mapToInt(Integer::intValue)
-                                    .average()
-                                    .orElse(0.0)
-                    );
+                    int avg = (vals == null || vals.isEmpty())
+                            ? 0
+                            : (int) Math.round(vals.stream()
+                            .mapToInt(Integer::intValue)
+                            .average()
+                            .orElse(0.0));
                     return new GraphResponse.TimePoint(label, avg);
                 })
                 .toList();
@@ -684,4 +689,50 @@ public class SleepService {
         return (int) Math.round(part / total * 100);
     }
 
+    private static final Map<String, SleepStage> STAGE_MAP = Map.of(
+            "W",  SleepStage.AWAKE,
+            "R",  SleepStage.REM,
+            "N1", SleepStage.NREM1,
+            "N2", SleepStage.NREM2,
+            "N3", SleepStage.NREM3
+    );
+    public static List<Float> forwardFillZerosHr(List<Float> hr) {
+        int n = hr.size();
+        List<Float> filled = new ArrayList<>(n);
+        Float last = null;
+
+        /* 1차 : forward-fill (앞 값 복사) */
+        for (Float v : hr) {
+            if (v != null && v != 0f) {
+                last = v;
+                filled.add(v);
+            } else {
+                filled.add(last);           // last 가 null 일 수도!
+            }
+        }
+
+        /* 2차 : back-fill (맨 첫 구간이 null 이면 뒷 값으로) */
+        if (filled.get(0) == null) {
+            // 뒤에서 첫 정상값 찾기
+            Float next = null;
+            for (Float v : filled) {
+                if (v != null) { next = v; break; }
+            }
+            if (next == null) {
+                throw new IllegalArgumentException("HR list is all zeros/nulls");
+            }
+            for (int i = 0; i < n && filled.get(i) == null; i++) {
+                filled.set(i, next);
+            }
+        }
+
+        /* null 은 더 이상 없음 → 0 으로 남겨둘지 NaN 으로 바꿀지 선택 */
+        for (int i = 0; i < n; i++) {
+            if (filled.get(i) == null) {
+                // 실무에서는 0f 보다는 NaN 이 후단 처리에 안전
+                filled.set(i, Float.NaN);
+            }
+        }
+        return filled;
+    }
 }

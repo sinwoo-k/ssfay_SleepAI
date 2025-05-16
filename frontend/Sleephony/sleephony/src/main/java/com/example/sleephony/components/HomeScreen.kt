@@ -15,6 +15,7 @@ import com.example.sleephony.components.mypage.MyPageScreen
 import com.example.sleephony.presentation.components.alarm.AlarmScreen
 import com.example.sleephony.presentation.components.hitory.HistoryScreen
 import com.example.sleephony.presentation.components.step.StepIndicator
+import com.example.sleephony.viewmodel.AlarmViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
@@ -23,7 +24,8 @@ import com.google.accompanist.pager.rememberPagerState
 @Composable
 fun HomeScreen(
     modifier: Modifier,
-    navController: NavController
+    navController: NavController,
+    viewModel: AlarmViewModel
 ) {
     val pageState = rememberPagerState()
     val stepNum = remember { mutableStateOf(1) }
@@ -43,7 +45,7 @@ fun HomeScreen(
                 modifier = modifier.fillMaxSize()
             ) { page ->
                 when(page) {
-                    0 -> AlarmScreen(modifier = modifier, navController = navController)
+                    0 -> AlarmScreen(modifier = modifier, navController = navController, viewModel = viewModel)
                     1 -> HistoryScreen(modifier = modifier, navController = navController)
                     2 -> MyPageScreen(modifier = modifier, navController = navController)
                 }

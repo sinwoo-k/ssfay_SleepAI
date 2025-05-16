@@ -39,6 +39,9 @@ fun SleepTimeDetailScreen(
     val mySleepTimeAverage = statisticSummary?.averageSleepTimeMinutes?.toInt() ?: 0
     val otherSleepTimeAverage = statisticComparisonSummary[0]?.sleepDurationMinutes?.toInt() ?: 0
     val averageDifference = if (mySleepTimeAverage> otherSleepTimeAverage) true else false
+    val preSleep = statisticSummary?.previousAverageSleepTimeMinutes?.toInt() ?: 0
+    val mostSleep = statisticSummary?.mostSleepTimeMinutes?.toInt() ?: 0
+    val least = statisticSummary?.leastSleepTimeMinutes?.toInt() ?: 0
 
 
     LazyColumn(
@@ -65,30 +68,30 @@ fun SleepTimeDetailScreen(
                     title = {
                         White_text("${other} 평균 수면시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepTimeAverage)}", white_text ="보다" )
-                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepTimeAverage - otherSleepTimeAverage)}분", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
+                        Comparison_text(blue_text = "평균 ${SummarTime(Math.abs(mySleepTimeAverage - otherSleepTimeAverage))}", white_text = if (averageDifference) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="저번주",
-                    before_value= 648f,
+                    before_value= preSleep.toFloat(),
                     after_name = "이번주",
-                    after_value = 703f,
+                    after_value = mySleepTimeAverage.toFloat(),
                     title = {
                         White_text("지난주보다")
-                        Blue_text("15분 더")
-                        White_text("꿀잠을 유지하셨어요")
+                        Blue_text("${SummarTime(Math.abs(mySleepTimeAverage - preSleep))} 더")
+                        White_text(if (mySleepTimeAverage > preSleep)"꿀잠을 유지하셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(
                     modifier = modifier,
                     before_name="최단 수면",
-                    before_value= 603f,
+                    before_value= least.toFloat(),
                     after_name = "최장 수면",
-                    after_value = 803f,
+                    after_value = mostSleep.toFloat(),
                     title = {
                         White_text("가장 많이 잔날과 적게 잔날은")
-                        Comparison_text(blue_text = "2시간", white_text = "차이나요")
+                        Comparison_text(blue_text = "${SummarTime(Math.abs(mostSleep - least))}", white_text = "차이나요")
                     }
                 )
             }
@@ -163,8 +166,7 @@ fun Comparison_text(
 
 fun SummarTime(value: Int): String {
     if (value == 0) return "0분"
-    val hour = value / 60
-    val min = value % 60
-
+    val hour = value / 100
+    val min = value % 100
     return if (hour != 0) "${hour}시간 ${min}분" else "${min}분"
-}
+    }

@@ -57,7 +57,7 @@ fun SleepLightDetailScreen(
                     title = {
                         White_text("${other} 평균 얕은 수면 시간")
                         Comparison_text(blue_text = "${SummarTime(otherSleepLightAverage)}", white_text = "보다")
-                        Comparison_text(blue_text = "평균 ${Math.abs(mySleepLightAverage - otherSleepLightAverage)}분", white_text = if (mySleepLightAverage > otherSleepLightAverage) "더 주무셨어요" else "덜 주무셨어요")
+                        Comparison_text(blue_text = "평균 ${SummarTime(Math.abs(mySleepLightAverage - otherSleepLightAverage))}", white_text = if (mySleepLightAverage > otherSleepLightAverage) "더 주무셨어요" else "덜 주무셨어요")
                     }
                 )
                 ComparisonChart(

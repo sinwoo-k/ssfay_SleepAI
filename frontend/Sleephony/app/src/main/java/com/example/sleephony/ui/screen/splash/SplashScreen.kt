@@ -1,7 +1,9 @@
 package com.example.sleephony.ui.screen.splash
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,13 +38,25 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.sleephony.R
+import com.example.sleephony.data.datasource.local.UserLocalDataSource
 import com.example.sleephony.ui.common.animation.ShootingStar
+import com.example.sleephony.ui.screen.auth.ProfileViewModel
+import com.example.sleephony.ui.screen.statistics.components.detail.SummarTime
+import com.example.sleephony.ui.screen.statistics.viewmodel.StatisticsViewModel
+import com.example.sleephony.utils.WearMessageUtils
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
 
 @Composable
 fun SplashScreen(
     navController: NavHostController,
-    viewModel: SplashViewModel = hiltViewModel()
+    viewModel: SplashViewModel = hiltViewModel(),
+    statisticsViewModel: StatisticsViewModel
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -62,6 +76,50 @@ fun SplashScreen(
             activity?.finishAffinity()
         }
     }
+
+    val weekStartState = statisticsViewModel.selectedWeek
+    val weekEnd = weekStartState.plusDays(6)
+
+    LaunchedEffect(Unit) {
+        statisticsViewModel.loadStatistics(
+            startDate = weekStartState.toString(),
+            endDate = weekEnd.toString(),
+            periodType = "WEEK"
+        )
+    }
+
+    val statistics = statisticsViewModel.statistics.collectAsState().value
+    statistics?.sleepTime
+    val profile = remember {
+        UserLocalDataSource(context).getProfile()
+    }
+    LaunchedEffect(profile,statistics) {
+        profile?.let {
+            WearMessageUtils.SendMessage(
+                context = context,
+                mode = "profile",
+                data = mapOf(
+                    "email" to it.email,
+                    "height" to it.height.toString(),
+                    "gender" to it.gender,
+                    "weight" to it.weight.toString(),
+                    "nickname" to it.nickname,
+                    "birthDate" to it.birthDate
+                ),
+            )
+        }
+        statistics?.sleepTime?.forEach {
+            WearMessageUtils.SendMessage(
+                context = context,
+                mode = "history",
+                data = mapOf(
+                    "label" to it.label,
+                    "value" to SummarTime(it.value.toInt())
+                )
+            )
+        }
+    }
+
 
     LaunchedEffect(isLoggedIn, notificationsEnabled, hasRequestedPermission) {
         if (isLoggedIn != null) {
@@ -161,4 +219,3 @@ fun SplashScreen(
         }
     }
 }
-
