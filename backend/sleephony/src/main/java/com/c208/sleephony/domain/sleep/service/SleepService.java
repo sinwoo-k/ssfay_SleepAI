@@ -59,6 +59,10 @@ public class SleepService {
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Map<String, LocalDateTime> startTimeMap = new ConcurrentHashMap<>();
 
+    private static final int EPOCH_SECONDS = 150;  // 2분 30초
+    private static final int MIN_REQUIRED_WINDOWS =
+            (int) (Duration.ofHours(2).getSeconds() / EPOCH_SECONDS);  // 7200/150 = 48
+
     @Value("${sleep.kafka.request-topic:sleep-raw-stage-request}")
     private String requestTopic;
     /**
@@ -199,7 +203,7 @@ public class SleepService {
         long levelCount = sleepLevelRepository
                 .countByUserIdAndMeasuredAtBetween(userId, dayStart, dayEnd);
 
-        if (levelCount < 240) {
+        if (levelCount < MIN_REQUIRED_WINDOWS) {
             throw BusinessException.insufficientData();
         }
         // 30초 윈도우 단위로 저장된 SleepLevel 조회
@@ -226,10 +230,10 @@ public class SleepService {
         }
 
         int nremCount = n1Count + n2Count;
-        int awakeMin = Math.toIntExact(Math.round(awakeCount*30/60.0));
-        int remMin   = Math.toIntExact(Math.round(remCount*30/60.0));
-        int nremMin  = Math.toIntExact(Math.round(nremCount*30/60.0));
-        int deepMin  = Math.toIntExact(Math.round(n3Count*30/60.0));
+        int awakeMin = Math.toIntExact(Math.round(awakeCount * EPOCH_SECONDS / 60.0));
+        int remMin   = Math.toIntExact(Math.round(remCount   * EPOCH_SECONDS / 60.0));
+        int nremMin  = Math.toIntExact(Math.round(nremCount  * EPOCH_SECONDS / 60.0));
+        int deepMin  = Math.toIntExact(Math.round(n3Count    * EPOCH_SECONDS / 60.0));
         int totalMin = (int) Duration.between(startedAt, endedAt).toMinutes();
         int cycles   = Math.max(1, totalMin/90);
         int score    = Math.max(1, Math.min(
@@ -242,7 +246,7 @@ public class SleepService {
                 .findFirstByUserIdAndSleepTimeBetween(userId, dayStart, dayEnd);
         SleepReport report = opt.orElseGet(() -> SleepReport.builder()
                 .userId(userId)
-                .sleepTime(dayStart)
+                .sleepTime(startedAt)
                 .build());
         // SleepReport 빌드
         report.setRealSleepTime(realSleep);
