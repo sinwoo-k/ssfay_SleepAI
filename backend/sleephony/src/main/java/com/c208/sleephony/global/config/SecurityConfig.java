@@ -39,13 +39,15 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/.env*"),
                                 new AntPathRequestMatcher("/**/*.yml"),
                                 new AntPathRequestMatcher("/**/*.properties")
-                        ).denyAll()                        .requestMatchers(
+                        ).denyAll()
+                        .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/api/auth/login-google",
                                 "/api/auth/login-kakao",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/api/sleep/stage/raw"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -64,7 +64,13 @@ public class SleepService {
     public SseEmitter streamRawSleepStage(RawSequenceRequest req) {
         String requestId = UUID.randomUUID().toString();
         Integer userId = AuthUtil.getLoginUserId();
-
+        log.info("[Request Data Sizes] userId={}, requestId={}, accX_size={}, accY_size={}, accZ_size={}, temp_size={}, hr_size={}",
+                userId, requestId,
+                req.getAccX().size(),
+                req.getAccY().size(),
+                req.getAccZ().size(),
+                req.getTemp().size(),
+                req.getHr().size());
         SseEmitter emitter = new SseEmitter(TimeUnit.SECONDS.toMillis(60));
         emitter.onCompletion(() -> emitters.remove(requestId));
         emitter.onTimeout(()    -> emitters.remove(requestId));
@@ -76,7 +82,11 @@ public class SleepService {
         RawSequenceKafkaPayload payload = new RawSequenceKafkaPayload(
                 req.getAccX(), req.getAccY(), req.getAccZ(),
                 req.getTemp(), hrFixed);
-
+        // 보정된 HR 데이터도 로깅
+        log.info("[HR Fixed] userId={}, requestId={}, hr_fixed_size={}, zeros_replaced={}, hr_fixed_values={}",
+                userId, requestId, hrFixed.size(),
+                req.getHr().stream().filter(hr -> hr == 0.0f).count(),
+                hrFixed.subList(0, Math.min(10, hrFixed.size())) + "...");
         ProducerRecord<String, RawSequenceKafkaPayload> record =
                 new ProducerRecord<>(requestTopic, String.valueOf(userId), payload);
 
@@ -686,18 +696,43 @@ public class SleepService {
             "N2", SleepStage.NREM2,
             "N3", SleepStage.NREM3
     );
-    private static List<Float> forwardFillZerosHr(List<Float> hr) {
-        List<Float> result = new ArrayList<>(hr.size());
+    public static List<Float> forwardFillZerosHr(List<Float> hr) {
+        int n = hr.size();
+        List<Float> filled = new ArrayList<>(n);
         Float last = null;
 
+        /* 1차 : forward-fill (앞 값 복사) */
         for (Float v : hr) {
-            if (v != null && v != 0f) {   // 정상 HR
+            if (v != null && v != 0f) {
                 last = v;
-                result.add(v);
-            } else {                      // 0 또는 null → 직전 값 사용
-                result.add(last);
+                filled.add(v);
+            } else {
+                filled.add(last);           // last 가 null 일 수도!
             }
         }
-        return result;
+
+        /* 2차 : back-fill (맨 첫 구간이 null 이면 뒷 값으로) */
+        if (filled.get(0) == null) {
+            // 뒤에서 첫 정상값 찾기
+            Float next = null;
+            for (Float v : filled) {
+                if (v != null) { next = v; break; }
+            }
+            if (next == null) {
+                throw new IllegalArgumentException("HR list is all zeros/nulls");
+            }
+            for (int i = 0; i < n && filled.get(i) == null; i++) {
+                filled.set(i, next);
+            }
+        }
+
+        /* null 은 더 이상 없음 → 0 으로 남겨둘지 NaN 으로 바꿀지 선택 */
+        for (int i = 0; i < n; i++) {
+            if (filled.get(i) == null) {
+                // 실무에서는 0f 보다는 NaN 이 후단 처리에 안전
+                filled.set(i, Float.NaN);
+            }
+        }
+        return filled;
     }
 }
