@@ -266,11 +266,13 @@ public class SleepService {
      */
     public SleepReportWithPrevious getReportByDate(LocalDate date) {
         Integer userId = AuthUtil.getLoginUserId();
-        LocalDateTime todayFrom = date.atStartOfDay();
-        LocalDateTime todayTo = date.plusDays(1).atStartOfDay();
 
-        LocalDateTime prevFrom = date.minusDays(1).atStartOfDay();
-        LocalDateTime prevTo   = date.atStartOfDay();
+        LocalDateTime todayFrom = date.minusDays(1).atTime(12, 0);
+        LocalDateTime todayTo   = date.atTime(12, 0);
+
+        // 전일(이전 리포트) 역시 전전날 12:00 ~ 전날 12:00
+        LocalDateTime prevFrom = date.minusDays(2).atTime(12, 0);
+        LocalDateTime prevTo   = date.minusDays(1).atTime(12, 0);
 
         SleepReport todayReport = sleepReportRepository
                 .findFirstByUserIdAndSleepTimeBetween(userId, todayFrom, todayTo)
@@ -295,8 +297,9 @@ public class SleepService {
      */
     public List<SleepGraphPoint> getSleepGraphPoints(LocalDate date) {
         Integer userId      = AuthUtil.getLoginUserId();
-        LocalDateTime begin = date.atStartOfDay();
-        LocalDateTime end   = date.plusDays(1).atStartOfDay().minusSeconds(1);
+        LocalDateTime begin = date.minusDays(1).atTime(12, 0);
+        LocalDateTime end   = date.atTime(12, 0);
+
 
         // 1) DB에 저장된 SleepLevel 리스트만 가져옴
         List<SleepLevel> stored = sleepLevelRepository
@@ -325,12 +328,13 @@ public class SleepService {
 
         Integer userId = AuthUtil.getLoginUserId();
 
+        LocalDateTime begin = date.minusDays(1).atTime(12, 0);
+        LocalDateTime end   = date.atTime(12, 0);
+
         /* ── 1) 오늘 리포트 ─────────────────────────────────── */
         SleepReport report = sleepReportRepository
                 .findFirstByUserIdAndSleepTimeBetween(
-                        userId,
-                        date.atStartOfDay(),
-                        date.plusDays(1).atStartOfDay())
+                        userId, begin, end)
                 .orElseThrow(() ->
                         new SleepReportNotFoundException("해당 날짜 리포트가 없습니다."));
 
