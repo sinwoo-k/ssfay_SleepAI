@@ -87,7 +87,6 @@ class SleepMeasurementService : Service() {
     // 사운드 경로 얻는 함수
     private fun getSoundFilePath(themeId: Int, soundId: Int): String {
         val soundDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-        Log.d("DBG", "$soundDir")
         return "${soundDir?.absolutePath}/theme_${themeId}/sound_${soundId}.mp3"
     }
 
@@ -202,8 +201,6 @@ class SleepMeasurementService : Service() {
         serviceScope.launch {
             initializeSoundMap()
 
-
-            Log.d("DBG", "$soundMap")
             // 처음엔 AWAKE로 재생
             playSoundForSleepStage("AWAKE")
             while (isActive) {
@@ -238,12 +235,27 @@ class SleepMeasurementService : Service() {
             mediaPlayer = MediaPlayer()
         }
 
+        // 볼륨 크기
+        fun volumeFor(stage: String): Float = when (stage) {
+            "AWAKE" -> 1.0f   // 깨어있을 땐 최대
+            "NREM1" -> 0.5f   // 살짝 낮춤
+            "NREM2" -> 0.3f   // 절반 정도
+            "REM"   -> 0.1f   // 매우 작게
+            else    -> 1.0f
+        }
+
         try {
             mediaPlayer.setDataSource(soundPath)
             mediaPlayer.prepare()
+
+            // 사운드 조절
+            val vol = volumeFor(stage)
+            Log.d("SOUND", "$vol")
+            mediaPlayer.setVolume(vol, vol)
+            // 반복 재생
             mediaPlayer.isLooping = true
             mediaPlayer.start()
-            Log.d("DBG", "사운드 재생 중:$stage - $soundPath")
+            Log.d("SOUND", "사운드 재생 중:$stage - $soundPath")
         } catch (e: Exception) {
             Log.e("ERR", "재생 중 오류", e)
         }
@@ -277,6 +289,15 @@ class SleepMeasurementService : Service() {
         )
         if (accX.size == 600) {
             Log.d("DBG", "데이터 전송")
+
+            withContext(Dispatchers.IO) {
+                var json = Gson().toJson(req)
+
+                val fileName = "sleep_req+${System.currentTimeMillis()}.txt"
+                val file = File(applicationContext.filesDir, fileName)
+
+                file.writeText(json)
+            }
             sseClient.connect(req)
 
         }
