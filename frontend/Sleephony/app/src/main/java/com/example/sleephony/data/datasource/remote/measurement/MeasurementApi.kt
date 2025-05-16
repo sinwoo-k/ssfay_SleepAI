@@ -2,10 +2,11 @@ package com.example.sleephony.data.datasource.remote.measurement
 
 import com.example.sleephony.data.model.ApiResponse
 import com.example.sleephony.data.model.measurement.SleepBioDataRequest
-import com.example.sleephony.data.model.measurement.SleepBioDataResult
 import com.example.sleephony.data.model.measurement.SleepEndMeasurementRequest
 import com.example.sleephony.data.model.measurement.SleepEndMeasurementResult
 import com.example.sleephony.data.model.measurement.SleepStartMeasurementRequest
+import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -26,9 +27,9 @@ interface MeasurementApi {
     ) : ApiResponse<SleepEndMeasurementResult>
 
     // 수면 측정 단계
-    @POST("sleep/bio-data")
+    @POST("sleep/stage/raw")
     suspend fun sleepBioData(
         @Header("Authorization") bearer: String,
         @Body req: SleepBioDataRequest
-    ) : ApiResponse<SleepBioDataResult>
+    ) : Response<Void>
 }

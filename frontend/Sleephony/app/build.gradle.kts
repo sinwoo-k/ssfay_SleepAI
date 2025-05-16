@@ -149,6 +149,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
+    // sse
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
+
     // Test
     testImplementation            (libs.junit)
     androidTestImplementation     (libs.androidx.junit)

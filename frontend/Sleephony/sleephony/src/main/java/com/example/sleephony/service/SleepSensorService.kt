@@ -161,7 +161,7 @@ class SleepSensorService : Service(), SensorEventListener {
         event ?: return
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
                 accelerometerList[cnt] = listOf(values)
                 cnt++
                 if (cnt >= 20)  {
@@ -172,13 +172,13 @@ class SleepSensorService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_GRAVITY -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
                 currentData["gravity"] = values
                 sensorDataFlow.value = currentData
             }
             Sensor.TYPE_HEART_RATE -> {
-                val values = event.values.joinToString(", ") { "%.2f".format(it) }
+                val values = event.values.joinToString(", ") { "%.6f".format(it) }
                 val currentData = sensorDataFlow.value.toMutableMap()
                 currentData["heartRate"] = values
                 sensorDataFlow.value = currentData

@@ -12,7 +12,6 @@ import org.json.JSONObject
 
 class WearMessageListener :WearableListenerService(
 ) {
-
     override fun onCreate() {
         super.onCreate()
         Log.d("ssafy", "WearMessageListener 서비스 생성됨")
@@ -46,12 +45,21 @@ class WearMessageListener :WearableListenerService(
                     }
                     startActivity(intent)
                 }
+                if (mode == "senser") {
+                    Log.d("ssafy", "$jsonData")
+
+                    val sensorData = jsonData.toString()
+
+                    val broadcastIntent = Intent("com.example.sleephony.SENSOR_DATA").apply {
+                        putExtra("sensorData", sensorData)
+                    }
+                    sendBroadcast(broadcastIntent)
+                }
             } catch (e : Exception) {
                 Log.e("ssafy", "$e")
             }
         }
     }
-
     private fun parseTime(time: String) : Triple<Int,Int, Boolean> {
         val (isAmStr, hourStr, minStr) = time.split(" ").map { it }
         val hour = if (hourStr.toInt() == 0) 12 else hourStr.toInt()
