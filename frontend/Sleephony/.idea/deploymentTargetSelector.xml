@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-05-19T11:12:29.480933100Z">
+        <DropdownSelection timestamp="2025-05-18T15:19:36.714486600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M30B501H" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RFAY40YTPZH" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="sleephony">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-05-19T05:29:28.735652200Z">
+        <DropdownSelection timestamp="2025-05-15T23:54:58.618970200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R5CW60CGZRD" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.203.226:40411;connection=b1226937" />
             </handle>
           </Target>
         </DropdownSelection>
