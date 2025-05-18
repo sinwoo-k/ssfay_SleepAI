@@ -26,17 +26,28 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 
 class SleepSensorService : Service(), SensorEventListener {
 
-    private val accelerometerList = ArrayList<List<String>>(20).apply {
-        repeat(20) { add(emptyList())}
-    }
-    private var cnt = 0
+    private var accelerometerList = JSONArray()
+    private var accelerometerCnt = 0
+    private val accelerometerTargetCnt = 1000
+
+    private var heartRateList = JSONArray()
+    private var heartRateCnt = 0
+    private val heartRateTargetCnt = 150
+
+    private var temperatureList = JSONArray()
+    private var Temptemperature = "0"
+    private var temperatureCnt = 0
+    private val temperatureTargetCnt = 150
+
+    private var lock = Any()
+
     private val serviceScope = CoroutineScope(Dispatchers.IO)
-    private val sensorDataFlow = MutableStateFlow<Map<String,String>>(emptyMap())
     private lateinit var sensorManager: SensorManager
 
     private var heathTrackingService: HealthTrackingService? = null
@@ -51,11 +62,6 @@ class SleepSensorService : Service(), SensorEventListener {
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        }
-
-        val gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
-        if (gravity != null) {
-            sensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
         val heartRate = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
@@ -130,13 +136,15 @@ class SleepSensorService : Service(), SensorEventListener {
                 override fun onDataReceived(dataPoints: List<DataPoint>) {
                     for (data in dataPoints) {
                         val status = data.getValue(ValueKey.SkinTemperatureSet.STATUS)
-
                         if (status == 0) {
                             val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
-
-                            val currentData = sensorDataFlow.value.toMutableMap()
-                            currentData["temparature"] = String.format(Locale.getDefault(),"%.1f",skinTemp)
-                            sensorDataFlow.value = currentData
+                            val temperature = String.format(Locale.getDefault(),"%.1f",skinTemp)
+                            Temptemperature = temperature
+                            if (temperatureCnt < temperatureTargetCnt) {
+                                synchronized(lock) {
+                                    temperatureList.put(Temptemperature)
+                                }
+                            }
                         }
                     }
                 }
@@ -162,66 +170,82 @@ class SleepSensorService : Service(), SensorEventListener {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                accelerometerList[cnt] = listOf(values)
-                cnt++
-                if (cnt >= 20)  {
-                    val currentData = sensorDataFlow.value.toMutableMap()
-                    currentData["accelerometer"] = accelerometerList.toString()
-                    sensorDataFlow.value = currentData
-                    cnt = 0
+                if (accelerometerCnt < accelerometerTargetCnt) {
+                    synchronized(lock) {
+                        accelerometerList.put(values)
+                        accelerometerCnt++
+                        countTarget()
+                    }
                 }
-            }
-            Sensor.TYPE_GRAVITY -> {
-                val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["gravity"] = values
-                sensorDataFlow.value = currentData
             }
             Sensor.TYPE_HEART_RATE -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                val currentData = sensorDataFlow.value.toMutableMap()
-                currentData["heartRate"] = values
-                sensorDataFlow.value = currentData
-                serviceScope.launch {
-                    sendSenserMessage()
+                if (heartRateCnt < heartRateTargetCnt) {
+                    synchronized(lock) {
+                        heartRateList.put(values)
+                        heartRateCnt++
+                        temperatureList.put(Temptemperature)
+                        temperatureCnt++
+                        countTarget()
+                    }
                 }
             }
         }
     }
+    private fun countTarget() {
+        Log.d("ssafy","accelerometerCnt: ${accelerometerCnt} heartRateCnt: ${heartRateCnt} temperatureCnt:${temperatureCnt}")
+        if (
+            accelerometerCnt == accelerometerTargetCnt &&
+            heartRateCnt == heartRateTargetCnt &&
+            temperatureCnt == temperatureTargetCnt
+        ) {
+            serviceScope.launch {
+                sendSensorMessage()
+            }
+        }
+    }
 
-    private suspend fun sendSenserMessage(){
+    private suspend fun sendSensorMessage(){
         try {
             val nodeClient = Wearable.getNodeClient(this)
             val messageClient = Wearable.getMessageClient(this)
 
-            val accelerometer = sensorDataFlow.value.getValue("accelerometer")
-            val gravity = sensorDataFlow.value.getValue("gravity")
-            val hearRate = sensorDataFlow.value.getValue("heartRate")
-            val skinTemperature = sensorDataFlow?.value?.get("temparature") ?: "0"
             Log.d("ssafy","" +
-                    "accelerometer ${accelerometer} " +
-                    "gravity ${gravity}  " +
-                    "hearRate ${hearRate} " +
-                    "skinTemperature $skinTemperature"
+                    "accelerometer ${accelerometerList} " +
+                    "hearRate ${heartRateList} " +
+                    "skinTemperature $temperatureList"
             )
 
             val jsonData = JSONObject().apply {
                 put("mode","senser")
-                put("accelerometer","${accelerometer}")
-                put("gravity","${gravity}")
-                put("hearRate","${hearRate}")
-                put("temparature","$skinTemperature")
+                put("accelerometer",accelerometerList)
+                put("hearRate",heartRateList)
+                put("temperature",temperatureList)
             }
             val jsonString = jsonData.toString()
+
+            val baos = java.io.ByteArrayOutputStream()
+            val gzos = java.util.zip.GZIPOutputStream(baos)
+            gzos.write(jsonString.toByteArray(Charsets.UTF_8))
+            gzos.close()
 
             val nodes = nodeClient.connectedNodes.await()
             for (node in nodes) {
                 messageClient.sendMessage(
                     node.id,
                     "/alarm",
-                    jsonString.toByteArray()
+                    baos.toByteArray()
                 ).await()
             }
+            synchronized(lock) {
+                accelerometerCnt = 0
+                accelerometerList = JSONArray()
+                heartRateCnt = 0
+                heartRateList = JSONArray()
+                temperatureCnt = 0
+                temperatureList = JSONArray()
+            }
+
         } catch (e:Exception) {
             Log.d("ssafy","$e")
         }
@@ -236,7 +260,6 @@ class SleepSensorService : Service(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
-        sensorDataFlow.value = emptyMap()
         serviceScope.cancel()
 
         skinTemperatureTacker?.setEventListener(null)
