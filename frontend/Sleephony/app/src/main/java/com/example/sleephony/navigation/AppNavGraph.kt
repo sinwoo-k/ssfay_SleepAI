@@ -28,10 +28,12 @@ import com.example.sleephony.ui.screen.report.AiReportScreen
 import com.example.sleephony.ui.screen.report.ReportScreen
 import com.example.sleephony.ui.screen.settings.SettingViewModel
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
+import com.example.sleephony.ui.screen.settings.SettingsGuideScreen
 import com.example.sleephony.ui.screen.statistics.components.detail.SleepDetailScreen
 import com.example.sleephony.ui.screen.settings.SettingsHomeScreen
 import com.example.sleephony.ui.screen.settings.SettingsUserProfileScreen
 import com.example.sleephony.ui.screen.settings.SettingsUserProfileUpdateScreen
+import com.example.sleephony.ui.screen.settings.SettingsWatchScreen
 import com.example.sleephony.ui.screen.sleep.SleepMeasurementScreen
 import com.example.sleephony.ui.screen.sleep.SleepSettingScreen
 import com.example.sleephony.ui.screen.sleep.SleepUiState
@@ -54,6 +56,7 @@ fun AppNavGraph(
     val reportViewModel: ReportViewModel = hiltViewModel()
     val splashVm: SplashViewModel = hiltViewModel()
     val profileVm: ProfileViewModel = hiltViewModel()
+    val settingVm: SettingViewModel = hiltViewModel()
     val context = LocalContext.current
 
     // 현재 경로 가져오기
@@ -202,6 +205,7 @@ fun AppNavGraph(
 
             composable("settings") {
                 SettingsHomeScreen(
+                    viewModel = settingVm,
                     logout = {
                         navController.navigate("login") {
                             popUpTo("settings") { inclusive = true}
@@ -209,12 +213,19 @@ fun AppNavGraph(
                     },
                     goUserProfile = {
                       navController.navigate("settings_profile")
+                    },
+                    goWearable = {
+                        navController.navigate("settings_wearable")
+                    },
+                    goGuide = {
+                        navController.navigate("settings_guide")
                     }
                 )
             }
 
             composable("settings_profile") {
                 SettingsUserProfileScreen(
+                    viewModel = settingVm,
                     backSettingHome = {
                         navController.navigate("settings") {
                             popUpTo("settings_profile") { inclusive = true }
@@ -242,17 +253,34 @@ fun AppNavGraph(
                     }
                 )
             ) { backStackEntry ->
-                val settingsEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry("settings")
-                }
-                val viewModel: SettingViewModel = hiltViewModel(settingsEntry)
                 val key =  backStackEntry.arguments?.getString("key")!!
                 SettingsUserProfileUpdateScreen(
-                    viewModel = viewModel,
+                    viewModel = settingVm,
                     key = key,
                     updateProfile = {
                         navController.popBackStack()
                     }
+                )
+            }
+
+            composable("settings_wearable"){
+                SettingsWatchScreen(
+                    viewModel = settingVm,
+                    backSettingHome = {
+                        navController.navigate("settings") {
+                            popUpTo("settings_wearable") { inclusive = true }
+                        }
+                    },
+                )
+            }
+
+            composable("settings_guide"){
+                SettingsGuideScreen(
+                    backSettingHome = {
+                        navController.navigate("settings") {
+                            popUpTo("settings_guide") { inclusive = true }
+                        }
+                    },
                 )
             }
 

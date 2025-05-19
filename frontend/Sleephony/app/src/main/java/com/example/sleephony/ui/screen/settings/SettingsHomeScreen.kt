@@ -33,7 +33,9 @@ import com.example.sleephony.ui.screen.settings.components.UserProfileBox
 fun SettingsHomeScreen(
     viewModel: SettingViewModel = hiltViewModel(),
     logout: () -> Unit,
-    goUserProfile: () -> Unit
+    goUserProfile: () -> Unit,
+    goWearable: () -> Unit,
+    goGuide: () -> Unit
 ){
     Box(
         modifier = Modifier
@@ -87,12 +89,12 @@ fun SettingsHomeScreen(
                 )
                 Spacer(Modifier.height(24.dp))
                 SettingTextButton(
-                    onClick = {},
+                    onClick = goWearable,
                     text = "스마트 워치 연동"
                 )
                 Spacer(Modifier.height(24.dp))
                 SettingTextButton(
-                    onClick = {},
+                    onClick = goGuide,
                     text = "이용 가이드"
                 )
             }
