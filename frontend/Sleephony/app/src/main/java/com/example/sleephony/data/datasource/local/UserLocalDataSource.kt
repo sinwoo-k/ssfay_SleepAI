@@ -1,10 +1,14 @@
 package com.example.sleephony.data.datasource.local
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.example.sleephony.data.model.user.UserProfileResult
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,6 +17,19 @@ class UserLocalDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+
+    val profileFlow: Flow<UserProfileResult> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+            trySend(getProfile())
+        }
+
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        trySend(getProfile())  // 초기값 emit
+
+        awaitClose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
 
     fun saveProfile(profile: UserProfileResult) {
         prefs.edit {

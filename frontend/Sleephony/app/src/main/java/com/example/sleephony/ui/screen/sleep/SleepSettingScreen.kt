@@ -54,6 +54,7 @@ import com.example.sleephony.ui.common.components.ThemeImageButton
 import com.example.sleephony.ui.common.components.TimeWheelPicker
 import com.example.sleephony.ui.screen.sleep.components.DownloadConfirmDialog
 import com.example.sleephony.ui.screen.sleep.components.ThemeSelectSheet
+import com.example.sleephony.utils.SoundFileHelper
 
 @Composable
 fun SleepSettingScreen(
@@ -162,8 +163,9 @@ fun SleepSettingScreen(
                     themes = themes,
                     currentThemeId = selectedThemeId,
                     onThemeSelected = { theme ->
+                        val isDownloaded = SoundFileHelper.isAllDownloaded(context, theme.id)
                         // Wi-Fi 이거나, 모바일 다운로드 허용 여부가 켜져 있으면 바로 다운로드 시작
-                        if (viewModel.isOnWifi() || allowMobile) {
+                        if (viewModel.isOnWifi() || allowMobile || isDownloaded) {
                             viewModel.onThemeSelected(theme)
                             viewModel.downloadTheme(theme.id)
                             showThemeDialog = false
