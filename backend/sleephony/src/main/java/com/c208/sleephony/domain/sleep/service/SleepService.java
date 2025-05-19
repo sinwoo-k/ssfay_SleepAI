@@ -103,10 +103,16 @@ public class SleepService {
         int deepMin  = Math.toIntExact(Math.round(n3Count    * EPOCH_SECONDS / 60.0));
         int totalMin = (int) Duration.between(startedAt, endedAt).toMinutes();
         int cycles   = Math.max(1, totalMin/90);
-        int score    = Math.max(1, Math.min(
-                100 - (int)(awakeMin*0.5) + (int)(remMin*0.2) + (int)(deepMin*0.3),
-                100));
         LocalDateTime realSleep = (firstN1!=null? firstN1: startedAt);
+
+        int sleepDurationScore = Math.min(40, (int) (totalMin >= 420 ? 40 : (totalMin / 420.0) * 40));
+        int sleepEfficiency = (int) ((double) (totalMin - awakeMin) / totalMin * 100);
+        int efficiencyScore = sleepEfficiency >= 85 ? 20 : (int) ((sleepEfficiency / 85.0) * 20);
+        int deepSleepScore = Math.min(15, (int) ((deepMin / (double) totalMin) * 100 / 20 * 15));
+        int remSleepScore = Math.min(15, (int) ((remMin / (double) totalMin) * 100 / 25 * 15));
+        int cycleScore = Math.min(10, (cycles >= 4 ? 10 : (int) (cycles * 2.5)));
+
+        int score = sleepDurationScore + efficiencyScore + deepSleepScore + remSleepScore + cycleScore;
 
         // 기존 리포트 조회 여부
         Optional<SleepReport> opt = sleepReportRepository
