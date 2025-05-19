@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const SelectUser = ({ selectUser, SetSelectUser }) => {
+const SelectUser = ({ users, SetSelectUser }) => {
   return (
     <div className="user-select">
       <select
@@ -8,12 +8,17 @@ const SelectUser = ({ selectUser, SetSelectUser }) => {
         id="user-select"
         onChange={(e) => {
           SetSelectUser(e.target.value);
-          console.log(e.target.value);
         }}
+        defaultValue={0}
       >
-        <option value="사용자1">사용자1</option>
-        <option value="사용자2">사용자2</option>
-        <option value="사용자3">사용자3</option>
+        <option value={0} disabled hidden>
+          사용자를 선택하세요.
+        </option>
+        {users.map((v) => (
+          <option key={`user-${v.userId}-${v.nickname}`} value={v.userId}>
+            {v.nickname}
+          </option>
+        ))}
       </select>
     </div>
   );

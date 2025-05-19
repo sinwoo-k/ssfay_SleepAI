@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ResponsiveContainer,
@@ -9,56 +10,64 @@ import {
   Line,
 } from "recharts";
 
-const STAGE_LABELS = {
-  0: "AWAKE",
-  1: "NREM1",
-  2: "NREM2",
-  3: "NREM3",
-  4: "REM",
-};
+const LEVEL_MAP = { REM: 0, NREM3: 1, NREM2: 2, NREM1: 3, AWAKE: 4 };
+const REVERSE_LEVEL_MAP = ["REM", "NREM3", "NREM2", "NREM1", "AWAKE"];
 
-const UserSleepChart = ({ selectUser }) => {
+const UserSleepChart = ({ selectUser, baseUrl }) => {
   const [isMeasured, setIsMeasured] = useState(false);
 
   const [data, setData] = useState([]);
 
   const timerRef = useRef(null);
 
+  const getIsMeasuredUser = () => {
+    axios
+      .get(`${baseUrl}/preview/status/${selectUser}`)
+      .then((res) => {
+        setIsMeasured(res.data.results);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const getMeasuredData = () => {
+    axios
+      .get(`${baseUrl}/preview/sleep-levels/${selectUser}`)
+      .then((res) => {
+        console.log(res);
+        const chartData = res.data.results.map((item) => ({
+          time: new Date(item.time).toLocaleTimeString(),
+          stage: LEVEL_MAP[item.level] ?? 0,
+          rawLevel: item.level,
+        }));
+        setData(chartData);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
   // selectUser가 변경되면 측정 상태 토글
   useEffect(() => {
     if (selectUser) {
-      setIsMeasured(true);
-    } else {
-      setIsMeasured(false);
-      setData([]); // 초기화
+      getIsMeasuredUser();
     }
   }, [selectUser]);
 
   // 측정 중이면 1초마다 더미 데이터 추가
   useEffect(() => {
     if (isMeasured) {
-      // 초기 데이터
-      setData([{ time: new Date().toLocaleTimeString(), stage: 1 }]);
+      getMeasuredData();
       timerRef.current = setInterval(() => {
-        setData((prev) => {
-          const next = [
-            ...prev,
-            {
-              time: new Date().toLocaleTimeString(),
-              // 0~3 랜덤
-              stage: Math.floor(Math.random() * 5),
-            },
-          ];
-          // 최대 20개만 남기기
-          return next.slice(-20);
-        });
-      }, 1000);
+        getMeasuredData();
+      }, 150000);
     } else {
       clearInterval(timerRef.current);
     }
     // 언마운트 시 타이머 정리
     return () => clearInterval(timerRef.current);
-  }, [isMeasured]);
+  }, [isMeasured, selectUser]);
 
   return (
     <div className="chart-container">
@@ -80,11 +89,11 @@ const UserSleepChart = ({ selectUser }) => {
             <YAxis
               domain={[0, 4]}
               tick={[0, 1, 2, 3, 4]}
-              tickFormatter={(v) => STAGE_LABELS[v]}
+              tickFormatter={(v) => REVERSE_LEVEL_MAP[v]}
             />
             <Tooltip
               labelFormatter={(label) => `시간: ${label}`}
-              formatter={(value) => STAGE_LABELS[value]}
+              formatter={(value) => REVERSE_LEVEL_MAP[value]}
             />
           </LineChart>
         </ResponsiveContainer>
