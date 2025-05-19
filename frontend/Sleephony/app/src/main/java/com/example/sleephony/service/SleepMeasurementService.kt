@@ -115,25 +115,22 @@ class SleepMeasurementService : Service() {
 
                val accelList = obj.getJSONArray("accelerometer")
                val hrList = obj.getJSONArray("hearRate")
-               val tempList = obj.getJSONArray("temparature")
+               val tempList = obj.getJSONArray("temperature")
                for (i in 0 until accelList.length()) {
                    val accelStr = accelList.getString(i)
                    val values = listOf(accelStr.split(",").map { it.trim().toDouble() })
                    accelBuffer.addAll(values)
+                   if (i<150) {
+                       val hrStr = hrList.getString(i).toDouble()
+                       val hrTempList = mutableListOf<Double>()
+                       repeat(20) { hrTempList.add(hrStr) }
+                        hrBuffer.addAll(hrTempList)
 
-                   val hrStr = hrList.getString(i).toDouble()
-                   val hrTempList = mutableListOf()
-                   repeat(20) {
-                       hrTempList.add(hrStr)
+                       val temStr = tempList.getString(i).toDouble()
+                       val tempTempList = mutableListOf<Double>()
+                       repeat(20) { tempTempList.add(temStr) }
+                       tempBuffer.addAll(tempTempList)
                    }
-                    hrBuffer.addAll(hrTempList)
-
-                   val temStr = tempList.getString(i).toDouble()
-                   val tempTempList = mutableListOf()
-                   repeat(20) {
-                       tempTempList.add(temStr)
-                   }
-                   hrBuffer.addAll(tempTempList)
                }
 
                if (accelBuffer.size == 3000) {

@@ -34,7 +34,7 @@ class SleepSensorService : Service(), SensorEventListener {
 
     private var accelerometerList = JSONArray()
     private var accelerometerCnt = 0
-    private val accelerometerTargetCnt = 1000
+    private val accelerometerTargetCnt = 3000
 
     private var heartRateList = JSONArray()
     private var heartRateCnt = 0
@@ -61,7 +61,7 @@ class SleepSensorService : Service(), SensorEventListener {
 
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
         }
 
         val heartRate = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
