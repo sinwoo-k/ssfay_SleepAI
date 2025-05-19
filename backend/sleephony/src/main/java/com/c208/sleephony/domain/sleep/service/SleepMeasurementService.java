@@ -114,7 +114,7 @@ public class SleepMeasurementService {
             @Header("userId")    String userIdStr
     ) {
         Integer userId = Integer.parseInt(userIdStr);
-        LocalDateTime clientMeasuredAt = startTimeMap.remove(requestId);
+        LocalDateTime measuredAt = startTimeMap.remove(requestId);
 
         RawSequenceResponse res = record.value();
 
@@ -130,16 +130,26 @@ public class SleepMeasurementService {
 
         SleepStage stage = stageFilter.filter(lastFive);
 
+        String redisKey = "sleep:start:" + userId;
+        String startedAtStr = stringRedisTemplate.opsForValue().get(redisKey);
+        if (startedAtStr != null) {
+            LocalDateTime startedAt = LocalDateTime.parse(startedAtStr);
+            if (Duration.between(startedAt, measuredAt).getSeconds() <= 600) {
+                log.info("[SleepStage Override] First 10 minutes → Forcing AWAKE (was: {})", stage);
+                stage = SleepStage.AWAKE;
+            }
+        }
+
         SleepLevel entity = SleepLevel.builder()
                 .userId(userId)
                 .level(stage)
-                .measuredAt(clientMeasuredAt)
+                .measuredAt(measuredAt)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         sleepLevelRepository.save(entity);
         log.info("[Kafka] user {} – filtered={} / raw={} @ {}",
-                userId, stage, raw, clientMeasuredAt);
+                userId, stage, raw, measuredAt);
 
         SseEmitter emitter = emitters.remove(requestId);
         if (emitter != null) {
