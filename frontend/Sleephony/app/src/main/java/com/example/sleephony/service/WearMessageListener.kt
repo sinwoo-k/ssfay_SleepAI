@@ -9,6 +9,7 @@ import com.example.sleephony.ui.screen.statistics.components.parsingTime
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import org.json.JSONObject
+import java.nio.charset.Charset
 
 class WearMessageListener :WearableListenerService(
 ) {
@@ -19,9 +20,18 @@ class WearMessageListener :WearableListenerService(
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         if (messageEvent.path == "/alarm") {
+
             try {
-                val message = String(messageEvent.data)
+                val message = try {
+                    val data = messageEvent.data
+                    val gzip = java.util.zip.GZIPInputStream(java.io.ByteArrayInputStream(data))
+                    gzip.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                } catch (e: Exception) {
+                    String(messageEvent.data)
+                }
+
                 val jsonData = JSONObject(message)
+                Log.d("ssafy", "$jsonData")
                 val mode = jsonData.getString("mode")
                 if (mode == "alarm") {
                     val wakeUpTime = jsonData.getString("wakeUpTime")
