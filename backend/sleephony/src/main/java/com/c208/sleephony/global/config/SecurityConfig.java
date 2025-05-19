@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/api/sleep/stage/raw",
                                 "/actuator/**",
-                                "/grafana/**"
+                                "/grafana/**",
+                                "/api/preview/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

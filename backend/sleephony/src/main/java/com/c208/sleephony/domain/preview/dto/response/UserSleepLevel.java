@@ -1,4 +1,4 @@
-package com.c208.sleephony.domain.user.dto.response;
+package com.c208.sleephony.domain.preview.dto.response;
 
 import com.c208.sleephony.domain.sleep.entity.SleepLevel;
 import com.c208.sleephony.domain.sleep.entity.SleepStage;

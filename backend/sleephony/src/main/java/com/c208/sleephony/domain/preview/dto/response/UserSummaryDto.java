@@ -1,4 +1,4 @@
-package com.c208.sleephony.domain.user.dto.response;
+package com.c208.sleephony.domain.preview.dto.response;
 
 
 public interface UserSummaryDto {
