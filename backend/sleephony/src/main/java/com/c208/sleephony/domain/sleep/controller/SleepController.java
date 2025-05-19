@@ -3,6 +3,7 @@ package com.c208.sleephony.domain.sleep.controller;
 import com.c208.sleephony.domain.sleep.dto.request.*;
 import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.SleepReport;
+import com.c208.sleephony.domain.sleep.service.SleepMeasurementService;
 import com.c208.sleephony.domain.sleep.service.SleepService;
 import com.c208.sleephony.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,14 +27,14 @@ import java.util.List;
 public class SleepController {
 
     private final SleepService sleepService;
-
+    private final SleepMeasurementService sleepMeasurementService;
     @PostMapping(
             path     = "stage/raw",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_EVENT_STREAM_VALUE
     )
     public SseEmitter streamRawSleepStage(@Valid @RequestBody RawSequenceRequest requestDto) {
-        return sleepService.streamRawSleepStage(requestDto);
+        return sleepMeasurementService.streamRawSleepStage(requestDto);
     }
 
     @Operation(summary = "수면 측정 시작 시간 저장", description = "Redis에 수면 측정 시작 시간을 저장합니다.")
@@ -42,7 +43,7 @@ public class SleepController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "측정 시작 시간 DTO")
             @RequestBody StartMeasurementRequest requestDto
     ) {
-        return ApiResponse.success(HttpStatus.CREATED,sleepService.startMeasurement(requestDto.getStartedAt()));
+        return ApiResponse.success(HttpStatus.CREATED,sleepMeasurementService.startMeasurement(requestDto.getStartedAt()));
     }
 
     @Operation(summary = "수면 리포트 생성", description = "수면 측정 종료 시간을 기준으로 수면 리포트를 생성합니다.")
