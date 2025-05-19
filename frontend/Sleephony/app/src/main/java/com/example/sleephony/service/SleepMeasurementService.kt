@@ -113,16 +113,28 @@ class SleepMeasurementService : Service() {
            try {
                val obj = JSONObject(data)
 
-               val accelStr = obj.getString("accelerometer")
-               val accType = object : TypeToken<List<List<Double>>>() {}.type
-               val accelList: List<List<Double>> = Gson().fromJson(accelStr, accType)
+               val accelList = obj.getJSONArray("accelerometer")
+               val hrList = obj.getJSONArray("hearRate")
+               val tempList = obj.getJSONArray("temparature")
+               for (i in 0 until accelList.length()) {
+                   val accelStr = accelList.getString(i)
+                   val values = listOf(accelStr.split(",").map { it.trim().toDouble() })
+                   accelBuffer.addAll(values)
 
-               val hr = obj.getString("hearRate").toDouble()
-               val temp = obj.getString("temparature").toDouble()
+                   val hrStr = hrList.getString(i).toDouble()
+                   val hrTempList = mutableListOf()
+                   repeat(20) {
+                       hrTempList.add(hrStr)
+                   }
+                    hrBuffer.addAll(hrTempList)
 
-               accelBuffer.addAll(accelList)
-               hrBuffer.addAll(List(accelList.size) { hr })
-               tempBuffer.addAll(List(accelList.size) { temp })
+                   val temStr = tempList.getString(i).toDouble()
+                   val tempTempList = mutableListOf()
+                   repeat(20) {
+                       tempTempList.add(temStr)
+                   }
+                   hrBuffer.addAll(tempTempList)
+               }
 
                if (accelBuffer.size == 3000) {
                    serviceScope.launch {
