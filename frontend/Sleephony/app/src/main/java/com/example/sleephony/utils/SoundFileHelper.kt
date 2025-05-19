@@ -21,4 +21,11 @@ object SoundFileHelper {
     fun isDownloaded(context: Context, themeId: Int, soundId: Int): Boolean {
         return getSoundFile(context, themeId, soundId).exists()
     }
+
+    fun isAllDownloaded(context: Context, themeId: Int): Boolean {
+        val soundDir = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "theme_${themeId}")
+        if (!soundDir.exists()) return false
+        val expectedCount = 4  // 예: 사운드 4개일 경우, 서버 응답으로 대체해도 됨
+        return soundDir.listFiles()?.size == expectedCount
+    }
 }

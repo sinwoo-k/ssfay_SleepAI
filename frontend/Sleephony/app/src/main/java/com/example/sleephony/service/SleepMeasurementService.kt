@@ -170,6 +170,19 @@ class SleepMeasurementService : Service() {
                         } else {
                             Log.d("SSE", "동일 단계($sleepStage) 재생 생략")
                         }
+
+                        if (mode == AlarmMode.COMFORT){
+                            val now = System.currentTimeMillis()
+                            val inWindow = now in startTimestamp..endTimestamp
+                            val reached = sleepStage == targetStage
+                            val timeout = now >= endTimestamp
+
+                            if ((inWindow && reached) || timeout) {
+                                triggerAlarm()
+                                serviceScope.cancel()
+                            }
+                        }
+
                     }
                 }
 
