@@ -59,15 +59,14 @@ fun ReportContent(
         // 데이터가 없을 경우 처리
         if (report == null) {
             Text(
-                text = "선택된 날짜에는 수면 데이터가 없습니다.",
+                text = "선택된 날짜에는 \n 수면 데이터가 없습니다.",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp) // 주변에 여백 추가
-                    .background(Color(0xFF2E3F7C), shape = RoundedCornerShape(8.dp))
+                    .background(color = Color.Black.copy(alpha = .3f), shape = RoundedCornerShape(20.dp))
                     .padding(16.dp), // 안쪽 여백
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = Color.White.copy(alpha = .7f),
                 textAlign = TextAlign.Center, // 가운데 정렬
             )
 

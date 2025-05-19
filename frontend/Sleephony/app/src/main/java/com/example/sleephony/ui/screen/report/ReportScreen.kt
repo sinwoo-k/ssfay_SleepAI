@@ -19,7 +19,7 @@ import com.example.sleephony.ui.screen.report.component.ReportCalendar
 import com.example.sleephony.ui.screen.report.component.ReportContent
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
 import java.time.LocalDate
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 
 @Composable
@@ -28,7 +28,7 @@ fun ReportScreen(
     reportViewModel: ReportViewModel
 ) {
     // ReportScreen에서 selectedDate 관리
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
 
     Box(
         modifier = Modifier
