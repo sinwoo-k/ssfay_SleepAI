@@ -5,9 +5,9 @@ import java.time.LocalDateTime
 
 enum class SleepStage(val label: String, val color: Color) {
     AWAKE("비수면", Color(0xFFE1C16E)),
+    REM("램수면", Color(0xFFB388FF)),
     LIGHT("얕은잠", Color(0xFF90CAF9)),
-    DEEP("깊은잠", Color(0xFF0077B6)),
-    REM("램수면", Color(0xFFB388FF))
+    DEEP("깊은잠", Color(0xFF0077B6))
 }
 
 data class SleepStageBlock(
