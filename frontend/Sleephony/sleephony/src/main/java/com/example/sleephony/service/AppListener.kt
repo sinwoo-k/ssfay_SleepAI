@@ -34,7 +34,7 @@ class AppMessageListener: WearableListenerService() {
             } else if (mode == "history") {
                 val historyData = getSharedPreferences("user_history", MODE_PRIVATE)
                 with(historyData.edit()) {
-                    putString("${jsonData.getString("day")}-value",jsonData.getString("value"))
+                    putString("${jsonData.getString("label")}-value",jsonData.getString("value"))
                     apply()
                 }
             } else if (mode == "alarm") {
