@@ -46,7 +46,11 @@ class SettingViewModel @Inject constructor(
     val wearableNodes: StateFlow<List<Node>> = _wearableNodes
 
     init {
-        _profileState.value = userLocalDataSource.getProfile()
+        viewModelScope.launch {
+            userLocalDataSource.profileFlow.collect { profile ->
+                _profileState.value = profile
+            }
+        }
         fetchConnectedWearOsNodes()
     }
 
@@ -93,9 +97,6 @@ class SettingViewModel @Inject constructor(
             )
 
             userRepository.patchUserProfile(req)
-                .onSuccess {
-                    _profileState.value = updated
-                }
                 .onFailure { err ->
                     Log.e("DBG", "프로필 수정 실패", err)
                 }

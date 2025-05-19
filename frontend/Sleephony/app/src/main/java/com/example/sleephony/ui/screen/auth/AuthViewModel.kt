@@ -39,8 +39,14 @@ class AuthViewModel @Inject constructor(
                 if (result.status == "join") {
                     uiState = UiState.NeedsProfile
                 } else {
-                    userRepository.getUserProfile()
-                    uiState = UiState.Authenticated
+                    val profileResult = userRepository.getUserProfile()
+                    profileResult
+                        .onSuccess {
+                        uiState = UiState.Authenticated
+                        }
+                        .onFailure { e ->
+                        uiState = UiState.Error(e.message ?: "유저 정보 불러오기 실패")
+                        }
                 }
             }
             .onFailure { e ->
@@ -56,8 +62,14 @@ class AuthViewModel @Inject constructor(
                 if (result.status == "join") {
                     uiState = UiState.NeedsProfile
                 } else {
-                    userRepository.getUserProfile()
-                    uiState = UiState.Authenticated
+                    val profileResult = userRepository.getUserProfile()
+                    profileResult
+                        .onSuccess {
+                            uiState = UiState.Authenticated
+                        }
+                        .onFailure { e ->
+                            uiState = UiState.Error(e.message ?: "유저 정보 불러오기 실패")
+                        }
                 }
             }
             .onFailure { e ->
