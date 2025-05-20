@@ -44,8 +44,6 @@ public class SleepService {
     private final SleepStatisticRepository sleepStatisticRepository;
 
     private static final int EPOCH_SECONDS = 150;  // 2분 30초
-    private static final int MIN_REQUIRED_WINDOWS =
-            (int) (Duration.ofHours(2).getSeconds() / EPOCH_SECONDS);  // 7200/150 = 48
 
     /**
      * 측정 종료 시각을 받아 Redis에서 시작 시각을 조회 후 삭제하고,
@@ -67,10 +65,10 @@ public class SleepService {
                 .orElseThrow(() -> new RedisOperationException("시작 시각이 존재하지 않습니다."));
         LocalDateTime dayStart = reportDate.atStartOfDay();
         LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
-        long levelCount = sleepLevelRepository
-                .countByUserIdAndMeasuredAtBetween(userId, dayStart, dayEnd);
 
-        if (levelCount < MIN_REQUIRED_WINDOWS) {
+        long sleepSeconds = Duration.between(startedAt, endedAt).getSeconds();
+
+        if (sleepSeconds < Duration.ofHours(2).getSeconds()) {
             throw BusinessException.insufficientData();
         }
         // 30초 윈도우 단위로 저장된 SleepLevel 조회
