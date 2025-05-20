@@ -10,6 +10,7 @@ import android.hardware.*
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
@@ -55,9 +56,15 @@ class SleepSensorService : Service(), SensorEventListener {
     private var skinTempHandler: Handler? = null
     private var isSkinTempAvailable = false
 
+    private var wakeLock: PowerManager.WakeLock? = null
+
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SleepSensorService::WakeLock")
+        wakeLock?.acquire()
 
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (accelerometer != null) {
@@ -78,7 +85,7 @@ class SleepSensorService : Service(), SensorEventListener {
         val channel = NotificationChannel(
             channelId,
             channelName,
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_HIGH
         )
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -87,6 +94,7 @@ class SleepSensorService : Service(), SensorEventListener {
             .setContentTitle("수면 센서 활성화됨")
             .setContentText("센서 데이터를 수집 중입니다...")
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
         startForeground(1, notification)
@@ -259,6 +267,10 @@ class SleepSensorService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        wakeLock?.release()
+        wakeLock = null
+
         sensorManager.unregisterListener(this)
         serviceScope.cancel()
 
