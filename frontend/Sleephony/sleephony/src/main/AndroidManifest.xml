@@ -20,12 +20,18 @@
     <!--    진동 권한-->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!--    알람 권한-->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+        android:minSdkVersion="33" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
+
+        <receiver android:name="com.example.sleephony.components.alarm.AlarmReceiver" android:exported="false" />
 
         <!--test-->
         <service

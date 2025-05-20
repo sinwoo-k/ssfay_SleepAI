@@ -31,6 +31,7 @@ import com.example.sleephony.utils.SoundFileHelper
 import com.example.sleephony.utils.SoundPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -271,9 +272,55 @@ class SleepViewModel @Inject constructor(
             isStopReceiverRegistered = true
         }
 
-        _uiState.value = SleepUiState.Running
+
 
         viewModelScope.launch {
+            val themeId = selectedThemeId.value
+
+            // 1. 테마의 모든 사운드가 다운로드되어 있는지 확인
+            val themeResult = themeRepository.getTheme(themeId).getOrNull()
+            if (themeResult == null) {
+                Log.e("SleepVM", "테마 정보를 불러올 수 없음")
+                return@launch
+            }
+
+            val undownloaded = themeResult.sounds.filterNot { sound ->
+                SoundFileHelper.isDownloaded(appContext, themeId, sound.soundId)
+            }
+
+            if (undownloaded.isNotEmpty()) {
+                // 2. 모두 다운로드 큐에 등록
+                Log.d("SleepVM", "사운드 일부 누락 → 다운로드 시작")
+                undownloaded.forEach { sound ->
+                    soundLocalDataSource.enqueueDownload(themeId, sound)
+                }
+
+                // 3. 다운로드 완료까지 대기 (기본적으로 최대 30초 정도 polling)
+                val maxRetry = 60
+                repeat(maxRetry) {
+                    val allReady = themeResult.sounds.all { sound ->
+                        SoundFileHelper.isDownloaded(appContext, themeId, sound.soundId)
+                    }
+                    if (allReady) {
+                        Log.d("SleepVM", "사운드 다운로드 완료")
+                        return@repeat
+                    }
+                    delay(500)
+                }
+
+                // 최종 확인
+                val stillMissing = themeResult.sounds.any { sound ->
+                    !SoundFileHelper.isDownloaded(appContext, themeId, sound.soundId)
+                }
+                if (stillMissing) {
+                    Log.e("SleepVM", "다운로드 실패한 사운드 있음 → 측정 취소")
+                    return@launch
+                }
+            }
+
+
+            _uiState.value = SleepUiState.Running
+
             // 알람 권한 설정
             ensureExactAlarmPermission(appContext)
 
@@ -286,12 +333,15 @@ class SleepViewModel @Inject constructor(
             val endMin   = baseMin + window    // 6:30 → 420분(7:00)
 
             val nowCal = Calendar.getInstance()
+            val nowMinuteOfDay = nowCal.get(Calendar.HOUR_OF_DAY) * 60 + nowCal.get(Calendar.MINUTE)
+            val shouldBeTomorrow = startMin <= nowMinuteOfDay && endMin <= nowMinuteOfDay
+
             val startCal = nowCal.clone() as Calendar
             startCal.apply {
                 set(Calendar.HOUR_OF_DAY, startMin / 60)
                 set(Calendar.MINUTE, startMin % 60)
                 set(Calendar.SECOND, 0)
-                if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DATE, 1)
+                if (shouldBeTomorrow) add(Calendar.DATE, 1)
             }
 
             val endCal = nowCal.clone() as Calendar
@@ -300,7 +350,7 @@ class SleepViewModel @Inject constructor(
                 set(Calendar.HOUR_OF_DAY, endMin / 60)
                 set(Calendar.MINUTE, endMin % 60)
                 set(Calendar.SECOND, 0)
-                if(timeInMillis <= System.currentTimeMillis()) add(Calendar.DATE, 1)
+                if (shouldBeTomorrow) add(Calendar.DATE, 1)
             }
 
 

@@ -113,16 +113,25 @@ class SleepMeasurementService : Service() {
            try {
                val obj = JSONObject(data)
 
-               val accelStr = obj.getString("accelerometer")
-               val accType = object : TypeToken<List<List<Double>>>() {}.type
-               val accelList: List<List<Double>> = Gson().fromJson(accelStr, accType)
+               val accelList = obj.getJSONArray("accelerometer")
+               val hrList = obj.getJSONArray("hearRate")
+               val tempList = obj.getJSONArray("temperature")
+               for (i in 0 until accelList.length()) {
+                   val accelStr = accelList.getString(i)
+                   val values = listOf(accelStr.split(",").map { it.trim().toDouble() })
+                   accelBuffer.addAll(values)
+                   if (i<150) {
+                       val hrStr = hrList.getString(i).toDouble()
+                       val hrTempList = mutableListOf<Double>()
+                       repeat(20) { hrTempList.add(hrStr) }
+                        hrBuffer.addAll(hrTempList)
 
-               val hr = obj.getString("hearRate").toDouble()
-               val temp = obj.getString("temparature").toDouble()
-
-               accelBuffer.addAll(accelList)
-               hrBuffer.addAll(List(accelList.size) { hr })
-               tempBuffer.addAll(List(accelList.size) { temp })
+                       val temStr = tempList.getString(i).toDouble()
+                       val tempTempList = mutableListOf<Double>()
+                       repeat(20) { tempTempList.add(temStr) }
+                       tempBuffer.addAll(tempTempList)
+                   }
+               }
 
                if (accelBuffer.size == 3000) {
                    serviceScope.launch {
@@ -161,6 +170,19 @@ class SleepMeasurementService : Service() {
                         } else {
                             Log.d("SSE", "동일 단계($sleepStage) 재생 생략")
                         }
+
+                        if (mode == AlarmMode.COMFORT){
+                            val now = System.currentTimeMillis()
+                            val inWindow = now in startTimestamp..endTimestamp
+                            val reached = sleepStage == targetStage
+                            val timeout = now >= endTimestamp
+
+                            if ((inWindow && reached) || timeout) {
+                                triggerAlarm()
+                                serviceScope.cancel()
+                            }
+                        }
+
                     }
                 }
 

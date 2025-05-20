@@ -58,18 +58,18 @@ class AlarmForegroundService : Service() {
 
         val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-//        mediaPlayer = MediaPlayer().apply {
-//            setDataSource(this@AlarmForegroundService, alarmUri)
-//            isLooping = true
-//            setAudioAttributes(
-//                AudioAttributes.Builder()
-//                    .setUsage(AudioAttributes.USAGE_ALARM)
-//                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-//                    .build()
-//            )
-//            prepare()
-//            start()
-//        }
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(this@AlarmForegroundService, alarmUri)
+            isLooping = true
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            prepare()
+            start()
+        }
 
         // (1) NotificationChannel 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -128,11 +128,11 @@ class AlarmForegroundService : Service() {
         // 서비스가 끝날 때 진동도 멈추기
         vibrator.cancel()
 
-//        mediaPlayer?.let {
-//            it.stop()
-//            it.release()
-//        }
-//        mediaPlayer = null
+        mediaPlayer?.let {
+            it.stop()
+            it.release()
+        }
+        mediaPlayer = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

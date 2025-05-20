@@ -37,10 +37,8 @@ fun HistoryScreen(
     val days = listOf("월", "화", "수", "목", "금", "토", "일")
     val historyList = days.mapNotNull { day ->
         val value = history.getString("${day}-value", null)
-        value?.let { day to it } // null 아니면 Pair 반환
+        value?.let { day to it }
     }
-
-
 
     ScalingLazyColumn(
         modifier = modifier.fillMaxSize(),
