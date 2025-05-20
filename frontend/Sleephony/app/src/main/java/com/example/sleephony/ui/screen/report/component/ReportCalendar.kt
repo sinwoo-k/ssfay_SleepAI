@@ -132,7 +132,7 @@ fun ReportCalendar(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .width(40.dp)
+                        .width(38.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
