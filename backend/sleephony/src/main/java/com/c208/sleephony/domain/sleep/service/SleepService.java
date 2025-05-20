@@ -59,7 +59,6 @@ public class SleepService {
         LocalDate reportDate = endedAt.toLocalTime().isBefore(LocalTime.NOON)
                 ? endedAt.toLocalDate()
                 : endedAt.toLocalDate().plusDays(1);
-        // Redis에서 시작 시각 조회
         SleepSession session = sleepSessionRepository
                 .findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .orElse(null);
@@ -78,7 +77,7 @@ public class SleepService {
         }
         LocalDateTime dayStart = reportDate.atStartOfDay();
         LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
-        // 30초 윈도우 단위로 저장된 SleepLevel 조회
+
         List<SleepLevel> levels = sleepLevelRepository
                 .findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
 
@@ -127,6 +126,7 @@ public class SleepService {
                 .sleepTime(startedAt)
                 .build());
         // SleepReport 빌드
+        report.setSleepTime(startedAt);
         report.setRealSleepTime(realSleep);
         report.setSleepWakeTime(endedAt);
         report.setAwakeTime(awakeMin);
