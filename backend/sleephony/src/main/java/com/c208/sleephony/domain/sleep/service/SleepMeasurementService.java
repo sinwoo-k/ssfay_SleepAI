@@ -4,8 +4,10 @@ import com.c208.sleephony.domain.sleep.dto.request.RawSequenceKafkaPayload;
 import com.c208.sleephony.domain.sleep.dto.request.RawSequenceRequest;
 import com.c208.sleephony.domain.sleep.dto.response.RawSequenceResponse;
 import com.c208.sleephony.domain.sleep.entity.SleepLevel;
+import com.c208.sleephony.domain.sleep.entity.SleepSession;
 import com.c208.sleephony.domain.sleep.entity.SleepStage;
 import com.c208.sleephony.domain.sleep.repository.SleepLevelRepository;
+import com.c208.sleephony.domain.sleep.repository.SleepSessionRepository;
 import com.c208.sleephony.domain.sleep.utils.SleepStageFilter;
 import com.c208.sleephony.global.exception.RedisOperationException;
 import com.c208.sleephony.global.utils.AuthUtil;
@@ -15,7 +17,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Header;
@@ -41,8 +42,7 @@ public class SleepMeasurementService {
 
     private final SleepLevelRepository sleepLevelRepository;
     private final KafkaTemplate<String, RawSequenceKafkaPayload> kafkaTemplate;
-    private final StringRedisTemplate stringRedisTemplate;
-
+    private final SleepSessionRepository sleepSessionRepository;
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final Map<String, LocalDateTime> startTimeMap = new ConcurrentHashMap<>();
     private final SleepStageFilter stageFilter = new SleepStageFilter();
@@ -130,15 +130,14 @@ public class SleepMeasurementService {
 
         SleepStage stage = stageFilter.filter(lastFive);
 
-        String redisKey = "sleep:start:" + userId;
-        String startedAtStr = stringRedisTemplate.opsForValue().get(redisKey);
-        if (startedAtStr != null) {
-            LocalDateTime startedAt = LocalDateTime.parse(startedAtStr);
-            if (Duration.between(startedAt, measuredAt).getSeconds() <= 600) {
-                log.info("[SleepStage Override] First 10 minutes → Forcing AWAKE (was: {})", stage);
-                stage = SleepStage.AWAKE;
-            }
+        SleepSession session = sleepSessionRepository
+                .findFirstByUserIdOrderByCreatedAtDesc(userId)
+                .orElse(null);
+        if (session != null
+                && Duration.between(session.getStartedAt(), measuredAt).getSeconds() <= 600) {
+            stage = SleepStage.AWAKE;
         }
+
 
         SleepLevel entity = SleepLevel.builder()
                 .userId(userId)
@@ -172,15 +171,16 @@ public class SleepMeasurementService {
      * @return 저장 완료 메시지
      * @throws RedisOperationException Redis 저장 실패 시 발생
      */
+
     public String startMeasurement(LocalDateTime startedAt) {
         Integer userId = AuthUtil.getLoginUserId();
-        String key = "sleep:start:" + userId;
-        try {
-            stringRedisTemplate.opsForValue().set(key, startedAt.toString(), Duration.ofHours(24));
-            return "측정 시작 시각 저장 완료";
-        } catch (Exception e) {
-            throw new RedisOperationException("Redis에 측정 시작 시각 저장 중 오류가 발생했습니다.", e);
-        }
+        SleepSession session = SleepSession.builder()
+                .userId(userId)
+                .startedAt(startedAt)
+                .createdAt(LocalDateTime.now())
+                .build();
+        sleepSessionRepository.save(session);
+        return "측정 시작 시각 저장 완료";
     }
 
     private static final Map<String, SleepStage> STAGE_MAP = Map.of(
