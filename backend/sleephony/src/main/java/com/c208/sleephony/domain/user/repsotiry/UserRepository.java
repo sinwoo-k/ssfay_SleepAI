@@ -15,5 +15,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmailAndSocialAndDeleted(String email, Social social, char deleted);
     Optional<User> findByUserIdAndDeleted(Integer userId, char deleted);
 
-    List<UserSummaryDto> findAllProjectedBy();
+    List<UserSummaryDto> findAllProjectedByDeleted(Character deleted);
 }

@@ -4,6 +4,7 @@ import com.c208.sleephony.domain.sleep.repository.SleepLevelRepository;
 import com.c208.sleephony.domain.preview.dto.response.UserSleepLevel;
 import com.c208.sleephony.domain.preview.dto.response.UserSummaryDto;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
+import com.c208.sleephony.global.exception.RedisOperationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class PreviewService {
     private static final String REDIS_KEY_PREFIX = "sleep:start:"; // 측정 중 여부·시작 시각 키
 
     public List<UserSummaryDto> getAllUsers() {
-        return userRepository.findAllProjectedBy();
+        return userRepository.findAllProjectedByDeleted('N');
     }
 
     public boolean isMeasuring(Integer userId) {
@@ -35,7 +36,7 @@ public class PreviewService {
         String key = REDIS_KEY_PREFIX + userId;
         String startStr = redisTemplate.opsForValue().get(key);
         if (startStr == null) {
-            return List.of();  // 아직 측정 세션이 없거나 종료됨
+            throw new RedisOperationException("시작 시각이 존재하지 않습니다.");
         }
         LocalDateTime begin = LocalDateTime.parse(startStr);
         LocalDateTime now   = LocalDateTime.now();

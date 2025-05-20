@@ -60,9 +60,11 @@ public class SleepService {
                 ? endedAt.toLocalDate()
                 : endedAt.toLocalDate().plusDays(1);
         // Redis에서 시작 시각 조회
-        LocalDateTime startedAt = Optional.ofNullable(stringRedisTemplate.opsForValue().getAndDelete(key))
-                .map(LocalDateTime::parse)
-                .orElseThrow(() -> new RedisOperationException("시작 시각이 존재하지 않습니다."));
+        String startStr = stringRedisTemplate.opsForValue().get(key);
+        if (startStr == null) {
+            throw new RedisOperationException("시작 시각이 존재하지 않습니다.");
+        }
+        LocalDateTime startedAt = LocalDateTime.parse(startStr);
         LocalDateTime dayStart = reportDate.atStartOfDay();
         LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
 
@@ -129,8 +131,10 @@ public class SleepService {
         report.setSleepCycle(cycles);
         report.setSleepScore(score);
         report.setCreatedAt(LocalDateTime.now());
+        SleepReport result = sleepReportRepository.save(report);
+        stringRedisTemplate.delete(key);
 
-        return sleepReportRepository.save(report);
+        return result;
     }
     /**
      * 특정 일자의 리포트와 전일 리포트(있다면)의 총 수면 시간을 함께 반환합니다.
