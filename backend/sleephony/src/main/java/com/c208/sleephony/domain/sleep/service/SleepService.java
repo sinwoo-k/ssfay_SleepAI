@@ -5,10 +5,10 @@ import com.c208.sleephony.domain.sleep.dto.response.*;
 import com.c208.sleephony.domain.sleep.entity.*;
 import com.c208.sleephony.domain.sleep.repository.SleepLevelRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepReportRepository;
+import com.c208.sleephony.domain.sleep.repository.SleepSessionRepository;
 import com.c208.sleephony.domain.sleep.repository.SleepStatisticRepository;
 import com.c208.sleephony.domain.user.entity.User;
 import com.c208.sleephony.domain.user.repsotiry.UserRepository;
-import com.c208.sleephony.global.exception.BusinessException;
 import com.c208.sleephony.global.exception.RedisOperationException;
 import com.c208.sleephony.global.exception.SleepReportNotFoundException;
 import com.c208.sleephony.global.exception.UserNotFoundException;
@@ -44,6 +44,7 @@ public class SleepService {
     private final SleepStatisticRepository sleepStatisticRepository;
 
     private static final int EPOCH_SECONDS = 150;  // 2분 30초
+    private final SleepSessionRepository sleepSessionRepository;
 
     /**
      * 측정 종료 시각을 받아 Redis에서 시작 시각을 조회 후 삭제하고,
@@ -53,26 +54,30 @@ public class SleepService {
      * @return 저장된 SleepReport 엔티티
      * @throws RedisOperationException 시작 시각이 Redis에 없으면 발생
      */
-    public SleepReport generateSleepReport(LocalDateTime endedAt) {
+    public Optional<SleepReport> generateSleepReport(LocalDateTime endedAt) {
         Integer userId = AuthUtil.getLoginUserId();
-        String key = "sleep:start:" + userId;
         LocalDate reportDate = endedAt.toLocalTime().isBefore(LocalTime.NOON)
                 ? endedAt.toLocalDate()
                 : endedAt.toLocalDate().plusDays(1);
         // Redis에서 시작 시각 조회
-        String startStr = stringRedisTemplate.opsForValue().get(key);
-        if (startStr == null) {
-            throw new RedisOperationException("시작 시각이 존재하지 않습니다.");
+        SleepSession session = sleepSessionRepository
+                .findFirstByUserIdOrderByCreatedAtDesc(userId)
+                .orElse(null);
+        if (session == null) {
+            log.warn("세션 없음: userId={}, 측정만 종료 처리", userId);
+            return Optional.empty();  // 또는 Optional<SleepReport>로 변경 권장
         }
-        LocalDateTime startedAt = LocalDateTime.parse(startStr);
-        LocalDateTime dayStart = reportDate.atStartOfDay();
-        LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
+        LocalDateTime startedAt = session.getStartedAt();
 
         long sleepSeconds = Duration.between(startedAt, endedAt).getSeconds();
 
         if (sleepSeconds < Duration.ofHours(2).getSeconds()) {
-            throw BusinessException.insufficientData();
+            log.warn("수면 시간 부족: {}초(userId={}), 리포트 생략", sleepSeconds, userId);
+            sleepSessionRepository.deleteByUserId(userId);
+            return Optional.empty();
         }
+        LocalDateTime dayStart = reportDate.atStartOfDay();
+        LocalDateTime dayEnd   = reportDate.plusDays(1).atStartOfDay().minusNanos(1);
         // 30초 윈도우 단위로 저장된 SleepLevel 조회
         List<SleepLevel> levels = sleepLevelRepository
                 .findAllByUserIdAndMeasuredAtBetween(userId, startedAt, endedAt);
@@ -132,9 +137,9 @@ public class SleepService {
         report.setSleepScore(score);
         report.setCreatedAt(LocalDateTime.now());
         SleepReport result = sleepReportRepository.save(report);
-        stringRedisTemplate.delete(key);
+        sleepSessionRepository.deleteByUserId(userId);
 
-        return result;
+        return Optional.of(result);
     }
     /**
      * 특정 일자의 리포트와 전일 리포트(있다면)의 총 수면 시간을 함께 반환합니다.

@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sleep/")
@@ -48,7 +49,7 @@ public class SleepController {
 
     @Operation(summary = "수면 리포트 생성", description = "수면 측정 종료 시간을 기준으로 수면 리포트를 생성합니다.")
     @PostMapping("end-measurement")
-    public ApiResponse<SleepReport> endMeasurement(
+    public ApiResponse<Optional<SleepReport>> endMeasurement(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "측정 종료 시간 DTO")
             @RequestBody EndMeasurementRequest requestDto
     ) {
