@@ -17,5 +17,5 @@
     <string name="average_deep_sleep">평균 깊은 수면 시간은</string>
     <string name="statisticIsEmpty">아직 기록된 수면 시간이 없어요</string>
     <string name="statisticIsEmpty2">수면을 기록하고 내 패턴을 확인해보세요!</string>
-    <string name="average_sleep_score_help">수면 점수는 총 수면 시간, 잠들기까지 걸린시간, 자다 깸 횟수, 수면 단계의 비율 등 수립루틴의 수면 분석을 통해 얻어진 수치들을 종합적으로 판단하여 계산해요</string>
+    <string name="average_sleep_score_help">수면 점수는 총 수면 시간, 잠들기까지 걸린시간, 자다 깸 횟수, 수면 단계의 비율 등 수면루틴의 수면 분석을 통해 얻어진 수치들을 종합적으로 판단하여 계산해요</string>
 </resources>
