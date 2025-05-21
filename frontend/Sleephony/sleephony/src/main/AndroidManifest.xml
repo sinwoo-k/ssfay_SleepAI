@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--    바디 센서 권한-->
+    <uses-permission android:name="android.permission.BODY_SENSORS"/>
+    <!--    백그라운드 서비스 권한-->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!--    사용자 활동 감지 권한-->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!--    심박수 센서 권한-->
+    <uses-feature android:name="android.hardware.sensor.heartrate" android:required="false"/>
+    <!--    건강 백그라운드 권한-->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <!--    구글 서비스 권한-->
+    <uses-permission android:name="com.google.android.gms.permission.BIND_LISTENER" />
+    <!--    인터넷 권한-->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--    진동 권한-->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--    알람 권한-->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+        android:minSdkVersion="33" />
+
+    <!--배터리 최적화 예외-->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault">
+
+        <receiver android:name="com.example.sleephony.components.alarm.AlarmReceiver" android:exported="false" />
+
+        <!--test-->
+        <service
+            android:name=".service.SleepSensorService"
+            android:foregroundServiceType="health"
+            android:exported="false" />
+
+        <!--        알람 서비스-->
+        <service
+            android:name=".service.SleepAlarmService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health"/>
+
+        <!-- app  통신 -->
+        <service
+            android:name=".service.AppMessageListener"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/alarm" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".complication.MainComplicationService"
+            android:exported="true"
+            android:label="@string/complication_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="0" />
+        </service>
+        <service
+            android:name=".tile.MainTileService"
+            android:exported="true"
+            android:label="@string/tile_label"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="true" />
+
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="false" />
+
+        <activity
+            android:name=".presentation.MainActivity"
+            android:exported="true"
+            android:taskAffinity=""
+            android:theme="@style/MainActivityTheme.Starting">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

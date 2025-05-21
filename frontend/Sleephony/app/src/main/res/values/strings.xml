@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Sleephony</string>
+    <string name="sleep_score">수면 점수</string>
+    <string name="average_sleep_score">평균 수면 점수</string>
+    <string name="average_sleep_time">평균 수면 시간</string>
+    <string name="average_sleep_latency">평균 비수면 시간</string>
+    <string name="sleep_summation">수면 요약</string>
+    <string name="non_sleep">비수면</string>
+    <string name="REM_sleep">렘수면</string>
+    <string name="light_sleep">얕은 수면</string>
+    <string name="deep_sleep">깊은 수면</string>
+    <string name="sleep_cycle">수면 사이클</string>
+    <string name="sleep_time">수면 시간</string>
+    <string name="sleep_latency_time">평균 잠드는데 걸리는 시간은</string>
+    <string name="average_REM_sleep">평균 렘수면 시간은</string>
+    <string name="average_light_sleep">평균 얕은 수면 시간은</string>
+    <string name="average_deep_sleep">평균 깊은 수면 시간은</string>
+    <string name="statisticIsEmpty">아직 기록된 수면 시간이 없어요</string>
+    <string name="statisticIsEmpty2">수면을 기록하고 내 패턴을 확인해보세요!</string>
+    <string name="average_sleep_score_help">수면 점수는 총 수면 시간, 잠들기까지 걸린시간, 자다 깸 횟수, 수면 단계의 비율 등 수면루틴의 수면 분석을 통해 얻어진 수치들을 종합적으로 판단하여 계산해요</string>
+</resources>
