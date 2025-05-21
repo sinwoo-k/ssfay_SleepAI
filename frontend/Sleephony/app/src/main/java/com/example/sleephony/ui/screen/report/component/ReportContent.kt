@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import com.example.sleephony.ui.screen.report.viewmodel.ReportViewModel
 import com.example.sleephony.ui.screen.statistics.components.AverageSleepScore
 import java.time.LocalDate
-import kotlin.math.abs
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,20 +70,12 @@ fun ReportContent(
             )
 
         } else {
-            // SleepScoreSection
-            val prevSleep = reportResult?.previousTotalSleepMinutes ?: 0
-            val diff = totalSleep - prevSleep
-            val absDiffFormatted = formatMinutesToHourMinute(abs(diff))
+
+            val comment = "주무셨어요"
 
             val diffText = when {
-                abs(diff) <= 30 -> "전날과 비슷한 수면 시간이네요!"
-                diff > 0 -> "전날보다 ${absDiffFormatted} 충전하셨어요!!"
-                else -> "전날보다 ${absDiffFormatted} 부족했어요!"
-            }
-
-            val comment = when {
-                report.sleepScore >= 85 -> "꿀잠을 유지하셨어요"
-                report.sleepScore >= 60 -> "꽤 잘 주무셨어요"
+                report.sleepScore >= 85 -> "평소보다 깊은 잠을 주무셨어요"
+                report.sleepScore >= 60 -> "꽤 잘 주무신거 같아요"
                 else -> "피로가 남아있을 수 있어요"
             }
 
@@ -119,16 +110,5 @@ fun ReportContent(
             viewModel = reportViewModel,
             selectedDate = selectedDate
         )
-    }
-}
-
-// 분 단위를 시간+분 형식으로 변환하는 함수
-fun formatMinutesToHourMinute(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return when {
-        hours > 0 && mins > 0 -> "${hours}시간 ${mins}분"
-        hours > 0 -> "${hours}시간"
-        else -> "${mins}분"
     }
 }
