@@ -24,7 +24,7 @@ import com.samsung.android.service.health.tracking.data.ValueKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.json.JSONArray
@@ -57,6 +57,7 @@ class SleepSensorService : Service(), SensorEventListener {
     private var isSkinTempAvailable = false
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private var isCollecting = true
 
     override fun onCreate() {
         super.onCreate()
@@ -148,7 +149,7 @@ class SleepSensorService : Service(), SensorEventListener {
                             val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
                             val temperature = String.format(Locale.getDefault(),"%.1f",skinTemp)
                             Temptemperature = temperature
-                            if (temperatureCnt < temperatureTargetCnt) {
+                            if (temperatureCnt < temperatureTargetCnt && isCollecting) {
                                 synchronized(lock) {
                                     temperatureList.put(Temptemperature)
                                 }
@@ -178,7 +179,7 @@ class SleepSensorService : Service(), SensorEventListener {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                if (accelerometerCnt < accelerometerTargetCnt) {
+                if (accelerometerCnt < accelerometerTargetCnt && isCollecting) {
                     synchronized(lock) {
                         accelerometerList.put(values)
                         accelerometerCnt++
@@ -188,27 +189,29 @@ class SleepSensorService : Service(), SensorEventListener {
             }
             Sensor.TYPE_HEART_RATE -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                if (heartRateCnt < heartRateTargetCnt) {
+                if (heartRateCnt < heartRateTargetCnt && isCollecting) {
                     synchronized(lock) {
                         heartRateList.put(values)
                         heartRateCnt++
                         temperatureList.put(Temptemperature)
                         temperatureCnt++
-                        countTarget()
                     }
                 }
             }
         }
     }
     private fun countTarget() {
-        Log.d("ssafy","accelerometerCnt: ${accelerometerCnt} heartRateCnt: ${heartRateCnt} temperatureCnt:${temperatureCnt}")
+        if (!isCollecting) return
         if (
             accelerometerCnt == accelerometerTargetCnt &&
             heartRateCnt == heartRateTargetCnt &&
             temperatureCnt == temperatureTargetCnt
         ) {
             serviceScope.launch {
+                isCollecting = false
                 sendSensorMessage()
+                delay(30000)
+                isCollecting = true
             }
         }
     }
