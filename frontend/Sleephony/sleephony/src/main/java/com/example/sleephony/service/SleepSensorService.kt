@@ -10,6 +10,7 @@ import android.hardware.*
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sleephony.R
@@ -23,7 +24,7 @@ import com.samsung.android.service.health.tracking.data.ValueKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import org.json.JSONArray
@@ -55,9 +56,16 @@ class SleepSensorService : Service(), SensorEventListener {
     private var skinTempHandler: Handler? = null
     private var isSkinTempAvailable = false
 
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var isCollecting = true
+
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SleepSensorService::WakeLock")
+        wakeLock?.acquire()
 
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (accelerometer != null) {
@@ -78,7 +86,7 @@ class SleepSensorService : Service(), SensorEventListener {
         val channel = NotificationChannel(
             channelId,
             channelName,
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_HIGH
         )
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
@@ -87,6 +95,7 @@ class SleepSensorService : Service(), SensorEventListener {
             .setContentTitle("수면 센서 활성화됨")
             .setContentText("센서 데이터를 수집 중입니다...")
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
         startForeground(1, notification)
@@ -140,7 +149,7 @@ class SleepSensorService : Service(), SensorEventListener {
                             val skinTemp = data.getValue(ValueKey.SkinTemperatureSet.OBJECT_TEMPERATURE)
                             val temperature = String.format(Locale.getDefault(),"%.1f",skinTemp)
                             Temptemperature = temperature
-                            if (temperatureCnt < temperatureTargetCnt) {
+                            if (temperatureCnt < temperatureTargetCnt && isCollecting) {
                                 synchronized(lock) {
                                     temperatureList.put(Temptemperature)
                                 }
@@ -170,7 +179,7 @@ class SleepSensorService : Service(), SensorEventListener {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                if (accelerometerCnt < accelerometerTargetCnt) {
+                if (accelerometerCnt < accelerometerTargetCnt && isCollecting) {
                     synchronized(lock) {
                         accelerometerList.put(values)
                         accelerometerCnt++
@@ -180,27 +189,29 @@ class SleepSensorService : Service(), SensorEventListener {
             }
             Sensor.TYPE_HEART_RATE -> {
                 val values = event.values.joinToString(", ") { "%.6f".format(it) }
-                if (heartRateCnt < heartRateTargetCnt) {
+                if (heartRateCnt < heartRateTargetCnt && isCollecting) {
                     synchronized(lock) {
                         heartRateList.put(values)
                         heartRateCnt++
                         temperatureList.put(Temptemperature)
                         temperatureCnt++
-                        countTarget()
                     }
                 }
             }
         }
     }
     private fun countTarget() {
-        Log.d("ssafy","accelerometerCnt: ${accelerometerCnt} heartRateCnt: ${heartRateCnt} temperatureCnt:${temperatureCnt}")
+        if (!isCollecting) return
         if (
             accelerometerCnt == accelerometerTargetCnt &&
             heartRateCnt == heartRateTargetCnt &&
             temperatureCnt == temperatureTargetCnt
         ) {
             serviceScope.launch {
+                isCollecting = false
                 sendSensorMessage()
+                delay(30000)
+                isCollecting = true
             }
         }
     }
@@ -259,6 +270,10 @@ class SleepSensorService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        wakeLock?.release()
+        wakeLock = null
+
         sensorManager.unregisterListener(this)
         serviceScope.cancel()
 
