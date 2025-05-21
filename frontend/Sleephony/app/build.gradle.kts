@@ -150,6 +150,7 @@ dependencies {
     implementation("dev.chrisbanes.snapper:snapper:0.3.0")
     implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+    implementation ("com.github.commandiron:WheelPickerCompose:1.1.11")
 
     // sse
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

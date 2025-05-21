@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.sleephony.R
 import com.example.sleephony.data.model.theme.ThemeListResult
@@ -168,7 +167,6 @@ fun SleepSettingScreen(
                         if (viewModel.isOnWifi() || allowMobile || isDownloaded) {
                             viewModel.onThemeSelected(theme)
                             viewModel.downloadTheme(theme.id)
-                            showThemeDialog = false
                         }
                         // 아니면 다이얼로그 띄우기
                         else {
