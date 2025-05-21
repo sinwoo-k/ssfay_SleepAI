@@ -10,45 +10,39 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.commandiron.wheel_picker_compose.WheelTimePicker
 import com.commandiron.wheel_picker_compose.core.TimeFormat
+import java.time.LocalTime
+import java.time.ZoneId
 
 @Composable
 fun TimeWheelPicker(
-    initialHour: Int = 6,
-    initialMinute: Int = 30,
-    initialIsAm: Boolean = true,
+    initialHour: Int,
+    initialMinute: Int,
+    initialIsAm: Boolean,
     onTimeChanged: (hour: Int, minute: Int, isAm: Boolean) -> Unit
 ) {
-    var hour by rememberSaveable { mutableStateOf(initialHour) }
-    var minute by rememberSaveable { mutableStateOf(initialMinute) }
-    var isAm by rememberSaveable { mutableStateOf(initialIsAm) }
-
-    LaunchedEffect(hour, minute, isAm) {
-        onTimeChanged(hour, minute, isAm)
-    }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
 
         WheelTimePicker(
+            startTime = LocalTime.of(if (initialIsAm && initialHour == 12) 0 else if (!initialIsAm && initialHour < 12) initialHour + 12 else initialHour, initialMinute),
             timeFormat = TimeFormat.AM_PM,
             size = DpSize(500.dp, 200.dp),
             textColor = Color.White,
             textStyle = MaterialTheme.typography.titleLarge
         ){snappedTime ->
-            val selectHour24 = snappedTime.hour
-            val selectMinute = snappedTime.minute
-            val selectIsAm   = selectHour24 < 12
-
-            val selectHour12 = when {
-                selectHour24 == 0  -> 12
-                selectHour24 > 12  -> selectHour24 - 12
-                else         -> selectHour24
+            val h24 = snappedTime.hour
+            val m   = snappedTime.minute
+            val am  = h24 < 12
+            val h12 = when {
+                h24 == 0   -> 12
+                h24 > 12   -> h24 - 12
+                else       -> h24
             }
-            onTimeChanged(selectHour12, selectMinute, selectIsAm)
+            onTimeChanged(h12, m, am)
         }
     }
 }
