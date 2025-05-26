@@ -99,7 +99,7 @@ Sleephony는 갤럭시 워치에서 수집한 생체 데이터를 바탕으로, 
 
 #### 테마 설정
 
-<img src="exec/assets//function/음악테마선택2.gif" >
+<img src="exec/assets/function/음악테마선택2.gif" >
 
 #### 알람 설정
 
